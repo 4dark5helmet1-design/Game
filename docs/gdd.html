@@ -1,0 +1,771 @@
+<title>Клик-Данж</title>
+
+<style>
+  :root {
+    --ground:   #efecf4;
+    --surface:  #ffffff;
+    --surface-2:#e5e0ee;
+    --plate:    #1b1a24;
+    --ink:      #241f2e;
+    --ink-2:    #554c6c;
+    --ink-3:    #857c9b;
+    --line:     #d5cee1;
+    --line-2:   #bdb3ce;
+    --amber:    #9c5c06;
+    --blood:    #b4303d;
+    --soul:     #6f36ad;
+    --moss:     #146b50;
+
+    --f-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --f-body: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+
+    --col: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:   #16141d;
+      --surface:  #1e1b28;
+      --surface-2:#272235;
+      --plate:    #100e16;
+      --ink:      #e9e3f0;
+      --ink-2:    #a79ec0;
+      --ink-3:    #7b7295;
+      --line:     #332d44;
+      --line-2:   #443c5a;
+      --amber:    #f2a63b;
+      --blood:    #e85c6b;
+      --soul:     #b47ce8;
+      --moss:     #5fd6a8;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:   #16141d;
+    --surface:  #1e1b28;
+    --surface-2:#272235;
+    --plate:    #100e16;
+    --ink:      #e9e3f0;
+    --ink-2:    #a79ec0;
+    --ink-3:    #7b7295;
+    --line:     #332d44;
+    --line-2:   #443c5a;
+    --amber:    #f2a63b;
+    --blood:    #e85c6b;
+    --soul:     #b47ce8;
+    --moss:     #5fd6a8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: var(--col);
+    margin: 0 auto;
+    padding: 0 20px 96px;
+  }
+
+  /* ---------- hero ---------- */
+
+  .hero {
+    background: var(--plate);
+    border-bottom: 1px solid var(--line);
+    padding: 40px 20px 36px;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,.035) 0 1px,
+      transparent 1px 3px
+    );
+  }
+  .hero-inner {
+    max-width: var(--col);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  #sprite {
+    width: 128px;
+    height: 128px;
+    image-rendering: pixelated;
+    display: block;
+    animation: bob 2.4s steps(2, end) infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+  }
+  .hero h1 {
+    font-family: var(--f-mono);
+    font-size: clamp(30px, 8vw, 46px);
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #e8e0ee;
+    margin: 0;
+    text-wrap: balance;
+    text-shadow: 0 3px 0 rgba(0,0,0,.55);
+  }
+  .hero .kicker {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: #f2a63b;
+    margin: 0;
+  }
+  .hero .lede {
+    color: #b3a9c6;
+    margin: 0;
+    max-width: 52ch;
+    font-size: 16px;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { margin-bottom: 56px; }
+
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 6px;
+  }
+
+  h2 {
+    font-family: var(--f-mono);
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    margin: 0 0 4px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--f-mono);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 32px 0 8px;
+  }
+
+  p { margin: 0 0 14px; }
+  section > p:first-of-type { margin-top: 18px; }
+
+  ul, ol { margin: 0 0 14px; padding-left: 1.3em; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--ink-3); }
+
+  strong { font-weight: 700; }
+  em { font-style: italic; color: var(--ink-2); }
+
+  code {
+    font-family: var(--f-mono);
+    font-size: .86em;
+    background: var(--surface-2);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--ink);
+  }
+
+  a { color: var(--amber); }
+
+  /* ---------- pieces ---------- */
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card > :last-child { margin-bottom: 0; }
+  .card-title {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+  .card-title .tag {
+    font-size: 10px;
+    letter-spacing: .14em;
+    color: var(--ink-3);
+    margin-left: 8px;
+    font-weight: 400;
+  }
+
+  .loop {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin: 20px 0 24px;
+    padding: 0;
+    list-style: none;
+  }
+  .loop li {
+    background: var(--surface);
+    border: 1px solid var(--line-2);
+    padding: 7px 11px;
+    margin: 0;
+  }
+  .loop .arrow { color: var(--amber); border: 0; background: none; padding: 0 2px; }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 10px;
+    margin: 20px 0 24px;
+    padding: 0;
+    list-style: none;
+  }
+  .swatches li { margin: 0; }
+  .chip {
+    height: 44px;
+    border: 1px solid rgba(0,0,0,.28);
+  }
+  .swatches .name {
+    display: block;
+    font-family: var(--f-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-top: 5px;
+  }
+  .swatches .hex {
+    display: block;
+    font-family: var(--f-mono);
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+
+  .tbl {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    margin: 0 0 18px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    font-size: 10px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 700;
+    background: var(--surface-2);
+  }
+  tr:last-child td { border-bottom: 0; }
+  td.num { text-align: right; }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 0 16px;
+    border-top: 1px solid var(--line);
+    padding: 18px 0;
+    align-items: start;
+  }
+  .stage:last-of-type { border-bottom: 1px solid var(--line); }
+  .stage .n {
+    font-family: var(--f-mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--line-2);
+    line-height: 1.2;
+  }
+  .stage h4 {
+    font-family: var(--f-mono);
+    font-size: 14px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  .stage p { margin: 0; font-size: 15.5px; color: var(--ink-2); }
+  .stage .mvp {
+    display: inline-block;
+    font-family: var(--f-mono);
+    font-size: 9.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ground);
+    background: var(--amber);
+    padding: 2px 6px;
+    margin-left: 8px;
+    vertical-align: 2px;
+  }
+
+  .note {
+    border-left: 2px solid var(--soul);
+    padding: 2px 0 2px 16px;
+    color: var(--ink-2);
+    font-size: 15.5px;
+    margin: 0 0 16px;
+  }
+
+  .q {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--amber);
+    padding: 14px 18px;
+    margin-bottom: 12px;
+  }
+  .q p { margin: 0; }
+  .q .ask {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    margin-bottom: 4px;
+  }
+  .q .why { font-size: 15px; color: var(--ink-2); }
+
+  hr.end {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 48px 0 20px;
+  }
+  .colophon {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #sprite { animation: none; }
+  }
+</style>
+
+<header class="hero">
+  <div class="hero-inner">
+    <canvas id="sprite" width="16" height="16" aria-label="Пиксельный череп — маскот игры"></canvas>
+    <p class="kicker">Дизайн-док · v0.1 · рабочее название</p>
+    <h1>Клик-Данж</h1>
+    <p class="lede">Кликер-RPG: каждый клик — удар по монстру. Спускаешься всё глубже, пока цифры не перестанут помещаться на экране.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <p class="eyebrow">Что это</p>
+  <h2>Идея</h2>
+  <p>По центру экрана стоит монстр. У него есть полоска здоровья. Ты кликаешь — он получает урон, из него летят пиксели и цифры. Умер — упало золото, тут же вышел следующий, посильнее. Каждый десятый — <strong>босс с таймером на 30 секунд</strong>: успел или нет.</p>
+  <p>Золото уходит в две стороны: <strong>оружие</strong> (усиливает твой клик) и <strong>напарники</strong> (бьют сами, пока ты не кликаешь). Когда спуск упирается в стену, ты <strong>жертвуешь весь прогресс</strong> и получаешь Души — они дают перманентный бонус, и следующий забег летит в разы быстрее.</p>
+  <p class="note">Соотношение 70/30 в пользу активной игры. Напарники — это <em>догоняющая</em> сила: они добивают этажи, которые ты уже прошёл руками, но сами вглубь не тащат. Всё, что открывает новую глубину, требует твоих рук: комбо, криты, слабые точки, скиллы.</p>
+
+  <ul class="loop">
+    <li>клик</li><li class="arrow">→</li>
+    <li>урон</li><li class="arrow">→</li>
+    <li>моб умер</li><li class="arrow">→</li>
+    <li>золото</li><li class="arrow">→</li>
+    <li>апгрейд</li><li class="arrow">→</li>
+    <li>этаж глубже</li><li class="arrow">→</li>
+    <li>стена</li><li class="arrow">→</li>
+    <li>души</li><li class="arrow">↻</li>
+  </ul>
+
+  <h3>Варианты названия</h3>
+  <ul>
+    <li><strong>Клик-Данж</strong> — честно и понятно, что это.</li>
+    <li><strong>ТЫК</strong> — коротко, мемно, хорошо смотрится большими буквами.</li>
+    <li><strong>Глубже</strong> — про суть: единственная цель игры.</li>
+    <li><strong>Костоправ</strong> — характерное, чуть мрачное, звучит как имя героя.</li>
+  </ul>
+</section>
+
+<section>
+  <p class="eyebrow">70% игры</p>
+  <h2>Бой: чем клик отличается от спама</h2>
+  <p>Главная опасность жанра — игрок кладёт на мышку книгу и уходит. Четыре механики делают осмысленный клик сильно выгоднее автоспама.</p>
+
+  <div class="card">
+    <p class="card-title">Комбо <span class="tag">непрерывность</span></p>
+    <p>Каждые <strong>8 кликов подряд</strong> множитель растёт на <code>+0.25×</code>, потолок <code>×5</code>. Пауза дольше <strong>1.5 сек</strong> — сгорает целиком, не по чуть-чуть. Полоска комбо стоит прямо под мобом и на высоком множителе начинает светиться и подрагивать.</p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Слабые точки <span class="tag">меткость</span></p>
+    <p>Раз в ~4 секунды на теле моба вспыхивает пиксельная точка и висит <strong>2 секунды</strong>. Клик по ней — <code>×10</code> урона и мгновенно полное комбо. Это то, чего нет у большинства кликеров: награда не за частоту кликов, а за то, что ты <em>смотришь</em> на экран. И это единственная механика, которую автокликер не отрабатывает.</p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Криты <span class="tag">случайность</span></p>
+    <p>База: <strong>5% шанс</strong>, <code>×5</code> урона. Растёт от оружия и Душ. Крит — это отдельное событие на экране: цифра втрое крупнее, красная вспышка, тряска, звук на октаву выше.</p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Скиллы <span class="tag">кулдауны</span></p>
+    <p>Шесть кнопок внизу экрана, открываются по мере спуска. Ради них игрок возвращается в игру руками — «зайду, сниму кулдауны, продавлю этаж».</p>
+  </div>
+
+  <div class="tbl">
+    <table>
+      <thead>
+        <tr><th>Скилл</th><th>Эффект</th><th class="num">Длит.</th><th class="num">КД</th><th class="num">Этаж</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Клинок ярости</td><td>урон клика ×3</td><td class="num">15 с</td><td class="num">45 с</td><td class="num">5</td></tr>
+        <tr><td>Молния</td><td>мгновенно 30× клика</td><td class="num">—</td><td class="num">30 с</td><td class="num">15</td></tr>
+        <tr><td>Стазис</td><td>таймер босса замирает</td><td class="num">10 с</td><td class="num">90 с</td><td class="num">30</td></tr>
+        <tr><td>Золотая жила</td><td>золото ×5</td><td class="num">20 с</td><td class="num">120 с</td><td class="num">50</td></tr>
+        <tr><td>Боевой клич</td><td>урон напарников ×3</td><td class="num">25 с</td><td class="num">120 с</td><td class="num">75</td></tr>
+        <tr><td>Кровавая луна</td><td>всё вышеперечисленное</td><td class="num">10 с</td><td class="num">300 с</td><td class="num">100</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Золотой моб</h3>
+  <p>Раз в 60–120 секунд вместо обычного моба выходит золотой — светится, дрожит, живёт <strong>15 секунд</strong>. Убил за это время — дождь золота на весь экран (<code>×25</code> от обычного дропа) плюс случайный бафф на 30 секунд. Не убил — сбежал. Это главный «не отходи от экрана» крючок.</p>
+</section>
+
+<section>
+  <p class="eyebrow">30% игры</p>
+  <h2>Напарники и оффлайн</h2>
+  <p>Напарники дают DPS — урон в секунду, который капает сам. Цена каждого следующего уровня: <code>цена = база × 1.07^уровень</code>. На уровнях <strong>10, 25, 50, 100, 200</strong> — вехи, каждая удваивает его DPS, а некоторые дают глобальный бонус (крит-шанс, золото, скорость комбо).</p>
+
+  <div class="tbl">
+    <table>
+      <thead>
+        <tr><th class="num">#</th><th>Напарник</th><th class="num">DPS/ур.</th><th class="num">Цена</th><th>Веха на 25</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Крыса-подельник</td><td class="num">1</td><td class="num">10</td><td>—</td></tr>
+        <tr><td class="num">2</td><td>Оруженосец</td><td class="num">5</td><td class="num">100</td><td>+5% урон клика</td></tr>
+        <tr><td class="num">3</td><td>Лучница</td><td class="num">25</td><td class="num">1.1K</td><td>+3% крит-шанс</td></tr>
+        <tr><td class="num">4</td><td>Знахарь</td><td class="num">120</td><td class="num">12K</td><td>+10% золота</td></tr>
+        <tr><td class="num">5</td><td>Гном-берсерк</td><td class="num">600</td><td class="num">130K</td><td>комбо копится на 25% быстрее</td></tr>
+        <tr><td class="num">6</td><td>Маг огня</td><td class="num">3K</td><td class="num">1.4M</td><td>+25% урон крита</td></tr>
+        <tr><td class="num">7</td><td>Голем</td><td class="num">15K</td><td class="num">15M</td><td>−10% ко всем кулдаунам</td></tr>
+        <tr><td class="num">8</td><td>Тень</td><td class="num">80K</td><td class="num">160M</td><td>слабые точки в 1.5× чаще</td></tr>
+        <tr><td class="num">9</td><td>Дракон</td><td class="num">500K</td><td class="num">1.8B</td><td>+20% ко всему DPS</td></tr>
+        <tr><td class="num">10</td><td>Падший бог</td><td class="num">4M</td><td class="num">20B</td><td>золотые мобы вдвое чаще</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Оффлайн-доход</h3>
+  <p>Вернулся — экран с итогом: «Пока тебя не было (4 ч 12 мин) напарники набили 8.2M золота». Считаем <strong>50% от DPS</strong>, потолок — <strong>8 часов</strong>. Потолок нужен, чтобы игра оставалась про заходы, а не про «зайду раз в неделю».</p>
+</section>
+
+<section>
+  <p class="eyebrow">Куда идём</p>
+  <h2>Спуск: этажи, зоны, боссы</h2>
+  <p>Этаж = <strong>10 мобов</strong>, десятый — босс. Убил босса — этаж глубже, фон и мобы постепенно меняются. Каждые 10 этажей начинается новая <strong>зона</strong> со своей палитрой, своими мобами и своим музыкальным настроением.</p>
+
+  <div class="tbl">
+    <table>
+      <thead>
+        <tr><th class="num">Этажи</th><th>Зона</th><th>Кто там живёт</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">1–10</td><td>Сырой подвал</td><td>крысы, слизни, скелеты</td></tr>
+        <tr><td class="num">11–20</td><td>Катакомбы</td><td>призраки, костяные псы</td></tr>
+        <tr><td class="num">21–30</td><td>Грибные пещеры</td><td>споровики, мицелий-гиганты</td></tr>
+        <tr><td class="num">31–40</td><td>Затопленные шахты</td><td>утопленники, глубинные твари</td></tr>
+        <tr><td class="num">41–50</td><td>Кузня падших</td><td>железные големы, кузнец-демон</td></tr>
+        <tr><td class="num">51–60</td><td>Ледяные залы</td><td>вьюжники, мороз-титаны</td></tr>
+        <tr><td class="num">61–70</td><td>Сад костей</td><td>костяные древа, жнецы</td></tr>
+        <tr><td class="num">71–80</td><td>Бездна</td><td>безымянные, щупальца</td></tr>
+        <tr><td class="num">81–90</td><td>Астральные врата</td><td>стражи, осколки звёзд</td></tr>
+        <tr><td class="num">91–100</td><td>Трон Пустоты</td><td>Пустота собственной персоной</td></tr>
+        <tr><td class="num">100+</td><td>бесконечность</td><td>зоны с префиксами: Проклятые, Древние…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Провал босса</h3>
+  <p>Не уложился в 30 секунд — <strong>ничего не теряешь</strong>, просто остаёшься на этаже и можешь фармить обычных мобов, пока не подкачаешься. Классический откат на 5 этажей назад ощущается как наказание; здесь стена честнее — она не отбирает, а просто не пускает.</p>
+  <p class="note">Есть кнопка «спуститься вручную» — можно уйти на любой уже пройденный этаж, чтобы фармить золото там, где мобы дохнут с одного клика.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Цифры</p>
+  <h2>Экономика и формулы</h2>
+  <p>Основа баланса — экспонента чуть быстрее, чем растут твои силы. Игрок всегда почти успевает.</p>
+
+  <div class="tbl">
+    <table>
+      <thead>
+        <tr><th>Величина</th><th>Формула</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>HP моба на этаже F</td><td>10 × 1.55^(F−1)</td></tr>
+        <tr><td>HP босса</td><td>HP моба × 12</td></tr>
+        <tr><td>Золото с моба</td><td>HP / 15</td></tr>
+        <tr><td>Золото с босса</td><td>обычное × 8</td></tr>
+        <tr><td>Урон клика</td><td>(1 + оружие) × комбо × крит × (1 + души)</td></tr>
+        <tr><td>Цена уровня оружия</td><td>50 × 1.09^уровень</td></tr>
+        <tr><td>Цена уровня напарника</td><td>база × 1.07^уровень</td></tr>
+        <tr><td>Души за забег</td><td>⌊5 × (макс. этаж / 25)^1.8⌋</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Проверка на глаз: этаж 25 даёт <strong>5 душ</strong>, этаж 50 — <strong>17</strong>, этаж 100 — <strong>60</strong>. Одна душа = <strong>+2% ко всему урону</strong>, так что первый престиж примерно удваивает силу, и следующий забег до 25-го этажа занимает не полчаса, а пару минут. Это и есть тот самый кайф второго захода.</p>
+
+  <p class="note">Технически: <code>1.55^100 ≈ 10^19</code> — влезает в обычный JS-number. Слой BigNumber понадобится только после ~этажа 300, вводим его, когда упрёмся, не раньше.</p>
+
+  <h3>Ритм первого часа</h3>
+  <ul>
+    <li><strong>0:00</strong> — клик, первое золото, первый апгрейд оружия. Никаких меню и туториалов.</li>
+    <li><strong>0:30</strong> — крыса-подельник: числа начали расти без тебя.</li>
+    <li><strong>2:00</strong> — первый босс с таймером. Первое напряжение.</li>
+    <li><strong>5:00</strong> — первый скилл. Появилась кнопка, которую хочется нажать.</li>
+    <li><strong>8:00</strong> — первый золотой моб. «А, вот оно как работает.»</li>
+    <li><strong>20:00</strong> — первая стена. Игра сама предлагает престиж.</li>
+    <li><strong>25:00</strong> — второй забег, всё летит. Крючок захлопнулся.</li>
+  </ul>
+</section>
+
+<section>
+  <p class="eyebrow">Мета</p>
+  <h2>Души и Древо</h2>
+  <p>Начиная с 25-го этажа доступно <strong>«Уйти на покой»</strong>: золото, оружие, напарники и этаж обнуляются, взамен — Души. Души тратятся в Древе и <strong>не сгорают никогда</strong>.</p>
+
+  <div class="tbl">
+    <table>
+      <thead>
+        <tr><th>Ветвь</th><th>Что качает</th><th>Потолок</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Клинок</td><td>+2% урон клика за душу</td><td>нет</td></tr>
+        <tr><td>Резня</td><td>+0.5% крит-шанс за уровень</td><td>60%</td></tr>
+        <tr><td>Жадность</td><td>+5% золота за уровень</td><td>нет</td></tr>
+        <tr><td>Ритм</td><td>окно комбо +0.1 с, потолок комбо +0.5×</td><td>×10</td></tr>
+        <tr><td>Хватка</td><td>−2% ко всем кулдаунам</td><td>−60%</td></tr>
+        <tr><td>Призрачная рука</td><td>автоклик: 1 клик/сек за уровень</td><td>10/сек</td></tr>
+        <tr><td>Глаз</td><td>слабые точки чаще и висят дольше</td><td>×3</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note">Автоклик специально стоит <em>дорого</em> и упирается в 10 кликов/сек — он должен избавлять от рутины на уже пройденных этажах, а не заменять игрока на новых. Слабые точки он не ловит.</p>
+
+  <h3>Достижения</h3>
+  <p>Около 50 штук, каждое даёт маленький перманентный бонус (<code>+1%</code> к чему-нибудь). Смысл не в бонусе, а в том, что раз в пару минут в углу экрана что-то всплывает: «100 000 кликов», «убил босса за 3 секунды», «прошёл этаж, ни разу не кликнув».</p>
+</section>
+
+<section>
+  <p class="eyebrow">Почему это приятно</p>
+  <h2>Сочность</h2>
+  <p>Это не украшательство и не «потом добавим». Ощущение удара — и есть игра. Чек-лист на каждый клик:</p>
+  <ul>
+    <li>Цифра урона вылетает вверх, слегка вбок, случайный наклон, гаснет за 0.6 с.</li>
+    <li>Моб дёргается назад и вспыхивает белым на 40 мс.</li>
+    <li>Тряска экрана: 1–2 пикселя обычно, 6 на крите.</li>
+    <li>Партиклы — пиксельные квадратики цвета моба, разлетаются с гравитацией.</li>
+    <li>Звук удара с растущим питчем по мере комбо. На <code>×5</code> — уже почти писк.</li>
+    <li>Полоска HP падает мгновенно, а «призрачная» полоска под ней догоняет за 0.3 с — видно, сколько снял.</li>
+    <li>Смерть моба: спрайт рассыпается на пиксели, золото сыпется монетками и втягивается в счётчик.</li>
+    <li>Счётчик золота не перескакивает, а быстро «прокручивается» до нового значения.</li>
+    <li>Кнопка апгрейда, который ты можешь себе позволить, — подсвечена. Всегда видно, куда нажать.</li>
+  </ul>
+</section>
+
+<section>
+  <p class="eyebrow">Как выглядит</p>
+  <h2>Арт-дирекшн</h2>
+  <p>Пиксель-арт, спрайты <strong>16×16</strong> (мобы) и <strong>32×32</strong> (боссы), рисуем прямо в коде — массивами строк с палитрой, без внешних ассетов. Один моб = 16 строк текста, поэтому новых монстров можно добавлять пачками, а не рисовать неделю.</p>
+  <p>Палитра — <strong>девять цветов на всю игру</strong>. Жёсткое ограничение держит вид цельным, а зоны различаются перекраской: подвал — коричнево-серый, лёд — синий, бездна — фиолетовый.</p>
+
+  <ul class="swatches" id="palette"></ul>
+
+  <p>Экран — вертикальный, работает и на телефоне: сверху счётчики и этаж, по центру сцена с мобом, под ней комбо и скиллы, снизу вкладки «Оружие / Напарники / Древо». Никакого скролла во время боя.</p>
+</section>
+
+<section>
+  <p class="eyebrow">На чём</p>
+  <h2>Техника</h2>
+  <ul>
+    <li><strong>Чистый HTML/CSS/JS</strong>, ES-модули, без сборщика и без зависимостей. Открыл файл — играешь.</li>
+    <li><strong>Canvas</strong> для боевой сцены (моб, партиклы, цифры урона), <strong>DOM</strong> для панелей и списков — так UI остаётся отзывчивым и доступным.</li>
+    <li>Игровой цикл на <code>requestAnimationFrame</code>, логика тикает фиксированным шагом, отдельно от отрисовки.</li>
+    <li><strong>Сохранение</strong> в <code>localStorage</code>: каждые 5 секунд, при уходе со вкладки и вручную. Плюс экспорт/импорт сейва строкой — чтобы перенести с компа на телефон.</li>
+    <li><strong>Звук</strong> — WebAudio, синтезируем на месте (короткие удары, писк комбо). Никаких mp3, нулевой вес.</li>
+    <li>Никаких серверов, аккаунтов и аналитики. Игра целиком твоя и работает офлайн.</li>
+  </ul>
+  <p>Структура: <code>index.html</code>, <code>style.css</code>, <code>src/</code> — <code>game.js</code> (состояние и цикл), <code>combat.js</code>, <code>upgrades.js</code>, <code>sprites.js</code>, <code>render.js</code>, <code>audio.js</code>, <code>save.js</code>, <code>ui.js</code>.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Порядок работ</p>
+  <h2>Роадмап</h2>
+  <p>Каждый этап заканчивается версией, в которую <em>можно играть</em>. Ты играешь, говоришь, что не так, — идём дальше.</p>
+
+  <div class="stage">
+    <div class="n">1</div>
+    <div>
+      <h4>Скелет <span class="mvp">MVP</span></h4>
+      <p>Моб, клик, урон, HP-бар, золото, этажи, 3 уровня оружия, 3 напарника, сохранение. Уродливо, но работает и уже затягивает.</p>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="n">2</div>
+    <div>
+      <h4>Сочность и бой</h4>
+      <p>Комбо, криты, слабые точки, боссы с таймером, партиклы, тряска, вылетающие цифры, звук. После этого этапа в игру становится приятно тыкать.</p>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="n">3</div>
+    <div>
+      <h4>Крючки</h4>
+      <p>Шесть скиллов с кулдаунами, золотые мобы, оффлайн-доход, экран возвращения.</p>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="n">4</div>
+    <div>
+      <h4>Мета</h4>
+      <p>Престиж, Души, Древо, автоклик. Игра превращается из десятиминутной в недельную.</p>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="n">5</div>
+    <div>
+      <h4>Наполнение</h4>
+      <p>Десять зон, ~40 спрайтов мобов и боссов, 50 достижений, музыка, полировка баланса по твоим ощущениям.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Твоё слово</p>
+  <h2>Что нужно решить</h2>
+
+  <div class="q">
+    <p class="ask">Название?</p>
+    <p class="why">Клик-Данж / ТЫК / Глубже / Костоправ — или своё. Пока пишу код под рабочее.</p>
+  </div>
+  <div class="q">
+    <p class="ask">Телефон или комп?</p>
+    <p class="why">Влияет на вёрстку и на то, насколько важен автоклик. Могу сделать так, чтобы нормально шло и там и там, но приоритет лучше выбрать один.</p>
+  </div>
+  <div class="q">
+    <p class="ask">Насколько длинный забег?</p>
+    <p class="why">Первый престиж через 20 минут (быстро, для коротких заходов) или через час (медленно, но каждая стена весомее)?</p>
+  </div>
+  <div class="q">
+    <p class="ask">Тон текстов?</p>
+    <p class="why">Мрачное фэнтези всерьёз или с шутками в описаниях апгрейдов? Это решает голос всей игры, и переписывать потом дорого.</p>
+  </div>
+  <div class="q">
+    <p class="ask">Звук нужен?</p>
+    <p class="why">Он сильно добавляет к ощущению удара, но кликеры часто играют беззвучно. Скажи — и я либо вложусь, либо не буду.</p>
+  </div>
+</section>
+
+<hr class="end">
+<p class="colophon">Клик-Данж · дизайн-док v0.1 · документ живой, правится по ходу</p>
+
+</div>
+
+<script>
+  const PALETTE = [
+    ["тень",    "#1b1a24"],
+    ["камень",  "#2f2b3d"],
+    ["стена",   "#4a4560"],
+    ["туман",   "#8a7f9e"],
+    ["кость",   "#e8e0ee"],
+    ["факел",   "#f2a63b"],
+    ["кровь",   "#d94a5c"],
+    ["яд",      "#5fd6a8"],
+    ["душа",    "#a06cd5"]
+  ];
+
+  const list = document.getElementById("palette");
+  for (const [name, hex] of PALETTE) {
+    const li = document.createElement("li");
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.style.background = hex;
+    const n = document.createElement("span");
+    n.className = "name";
+    n.textContent = name;
+    const h = document.createElement("span");
+    h.className = "hex";
+    h.textContent = hex;
+    li.append(chip, n, h);
+    list.append(li);
+  }
+
+  // Спрайты хранятся так же, как будут храниться в игре: массив строк + палитра.
+  const SKULL = [
+    "................",
+    "................",
+    ".....aaaaaa.....",
+    "....abbbbbba....",
+    "...abbbbbbbba...",
+    "..abbbbbbbbbba..",
+    "..abbbbbbbbbba..",
+    "..aaaabbbbaaaa..",
+    "..aadabbbbadaa..",
+    "..aaaabbbbaaaa..",
+    "..abbbbbbbbbba..",
+    "..abbbbaabbbba..",
+    "...abbbbbbbba...",
+    "....abababaa....",
+    ".....aaaaaa.....",
+    "................"
+  ];
+  const KEY = { a: "#1b1a24", b: "#e8e0ee", d: "#f2a63b" };
+
+  const cv = document.getElementById("sprite");
+  const ctx = cv.getContext("2d");
+  SKULL.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      if (KEY[ch]) {
+        ctx.fillStyle = KEY[ch];
+        ctx.fillRect(x, y, 1, 1);
+      }
+    });
+  });
+</script>
