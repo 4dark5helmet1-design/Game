@@ -191,8 +191,6 @@
 
   a { color: var(--lamp); }
 
-  /* ---------- cards ---------- */
-
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -227,10 +225,10 @@
   }
   .screen {
     width: 100%;
-    max-width: 330px;
+    max-width: 300px;
     background: #0d0b11;
     border: 1px solid var(--line-2);
-    box-shadow: 0 10px 30px rgba(0,0,0,.28);
+    box-shadow: 0 12px 34px rgba(0,0,0,.3);
     font-family: var(--f-mono);
     color: #cfc7dd;
     overflow: hidden;
@@ -247,27 +245,98 @@
   }
   .mock figcaption b { color: var(--ink-2); font-weight: 700; }
 
-  .hud {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr 1fr;
-    border-bottom: 1px solid #2a2333;
-    background: #14111b;
-  }
-  .hud div { padding: 7px 10px; }
-  .hud div + div { border-left: 1px solid #2a2333; }
-  .hud .k { display: block; font-size: 8px; letter-spacing: .2em; color: #6b6382; }
-  .hud .v {
-    display: block;
-    font-size: 15px;
-    font-variant-numeric: tabular-nums;
-    color: #e7e2ee;
-    letter-spacing: .02em;
-  }
-  .hud .v.lamp { color: #ffc14d; }
-  .hud .v.tight { font-size: 11px; letter-spacing: 0; white-space: nowrap; padding-top: 3px; }
+  /* --- экран копания: сцена во весь рост, поверх неё ничего лишнего --- */
 
   .stage { position: relative; line-height: 0; }
   .stage canvas { width: 100%; display: block; image-rendering: pixelated; }
+
+  /* ритм живёт свечением по краю кадра, а не полоской */
+  .stage.rhythm3::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 20px rgba(255,193,77,.30), inset 0 0 3px rgba(255,193,77,.45);
+  }
+  .stage.rhythm1::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 12px rgba(255,193,77,.08);
+  }
+
+  .hud-top, .belt, .whisper, .mul-pop, .stage .float { line-height: normal; }
+
+  .hud-top {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 9px 11px;
+    pointer-events: none;
+  }
+  .hud-top .depth {
+    font-size: 21px;
+    line-height: 1;
+    color: #e7e2ee;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .02em;
+    text-shadow: 0 1px 3px #0d0b11;
+  }
+  .hud-top .depth i { font-style: normal; font-size: 10px; color: #857c9b; margin-left: 2px; }
+  .hud-top .depth.off { color: #5b5370; }
+  .hud-top .ore {
+    font-size: 11px;
+    color: #9a91b0;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 3px #0d0b11;
+    text-align: right;
+  }
+  .hud-top .ore i { font-style: normal; display: block; font-size: 8px; letter-spacing: .18em; color: #6b6382; }
+
+  .mul-pop {
+    position: absolute;
+    top: 34px; right: 11px;
+    font-size: 13px;
+    color: #ffc14d;
+    text-shadow: 0 1px 4px #0d0b11;
+  }
+
+  /* пояс: три слота снаряжения по правому краю, под большим пальцем */
+  .belt {
+    position: absolute;
+    right: 8px;
+    bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .belt b {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid #332c44;
+    background: rgba(20,17,27,.72);
+    color: #6b6382;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: .04em;
+  }
+  .belt b.ready { border-color: #8a6520; color: #ffc14d; box-shadow: 0 0 10px rgba(255,193,77,.22); }
+
+  .whisper {
+    position: absolute;
+    left: 0; right: 0; bottom: 10px;
+    text-align: center;
+    font-size: 9.5px;
+    letter-spacing: .14em;
+    color: #6b6382;
+  }
+  .whisper.bad { color: #7d4aa8; }
 
   .stage .float {
     position: absolute;
@@ -280,141 +349,125 @@
   .float.dmg  { color: #e7e2ee; }
   .float.crit { color: #ffc14d; font-size: 17px; }
   .float.ore  { color: #4fb3d9; }
-  .float.bad  { color: #b07ce0; }
 
-  .arrow {
-    position: absolute;
-    font-size: 13px;
-    line-height: 1;
-    color: #6b6382;
-    text-shadow: 0 0 6px #0d0b11;
-  }
-  .arrow.u { top: 5px; left: 50%; transform: translateX(-50%); }
-  .arrow.d { bottom: 5px; left: 50%; transform: translateX(-50%); color: #ffc14d; }
-  .arrow.l { left: 5px; top: 50%; transform: translateY(-50%); }
-  .arrow.r { right: 5px; top: 50%; transform: translateY(-50%); }
-
-  .whisper {
-    position: absolute;
-    left: 0; right: 0; bottom: 6px;
-    text-align: center;
-    font-size: 9.5px;
-    letter-spacing: .14em;
-    color: #6b6382;
-  }
-  .whisper.bad { color: #7d4aa8; }
-
-  .strip {
+  /* нижняя полоса: ровно три вещи, все в зоне большого пальца */
+  .bar {
     display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 8px;
-    background: #14111b;
+    grid-template-columns: 46px 1fr 46px;
+    align-items: stretch;
+    gap: 1px;
+    background: #201b2b;
     border-top: 1px solid #2a2333;
   }
-  .strip canvas { width: 100%; display: block; image-rendering: pixelated; }
-  .strip .back {
-    font-size: 8.5px;
-    letter-spacing: .12em;
+  .bar span {
+    background: #14111b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
     color: #6b6382;
-    border: 1px solid #2a2333;
-    padding: 6px 7px;
-    white-space: nowrap;
+    padding: 15px 0;
   }
+  .bar .cta {
+    font-size: 11px;
+    letter-spacing: .1em;
+    color: #ffc14d;
+    background: #241b12;
+    box-shadow: inset 0 0 0 1px #8a6520;
+  }
+  .bar .cta.none { color: #4d4661; background: #14111b; box-shadow: none; letter-spacing: .16em; font-size: 9.5px; }
 
-  .dock { border-top: 1px solid #2a2333; background: #14111b; }
-  .rhythm { display: flex; align-items: center; gap: 8px; padding: 8px 10px 6px; }
-  .rhythm .bar { flex: 1; height: 6px; background: #241f30; position: relative; overflow: hidden; }
-  .rhythm .bar i {
+  /* --- хаб --- */
+
+  .hub { position: relative; }
+  .hub::before {
+    content: "";
     position: absolute;
-    inset: 0 32% 0 0;
-    background: linear-gradient(90deg, #8a6520, #ffc14d);
+    top: -60px; left: 50%;
+    width: 300px; height: 200px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(255,193,77,.13), transparent 66%);
+    pointer-events: none;
   }
-  .rhythm .mul { font-size: 12px; color: #ffc14d; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
-  .rhythm .lbl { font-size: 8px; letter-spacing: .18em; color: #6b6382; }
-
-  .skills { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 2px 10px 8px; }
-  .skills b {
-    display: block;
-    text-align: center;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    padding: 8px 0;
-    background: #241f30;
-    border: 1px solid #332c44;
-    color: #cfc7dd;
-  }
-  .skills b.ready { border-color: #8a6520; color: #ffc14d; }
-  .skills b.cd { color: #544c68; background: #1b1725; }
-
-  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #2a2333; }
-  .tabs span { text-align: center; font-size: 9px; letter-spacing: .1em; padding: 9px 0; color: #6b6382; }
-  .tabs span + span { border-left: 1px solid #2a2333; }
-  .tabs span.on { color: #ffc14d; background: #1b1725; }
-
-  .panel { padding: 12px 12px 14px; }
-  .panel-h {
-    font-size: 10px;
-    letter-spacing: .22em;
-    color: #6b6382;
-    padding-bottom: 9px;
+  .hub-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 16px 14px 12px;
     border-bottom: 1px solid #2a2333;
-    margin-bottom: 4px;
+    position: relative;
   }
-  .crew-row {
+  .hub-top .place { font-size: 12px; letter-spacing: .26em; color: #ffc14d; }
+  .hub-top .ore { font-size: 17px; color: #e7e2ee; font-variant-numeric: tabular-nums; }
+  .hub-top .ore i { font-style: normal; font-size: 8px; letter-spacing: .16em; color: #6b6382; margin-left: 4px; }
+
+  .hub-row {
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 2px 10px;
-    padding: 9px 0;
-    border-bottom: 1px solid #1e1a29;
+    gap: 3px 12px;
+    padding: 13px 14px;
+    border-bottom: 1px solid #1c1826;
     align-items: center;
+    position: relative;
   }
-  .crew-row .nm { font-size: 12px; color: #e7e2ee; }
-  .crew-row .sub { font-size: 9.5px; color: #6b6382; letter-spacing: .06em; }
-  .crew-row .buy {
+  .hub-row .n { font-size: 13px; color: #857c9b; letter-spacing: .12em; }
+  .hub-row .s { font-size: 10px; color: #5b5370; letter-spacing: .04em; }
+  .hub-row .p {
     grid-row: span 2;
-    font-size: 11px;
-    padding: 7px 10px;
-    border: 1px solid #332c44;
-    background: #241f30;
-    color: #786f8c;
-    font-variant-numeric: tabular-nums;
-  }
-  .crew-row .buy.can { border-color: #8a6520; color: #ffc14d; }
-  .crew-row.gone .nm { color: #5b5370; text-decoration: line-through; }
-  .crew-row.gone .sub { color: #7d4aa8; }
-
-  .collapse { padding: 20px 16px 18px; text-align: center; }
-  .collapse .t { font-size: 13px; letter-spacing: .22em; color: #e0505f; margin-bottom: 14px; }
-  .collapse .big { font-size: 40px; color: #ffc14d; line-height: 1; font-variant-numeric: tabular-nums; }
-  .collapse .big small { font-size: 12px; color: #6b6382; display: block; letter-spacing: .2em; margin-top: 6px; }
-  .collapse .loses {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1px;
-    background: #2a2333;
-    border: 1px solid #2a2333;
-    margin: 18px 0 16px;
-  }
-  .collapse .loses span {
-    background: #14111b;
-    padding: 8px 6px;
-    font-size: 9.5px;
-    letter-spacing: .08em;
-    color: #786f8c;
-  }
-  .collapse .btn {
-    display: block;
-    padding: 11px;
-    border: 1px solid #8a6520;
-    color: #ffc14d;
     font-size: 12px;
-    letter-spacing: .18em;
+    color: #4d4661;
+    font-variant-numeric: tabular-nums;
+    padding: 9px 12px;
+    border: 1px solid #262032;
   }
+  .hub-row.can { background: #16121c; }
+  .hub-row.can .n { color: #e7e2ee; }
+  .hub-row.can .s { color: #857c9b; }
+  .hub-row.can .p { color: #ffc14d; border-color: #8a6520; }
+  .hub-row.can::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: #ffc14d;
+  }
+  .hub-row.quiet .n { color: #6b6382; }
 
-  /* ---------- shaft table ---------- */
+  .hub-go {
+    margin: 14px;
+    padding: 15px;
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: .22em;
+    color: #ffc14d;
+    border: 1px solid #8a6520;
+    background: #241b12;
+  }
+  .hub-go small { display: block; font-size: 8.5px; letter-spacing: .16em; color: #6b6382; margin-top: 5px; }
+
+  /* --- дневник --- */
+  .diary {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line-2);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    font-family: var(--f-mono);
+    font-size: 13.5px;
+    line-height: 1.68;
+  }
+  .diary .dt {
+    display: block;
+    font-size: 10px;
+    letter-spacing: .18em;
+    color: var(--ink-3);
+    margin-bottom: 6px;
+  }
+  .diary.bad { border-left-color: var(--wrong); }
+  .diary.bad .dt { color: var(--wrong); }
+
+  /* ---------- прочее ---------- */
+
   .shaft {
     display: grid;
     grid-template-columns: 7.5rem 1fr;
@@ -571,7 +624,7 @@
 <header class="hero">
   <div class="hero-inner">
     <canvas id="sprite" width="16" height="16" aria-label="Пиксельная шахтёрская лампа"></canvas>
-    <p class="kicker">Дизайн-док · v0.4 · от первого лица</p>
+    <p class="kicker">Дизайн-док · v0.5 · интерфейс</p>
     <h1>Забой</h1>
     <p class="lede">Кликер про копание вниз. Ты смотришь в стену. Что у тебя за спиной — твоё личное дело.</p>
   </div>
@@ -583,8 +636,24 @@
   <p class="eyebrow">Что это</p>
   <h2>Идея</h2>
   <p>Ты стоишь в забое <strong>от первого лица</strong>. Перед тобой стена породы — сетка блоков во весь экран. Клик = удар киркой по конкретному блоку. Пробил дыру — <strong>шагнул вперёд</strong>, и перед тобой новая стена. Свет — фонарь на каске: он освещает то, во что ты смотришь, и больше ничего.</p>
-  <p>Всё, что игра тебе показывает — метр породы впереди. Тоннель за спиной существует, он записан, по нему можно вернуться. Но ты его не видишь.</p>
-  <p class="note">Вид сбоку показывает всю сцену разом — поэтому в нём невозможно испугать: к тебе физически неоткуда подкрасться. От первого лица <strong>три четверти мира всегда вне кадра</strong>, и игре не нужно ничего делать, чтобы это работало. Она просто иногда напоминает, что кадр — не весь мир.</p>
+  <p>Копишь руду, поднимаешься наверх, тратишь, спускаешься глубже. Наверху светло и ничего не происходит. Внизу — как получится.</p>
+  <p class="note">Первые минут десять это добрая игра про землю, корни и старые монеты. Потом ты находишь то, что тут копали до тебя. Потом становится понятно, почему бросили.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Правила интерфейса</p>
+  <h2>Экран — это игра, а не рамка вокруг неё</h2>
+  <p>Главная ошибка любого игрового UI — <strong>показывать всё и всегда</strong>. Игроку в каждый конкретный момент нужно очень мало: остальное только отнимает внимание у того, ради чего он здесь. Поэтому весь магазин уезжает в отдельное место, а на экране копания остаётся ровно то, без чего нельзя.</p>
+
+  <ol>
+    <li><strong>Сцена занимает почти весь экран.</strong> Никаких панелей, врезающихся в кадр. Ни одной рамки, ни одной таблицы.</li>
+    <li><strong>Всё нажимаемое — в нижней трети.</strong> Три четверти людей держат телефон одной рукой; верх экрана большим пальцем не достаётся вообще. Наверху — только то, на что смотрят и не жмут.</li>
+    <li><strong>Три элемента управления. Не больше.</strong> Оглянуться, контекстная покупка, подъём наверх. Плюс три круглых слота снаряжения по правому краю.</li>
+    <li><strong>Информация появляется, когда меняется.</strong> Множитель ритма всплывает на смене ступени и гаснет. Руда живёт мелким текстом в углу. Глубина — единственное, что показано крупно, потому что это и есть счёт в игре.</li>
+    <li><strong>Обратная связь без интерфейса.</strong> Ритм — не полоска, а тёплое свечение по краю кадра и дрожь фонаря. Чем выше множитель, тем ярче обводка. Полоска отнимает взгляд от стены, свечение — нет.</li>
+    <li><strong>Ничего не всплывает поверх забоя.</strong> Ни туториалов, ни модалок, ни «поздравляем». Всё, что игра хочет сказать, ждёт тебя наверху.</li>
+  </ol>
+  <p class="note">Отдельно про повороты: <strong>свайп</strong> вместо стрелок. Провёл пальцем влево — повернулся влево. Четыре кнопки по краям кадра съедали бы углы сцены и висели бы там всегда, а нужны раз в минуту. На компе — стрелки и WASD.</p>
 </section>
 
 <section>
@@ -593,100 +662,132 @@
 
   <figure class="mock">
     <div class="screen">
-      <div class="hud">
-        <div><span class="k">ГЛУБИНА</span><span class="v lamp">247 м</span></div>
-        <div><span class="k">РУДА</span><span class="v">1.24M</span></div>
-        <div><span class="k">ОСКОЛКИ</span><span class="v">34</span></div>
-      </div>
-      <div class="stage">
-        <canvas data-fp="main" width="160" height="144"></canvas>
-        <span class="arrow u">▲</span><span class="arrow d">▼</span>
-        <span class="arrow l">◀</span><span class="arrow r">▶</span>
-        <span class="float dmg" style="left:37%; top:36%">8.4K</span>
-        <span class="float crit" style="left:57%; top:52%">×10</span>
-        <span class="float ore" style="left:22%; top:70%">+120</span>
-      </div>
-      <div class="strip">
-        <canvas data-map="main" width="160" height="34"></canvas>
-        <span class="back">ОГЛЯ-<br>НУТЬСЯ</span>
-      </div>
-      <div class="dock">
-        <div class="rhythm">
-          <span class="lbl">РИТМ</span><span class="bar"><i></i></span><span class="mul">×3.2</span>
+      <div class="stage rhythm3">
+        <canvas data-fp="main" width="144" height="200"></canvas>
+        <div class="hud-top">
+          <span class="depth">247<i>М</i></span>
+          <span class="ore">1.24M<i>РУДА</i></span>
         </div>
-        <div class="skills">
-          <b class="ready">КУР</b><b class="ready">ДИН</b><b class="cd">17</b><b class="ready">ГЛЗ</b><b class="cd">42</b><b class="cd">—</b>
-        </div>
-        <div class="tabs">
-          <span class="on">КИРКА</span><span>БРИГАДА</span><span>ЛАМПА</span><span>ОСКОЛКИ</span>
-        </div>
+        <span class="mul-pop">×3.2</span>
+        <div class="belt"><b class="ready">КУР</b><b class="ready">ДИН</b><b>17</b></div>
+        <span class="float dmg" style="left:34%; top:34%">8.4K</span>
+        <span class="float crit" style="left:56%; top:47%">×10</span>
+        <span class="float ore" style="left:20%; top:63%">+120</span>
+      </div>
+      <div class="bar">
+        <span>↺</span>
+        <span class="cta">КИРКА +1 · 340</span>
+        <span>▲</span>
       </div>
     </div>
-    <figcaption><b>Главный экран.</b> Стена перед тобой — 6×6 блоков. Стены тоннеля уходят к тебе по бокам, вверху и внизу: видно, что ты внутри дыры, а не смотришь в картинку. Слева в породе жила. Уголками отмечена зона 2×2 — пробьёшь её, шагнёшь вперёд. Внизу схема-разрез: единственное место, где виден весь твой тоннель.</figcaption>
+    <figcaption><b>Экран копания.</b> Сцена, четыре числа и три кнопки. Тёплая обводка кадра — это ритм ×3.2, полоски больше нет. Уголками отмечена зона 2×2: пробьёшь — шагнёшь вперёд. Кнопка по центру появилась, потому что на кирку хватило руды; когда не хватает, там просто «КОПАЙ».</figcaption>
   </figure>
 
-  <h3>Что где</h3>
+  <h3>Что где и почему</h3>
   <ul>
-    <li><strong>Стена</strong> занимает почти весь экран. Блоки крупные, попадаются пальцем без промаха.</li>
-    <li><strong>Четыре стрелки</strong> по краям — сменить направление. Подсвечена та, куда ты идёшь сейчас.</li>
-    <li><strong>Схема-разрез</strong> под сценой — маленький сбоку-вид твоего тоннеля с точкой «ты здесь». Всё удовольствие «посмотреть, сколько я накопал» остаётся, но живёт в углу, а не занимает главный экран.</li>
-    <li><strong>Кнопка «Оглянуться»</strong>. О ней ниже отдельно.</li>
-    <li><strong>Ритм, снаряжение, вкладки</strong> — как раньше, внизу.</li>
+    <li><strong>Глубина</strong> — крупно, слева вверху. Это счёт в игре, всё остальное вторично.</li>
+    <li><strong>Руда</strong> — мелко, справа вверху. На неё смотрят раз в минуту.</li>
+    <li><strong>Свечение по краю</strong> — ритм. Растёт вместе с множителем, гаснет, когда сбился.</li>
+    <li><strong>↺ слева внизу</strong> — оглянуться.</li>
+    <li><strong>Кнопка по центру</strong> — единственная покупка, доступная под землёй: <strong>кирка</strong>. Она у тебя в руках, её можно подточить на месте. Всё остальное — только наверху. Появляется, когда хватает руды, и исчезает, когда нет: не надо ничего считать, кнопка сама говорит, что пора.</li>
+    <li><strong>▲ справа внизу</strong> — подъём в штрек.</li>
+    <li><strong>Три круга по правому краю</strong> — снаряжение. Не шесть, а три: какие взять с собой, решаешь наверху.</li>
   </ul>
 </section>
 
 <section>
+  <p class="eyebrow">Второе место</p>
+  <h2>Штрек</h2>
+  <p>Жмёшь <strong>▲</strong> — клеть поднимает тебя в штрек. Тут стол, лампа, доска с бумагами, схема шахты. Тут светло, тихо и <strong>ничего не происходит</strong>. Здесь ты тратишь всё, что накопал, выбираешь снаряжение, читаешь дневники и смотришь на свой тоннель. Потом жмёшь «Спуститься» и возвращаешься ровно туда, где остановился.</p>
+
+  <figure class="mock">
+    <div class="screen">
+      <div class="hub">
+        <div class="hub-top">
+          <span class="place">ШТРЕК</span>
+          <span class="ore">1.24M<i>РУДЫ</i></span>
+        </div>
+        <div class="hub-row can">
+          <span class="n">КИРКА</span><span class="p">340</span>
+          <span class="s">ур. 61 · 8.4K за удар</span>
+        </div>
+        <div class="hub-row can">
+          <span class="n">ФОНАРЬ</span><span class="p">18K</span>
+          <span class="s">ур. 9 · видно на 5 метров</span>
+        </div>
+        <div class="hub-row can">
+          <span class="n">БРИГАДА</span><span class="p">2.8K</span>
+          <span class="s">6 человек · 47K руды в минуту</span>
+        </div>
+        <div class="hub-row">
+          <span class="n">СНАРЯЖЕНИЕ</span><span class="p">3 / 6</span>
+          <span class="s">кураж · динамит · вспышка</span>
+        </div>
+        <div class="hub-row quiet">
+          <span class="n">ОСКОЛКИ</span><span class="p">34</span>
+          <span class="s">обвал доступен · 23 осколка</span>
+        </div>
+        <div class="hub-row quiet">
+          <span class="n">АРХИВ</span><span class="p">7</span>
+          <span class="s">схемы шахт · дневники · 41 из 50</span>
+        </div>
+        <div class="hub-go">СПУСТИТЬСЯ<small>ВЕРНЁШЬСЯ НА 247 М</small></div>
+      </div>
+    </div>
+    <figcaption><b>Штрек.</b> Шесть строк, одна кнопка. Подсвечено и обведено слева жёлтым то, на что хватает руды — цифры считать не надо, глаз сам находит, куда нажать. Внизу единственное действие, ради которого сюда приходят: уйти обратно.</figcaption>
+  </figure>
+
+  <h3>Зачем хаб вообще нужен</h3>
+  <ul>
+    <li><strong>Освобождает экран копания.</strong> Шесть списков, десять кнопок и таблица цен просто перестают существовать там, где идёт игра.</li>
+    <li><strong>Даёт паузу.</strong> Копание — это напряжение и монотонность; подъём наверх — выдох. Ритм «двадцать минут вниз, минута наверх» держит гораздо лучше, чем ровная линия.</li>
+    <li><strong>Объясняет экономику.</strong> Руду надо поднять, чтобы потратить. Ты не «открываешь магазин» — ты возвращаешься с добычей.</li>
+    <li><strong>Делает возвращение вниз решением.</strong> Наверху безопасно. Ты каждый раз сам решаешь спуститься.</li>
+  </ul>
+  <p class="note">И самое главное: <strong>в штреке не бывает ни глитчей, ни аномалий. Никогда.</strong> Игрок этого не осознаёт, но через час привыкает и начинает воспринимать штрек как убежище. Один раз, очень глубоко, там что-то будет — и работать это будет ровно потому, что до сих пор не работало ни разу.</p>
+</section>
+
+<section>
   <p class="eyebrow">Движение</p>
-  <h2>Шаг вперёд и повороты</h2>
+  <h2>Шаг и повороты</h2>
 
   <div class="card">
     <p class="card-title">Где пробил — туда и шагнул</p>
-    <p>Чтобы пройти дальше, надо разбить <strong>любые смежные 2×2 блока</strong>. Пробил по центру — шагнул прямо. Пробил в верхнем левом углу — шагнул вперёд и сместился влево-вверх. Никаких отдельных кнопок для мелкого маневрирования: <em>ты рулишь тем, куда бьёшь</em>. Это главное, что даёт первое лицо, и в виде сбоку такого не сделать.</p>
+    <p>Чтобы пройти дальше, надо разбить <strong>любые смежные 2×2 блока</strong>. Пробил по центру — шагнул прямо. Пробил в верхнем левом углу — сместился влево-вверх. Никаких отдельных кнопок для маневрирования: <em>ты рулишь тем, куда бьёшь</em>. Это главное, что даёт первое лицо.</p>
   </div>
 
   <div class="card">
     <p class="card-title">Шаг <span class="tag">главный ритм игры</span></p>
-    <p>Каждые 10–20 кликов — <strong>шаг</strong>: рывок камеры вперёд, столб пыли, глухой удар, новая стена. Это самое приятное событие в игре, и оно случается постоянно. Метр глубины = один шаг.</p>
+    <p>Каждые 10–20 кликов — <strong>шаг</strong>: рывок камеры вперёд, столб пыли, глухой удар, новая стена. Самое приятное событие в игре, и оно случается постоянно. Метр глубины = один шаг.</p>
   </div>
 
   <div class="card">
     <p class="card-title">Поворот <span class="tag">и то, что видно во время него</span></p>
-    <p>Стрелки меняют направление: вниз, вбок, вверх. Поворот занимает <strong>0.8 секунды</strong>, камера едет плавно — и в этот момент через кадр проезжает кусок тоннеля, который ты обычно не видишь. Всё странное показывается <em>именно во время поворота</em>: полсекунды, смазано, сфокусироваться нельзя.</p>
-    <p>Вниз — глубина растёт. Вбок — стоишь на месте по глубине, но добираешься до жил и полостей. Вверх — глубина падает; нужно ровно дважды: когда топит и когда за тобой идут.</p>
+    <p>Свайп меняет направление. Поворот занимает <strong>0.8 секунды</strong>, камера едет плавно — и в этот момент через кадр проезжает кусок тоннеля, который ты обычно не видишь. Всё странное показывается <em>именно во время поворота</em>: полсекунды, смазано, сфокусироваться нельзя.</p>
   </div>
 
   <div class="card">
     <p class="card-title">Оглянуться <span class="tag">кнопка без функции</span></p>
-    <p>Разворот на 180°. Смотришь в тоннель, который сам прокопал — он уходит в черноту, фонарь не достаёт до конца. <strong>Механической пользы ноль.</strong> Руды не даёт, ничего не открывает, время идёт.</p>
-    <p>Кнопка есть. Игрок нажмёт её сам, по своей воле, потому что ему станет интересно. И почти всегда там будет пусто.</p>
+    <p>Разворот на 180°. Смотришь в тоннель, который сам прокопал — он уходит в черноту, фонарь не достаёт до конца. <strong>Механической пользы ноль.</strong> Руды не даёт, ничего не открывает, время идёт. Кнопка есть, игрок нажмёт её сам. И почти всегда там будет пусто.</p>
   </div>
 
   <figure class="mock">
     <div class="screen">
-      <div class="hud">
-        <div><span class="k">ГЛУБИНА</span><span class="v lamp">247 м</span></div>
-        <div><span class="k">РУДА</span><span class="v">1.24M</span></div>
-        <div><span class="k">ОСКОЛКИ</span><span class="v">34</span></div>
-      </div>
-      <div class="stage">
-        <canvas data-fp="back" width="160" height="144"></canvas>
-        <span class="whisper">ТОННЕЛЬ · 247 М ПОЗАДИ</span>
-      </div>
-      <div class="strip">
-        <canvas data-map="main" width="160" height="34"></canvas>
-        <span class="back">ВЕР-<br>НУТЬСЯ</span>
-      </div>
-      <div class="dock">
-        <div class="rhythm"><span class="lbl">РИТМ</span><span class="bar"></span><span class="mul">×1.0</span></div>
-        <div class="skills">
-          <b class="ready">КУР</b><b class="ready">ДИН</b><b class="cd">17</b><b class="ready">ГЛЗ</b><b class="cd">42</b><b class="cd">—</b>
+      <div class="stage rhythm1">
+        <canvas data-fp="back" width="144" height="200"></canvas>
+        <div class="hud-top">
+          <span class="depth">247<i>М</i></span>
+          <span class="ore">1.24M<i>РУДА</i></span>
         </div>
-        <div class="tabs">
-          <span class="on">КИРКА</span><span>БРИГАДА</span><span>ЛАМПА</span><span>ОСКОЛКИ</span>
-        </div>
+        <span class="whisper">247 М ПОЗАДИ</span>
+      </div>
+      <div class="bar">
+        <span>↺</span>
+        <span class="cta none">КОПАЙ</span>
+        <span>▲</span>
       </div>
     </div>
-    <figcaption><b>Оглянулся.</b> Свой тоннель, уходящий в темноту. Фонарь достаёт метров на пять. Тут никогда ничего нет — до того раза, когда есть.</figcaption>
+    <figcaption><b>Оглянулся.</b> Свой тоннель с крепью, уходящий в темноту. Фонарь достаёт метров на пять. Тут никогда ничего нет — до того раза, когда есть.</figcaption>
   </figure>
 </section>
 
@@ -696,12 +797,12 @@
 
   <div class="card">
     <p class="card-title">Ритм <span class="tag">непрерывность</span></p>
-    <p>Долбишь без пауз — кирка разгоняется. Каждые <strong>8 ударов</strong> множитель <code>+0.25×</code>, потолок <code>×5</code>. Пауза больше <strong>1.5 сек</strong> — сбился полностью. Тон удара ползёт вверх вместе с разгоном.</p>
+    <p>Долбишь без пауз — кирка разгоняется. Каждые <strong>8 ударов</strong> множитель <code>+0.25×</code>, потолок <code>×5</code>. Пауза больше <strong>1.5 сек</strong> — сбился полностью. Тон удара ползёт вверх, обводка кадра разгорается.</p>
   </div>
 
   <div class="card">
     <p class="card-title">Трещины <span class="tag">меткость</span></p>
-    <p>На блоке проступает трещина и висит <strong>2 секунды</strong>. Попал точно в неё — блок раскалывается целиком, вместе с четырьмя соседними, и это <em>сразу открывает проход</em>. Трещины видно только в свете фонаря, автокирка по ним не попадает.</p>
+    <p>На блоке проступает трещина и висит <strong>2 секунды</strong>. Попал точно — блок раскалывается вместе с четырьмя соседними и <em>сразу открывает проход</em>. Видно только в свете фонаря, автокирка по ним не попадает.</p>
   </div>
 
   <div class="card">
@@ -711,15 +812,14 @@
 
   <div class="card">
     <p class="card-title">Порода <span class="tag">выбор</span></p>
-    <p><strong>Земля</strong> — с одного удара. <strong>Известняк</strong> — обычный. <strong>Гранит</strong> — ×8 прочности, дешевле обойти: пробей 2×2 рядом. <strong>Жила</strong> — ×20 руды. <strong>Обсидиан</strong> — киркой не берётся, только динамитом. <strong>Пустота</strong> — за блоком чернота, и свет в неё не проходит.</p>
+    <p><strong>Земля</strong> — с одного удара. <strong>Известняк</strong> — обычный. <strong>Гранит</strong> — ×8 прочности, дешевле обойти. <strong>Жила</strong> — ×20 руды. <strong>Обсидиан</strong> — только динамитом. <strong>Пустота</strong> — за блоком чернота, и свет в неё не проходит.</p>
   </div>
 
-  <h3>Снаряжение</h3>
+  <h3>Снаряжение: три слота из шести</h3>
+  <p>Шесть штук существует, взять с собой можно <strong>три</strong>. Какие — решаешь наверху, перед спуском. Это убирает с экрана половину кнопок и добавляет решение, которого раньше не было.</p>
   <div class="tbl">
     <table>
-      <thead>
-        <tr><th>Что</th><th>Эффект</th><th class="num">Длит.</th><th class="num">КД</th><th class="num">Глуб.</th></tr>
-      </thead>
+      <thead><tr><th>Что</th><th>Эффект</th><th class="num">Длит.</th><th class="num">КД</th><th class="num">Глуб.</th></tr></thead>
       <tbody>
         <tr><td>Кураж</td><td>урон кирки ×3</td><td class="num">15 с</td><td class="num">45 с</td><td class="num">30 м</td></tr>
         <tr><td>Динамит</td><td>сносит всю стену разом</td><td class="num">—</td><td class="num">40 с</td><td class="num">120 м</td></tr>
@@ -739,96 +839,51 @@
 
   <figure class="mock">
     <div class="screen">
-      <div class="hud">
-        <div><span class="k">ГЛУБИНА</span><span class="v lamp">508 м</span></div>
-        <div><span class="k">РУДА</span><span class="v">18.7M</span></div>
-        <div><span class="k">ОСКОЛКИ</span><span class="v">34</span></div>
-      </div>
-      <div class="stage">
-        <canvas data-fp="hole" width="160" height="144"></canvas>
-        <span class="arrow u">▲</span><span class="arrow d">▼</span>
-        <span class="arrow l">◀</span><span class="arrow r">▶</span>
-      </div>
-      <div class="strip">
-        <canvas data-map="main" width="160" height="34"></canvas>
-        <span class="back">ОГЛЯ-<br>НУТЬСЯ</span>
-      </div>
-      <div class="dock">
-        <div class="rhythm"><span class="lbl">РИТМ</span><span class="bar"><i style="inset:0 55% 0 0"></i></span><span class="mul">×2.3</span></div>
-        <div class="skills">
-          <b class="ready">КУР</b><b class="ready">ДИН</b><b class="ready">ВСП</b><b class="ready">ГЛЗ</b><b class="cd">42</b><b class="cd">—</b>
+      <div class="stage rhythm1">
+        <canvas data-fp="hole" width="144" height="200"></canvas>
+        <div class="hud-top">
+          <span class="depth">508<i>М</i></span>
+          <span class="ore">18.7M<i>РУДА</i></span>
         </div>
-        <div class="tabs">
-          <span class="on">КИРКА</span><span>БРИГАДА</span><span>ЛАМПА</span><span>ОСКОЛКИ</span>
-        </div>
+        <div class="belt"><b class="ready">КУР</b><b class="ready">ДИН</b><b class="ready">ВСП</b></div>
+      </div>
+      <div class="bar">
+        <span>↺</span>
+        <span class="cta none">КОПАЙ</span>
+        <span>▲</span>
       </div>
     </div>
-    <figcaption><b>Пробил в пустоту.</b> Дыра в стене, за ней ничего не видно. Вспышка засветилась — можно потратить кулдаун и посмотреть, что там, не заходя. Или не тратить.</figcaption>
+    <figcaption><b>Пробил в пустоту.</b> Дыра в стене, за ней ничего не видно. Вспышка в поясе засветилась — можно потратить кулдаун и посмотреть, что там, не заходя. Или не тратить.</figcaption>
   </figure>
 
   <h3>Что бывает в полостях</h3>
   <ul>
     <li><strong>Жила</strong> — гроздь рудных блоков. Чистая радость.</li>
     <li><strong>Тварь</strong> — вылезает и грызёт бригаду, пока жива. Закликивается насмерть. Единственный «бой» в игре и потому ценный.</li>
-    <li><strong>Комната</strong> — стол, кости, каска, дневник. Лут плюс кусок лора.</li>
+    <li><strong>Комната</strong> — стол, кости, каска, дневник.</li>
     <li><strong>Вода</strong> — заливает, надо срочно поворачивать вверх.</li>
     <li><strong>Ничего.</strong> Просто пустота. Иногда очень большая: шагаешь минуту, стен нет, фонарю не за что зацепиться.</li>
   </ul>
-  <p>Примерно раз на слой — <strong>погоня</strong>: сзади что-то поднимается, надо за 40 секунд пройти 15 метров <em>вверх или вбок</em>. Кнопка «Оглянуться» в это время работает.</p>
+  <p>Примерно раз на слой — <strong>погоня</strong>: сзади что-то поднимается, надо за 40 секунд пройти 15 метров вверх или вбок. Кнопка «Оглянуться» в это время работает.</p>
   <p class="note">Проиграть в «Забое» нельзя. Худшее — потерять людей и несданную руду. Игра никогда не отнимает забег целиком: это кликер, а не рогалик.</p>
 </section>
 
 <section>
   <p class="eyebrow">Главная механика</p>
   <h2>Свет</h2>
-  <p>Фонарь на каске светит туда, куда ты смотришь. Радиус — отдельная ветка прокачки. В темноте копать <em>можно</em>, но не видно типа породы, не появляются трещины, не блестят жилы и не понять, что за пробитым блоком.</p>
-  <p>Поэтому лампу качают. И поэтому самое неприятное — когда она <strong>гаснет</strong>: пять секунд почти полной черноты, звуки глохнут, кроме дыхания. Раздувается кликами. Ничего при этом не происходит.</p>
-  <p class="note">От первого лица у света появляется второй смысл: он <strong>обрезает мир</strong>. Всё, что дальше пяти метров, не существует, пока ты туда не посветил. Игре достаточно один раз показать, что там что-то было — дальше игрок дорисует сам, каждый раз.</p>
+  <p>Фонарь светит туда, куда ты смотришь. Радиус — отдельная ветка. В темноте копать <em>можно</em>, но не видно типа породы, не появляются трещины, не блестят жилы и не понять, что за пробитым блоком.</p>
+  <p>Поэтому фонарь качают. И поэтому самое неприятное — когда он <strong>гаснет</strong>: пять секунд почти полной черноты, звуки глохнут, кроме дыхания. Раздувается кликами.</p>
+  <p class="note">От первого лица у света есть второй смысл: он <strong>обрезает мир</strong>. Всё, что дальше пяти метров, не существует, пока ты туда не посветил. Игре достаточно один раз показать, что там что-то было — дальше игрок дорисует сам, каждый раз.</p>
 </section>
 
 <section>
   <p class="eyebrow">30% игры</p>
   <h2>Бригада</h2>
-  <p>Копатели работают у тебя за спиной — расширяют тоннель, добивают породу, дают руду в секунду. <strong>Ты их не видишь.</strong> Слышишь: удары кирок сзади, вразнобой. Когда одного не хватает, звук становится реже — и это замечаешь раньше, чем открываешь панель.</p>
-
-  <figure class="mock">
-    <div class="screen">
-      <div class="panel">
-        <div class="panel-h">БРИГАДА · 6 ЧЕЛОВЕК</div>
-        <div class="crew-row">
-          <span class="nm">Пацан с лопатой</span><span class="buy can">340</span>
-          <span class="sub">ур. 42 · 1.2K/с</span>
-        </div>
-        <div class="crew-row">
-          <span class="nm">Землекоп</span><span class="buy can">2.8K</span>
-          <span class="sub">ур. 38 · 9.5K/с</span>
-        </div>
-        <div class="crew-row">
-          <span class="nm">Крепильщик</span><span class="buy can">41K</span>
-          <span class="sub">ур. 25 · 31K/с · ВЕХА</span>
-        </div>
-        <div class="crew-row gone">
-          <span class="nm">Рудознатец</span><span class="buy">12K</span>
-          <span class="sub">нет на месте</span>
-        </div>
-        <div class="crew-row">
-          <span class="nm">Взрывник</span><span class="buy">1.4M</span>
-          <span class="sub">ур. 9 · 5.4K/с</span>
-        </div>
-        <div class="crew-row">
-          <span class="nm">Ламповщик</span><span class="buy">18M</span>
-          <span class="sub">не нанят</span>
-        </div>
-      </div>
-    </div>
-    <figcaption><b>Панель бригады.</b> Рудознатец был прокачан до 25-го уровня. Теперь его нет, уровни обнулились. Игра не говорит, куда он делся, и никогда не скажет.</figcaption>
-  </figure>
+  <p>Копатели работают у тебя за спиной — дают руду в секунду. <strong>Ты их не видишь.</strong> Слышишь: удары кирок сзади, вразнобой. Когда одного не хватает, звук становится реже — и это замечаешь раньше, чем поднимешься в штрек.</p>
 
   <div class="tbl">
     <table>
-      <thead>
-        <tr><th class="num">#</th><th>Кто</th><th class="num">Руда/с</th><th class="num">Цена</th><th>Веха на 25</th></tr>
-      </thead>
+      <thead><tr><th class="num">#</th><th>Кто</th><th class="num">Руда/с</th><th class="num">Цена</th><th>Веха на 25</th></tr></thead>
       <tbody>
         <tr><td class="num">1</td><td>Пацан с лопатой</td><td class="num">1</td><td class="num">10</td><td>—</td></tr>
         <tr><td class="num">2</td><td>Землекоп</td><td class="num">5</td><td class="num">100</td><td>+5% урон кирки</td></tr>
@@ -844,52 +899,77 @@
     </table>
   </div>
 
-  <h3>Бригада пропадает</h3>
-  <p>Глубже 400 метров копатели иногда <strong>исчезают</strong>. Уровни обнуляются, нанимать заново. Чем глубже — тем чаще; Крепильщик и Глухой Фома снижают шанс. Это одновременно жуть и честная механика: у страха есть цена в цифрах, значит его нельзя проигнорировать.</p>
+  <p>Глубже 400 метров копатели иногда <strong>исчезают</strong>. Уровни обнуляются, нанимать заново. Узнаёшь об этом наверху — строчкой «нет на месте», без объяснений. Чем глубже, тем чаще; Крепильщик и Глухой Фома снижают шанс.</p>
+  <p>Пока тебя нет: сводка в штреке — <em>«Смена работала 4 ч 12 мин, прошли 34 метра, добыли 8.2M руды»</em>. 50% выработки, потолок 8 часов. Иногда в сводке есть <strong>вторая строчка</strong>, которую ты не заказывал.</p>
+</section>
 
-  <h3>Пока тебя нет</h3>
-  <p>Вернулся — сводка: <em>«Смена работала 4 ч 12 мин, прошли 34 метра, добыли 8.2M руды»</em>. 50% выработки, потолок 8 часов. Иногда в сводке есть <strong>вторая строчка</strong>, которую ты не заказывал.</p>
+<section>
+  <p class="eyebrow">Голос игры</p>
+  <h2>Дневники</h2>
+  <p>Игра сама почти ничего не говорит: цифры, названия, две-три строчки в штреке. Весь текст, который у неё есть, лежит <strong>в дневниках предыдущей смены</strong> — их находишь в комнатах и полостях, по одному, не по порядку. Читаются наверху, в архиве.</p>
+  <p>Записи короткие и обрывочные. Никто ничего не объясняет — люди писали для себя, а не для тебя.</p>
+
+  <div class="diary">
+    <span class="dt">12 МАРТА</span>
+    Порода мягкая, идём хорошо. Сменщик говорит, слышал стук. Списали на крепь.
+  </div>
+  <div class="diary">
+    <span class="dt">19 МАРТА</span>
+    Стук не от крепи.
+  </div>
+  <div class="diary">
+    <span class="dt">27 МАРТА</span>
+    Ламповщик отказался спускаться. Не объяснил. Взяли нового, он не спрашивает.
+  </div>
+  <div class="diary">
+    <span class="dt">2 АПРЕЛЯ</span>
+    Сегодня нас было семеро. Вчера было восемь. Никто не помнит восьмого, и я тоже не помню. Записываю, пока помню, что не помню.
+  </div>
+  <div class="diary">
+    <span class="dt">ЧИСЛО СТЁРТО</span>
+    …не в породе. Порода это и есть…
+  </div>
+  <div class="diary">
+    <span class="dt">ЧИСЛО СТЁРТО</span>
+    Если услышишь своё имя — не оборачивайся. Сзади никого. Никогда не было.
+  </div>
+  <div class="diary bad">
+    <span class="dt">ЗАВТРАШНЕЕ ЧИСЛО</span>
+    Сегодня спустился ещё один. Не наш. Копает быстро.
+  </div>
+
+  <p class="note">Последняя запись <strong>датируется реальным завтрашним днём</strong> — игра берёт системную дату и прибавляет сутки. Работает один раз на игрока, стоит две строки кода и запоминается на месяц. Всего дневников около пятидесяти, они идут по датам, но находятся вразнобой, так что картина складывается постепенно и с дырами.</p>
 </section>
 
 <section>
   <p class="eyebrow">Главное</p>
   <h2>Аномалии</h2>
-  <p>Изредка — <strong>без всяких условий, чистый рандом</strong> — в стене попадается блок, который выглядит не так. Не подсвечен, не помечен, подсказки нет. Просто чуть другой оттенок. Половина игроков разобьёт его, не заметив.</p>
+  <p>Изредка — <strong>чистый рандом, без всяких условий</strong> — в стене попадается блок, который выглядит не так. Не подсвечен, не помечен, подсказки нет. Половина игроков разобьёт его, не заметив.</p>
   <p>Разбил, шагнул — и ты не в своей шахте. Ты в <strong>кармане</strong>: закрытая область со своими правилами. Прокопался наружу — вернулся, как будто ничего не было.</p>
 
   <figure class="mock">
     <div class="screen">
-      <div class="hud">
-        <div><span class="k">ГЛУБИНА</span><span class="v lamp">— м</span></div>
-        <div><span class="k">РУДА</span><span class="v">44.8M</span></div>
-        <div><span class="k">ОСКОЛКИ</span><span class="v">34</span></div>
-      </div>
       <div class="stage">
-        <canvas data-fp="room" width="160" height="144"></canvas>
-        <span class="arrow l">◀</span><span class="arrow r">▶</span>
-      </div>
-      <div class="strip">
-        <canvas data-map="void" width="160" height="34"></canvas>
-        <span class="back">ОГЛЯ-<br>НУТЬСЯ</span>
-      </div>
-      <div class="dock">
-        <div class="rhythm"><span class="lbl">РИТМ</span><span class="bar"></span><span class="mul">×1.0</span></div>
-        <div class="skills">
-          <b class="ready">КУР</b><b class="ready">ДИН</b><b class="ready">ВСП</b><b class="ready">ГЛЗ</b><b class="ready">СМЕ</b><b class="ready">КРП</b>
+        <canvas data-fp="room" width="144" height="200"></canvas>
+        <div class="hud-top">
+          <span class="depth off">—<i>М</i></span>
+          <span class="ore">44.8M<i>РУДА</i></span>
         </div>
-        <div class="tabs">
-          <span class="on">КИРКА</span><span>БРИГАДА</span><span>ЛАМПА</span><span>ОСКОЛКИ</span>
-        </div>
+      </div>
+      <div class="bar">
+        <span>↺</span>
+        <span class="cta none">КОПАЙ</span>
+        <span>▲</span>
       </div>
     </div>
-    <figcaption><b>Карман «Комната».</b> Ровные стены, кладка, дверь. Дверь не открывается. Счётчик глубины — прочерк, схема-разрез пустая: игра не знает, где ты. Стрелки вверх и вниз пропали. Все кулдауны обнулились, хотя ты их только что тратил.</figcaption>
+    <figcaption><b>Карман «Комната».</b> Ровная кладка, дверь. Дверь не открывается. Счётчик глубины — прочерк: игра не знает, где ты. Пояса со снаряжением нет. Кнопка ▲ есть, но клеть не приезжает.</figcaption>
   </figure>
 
   <h3>Виды карманов</h3>
   <ul>
     <li><strong>Комната.</strong> Ровные стены, стол, стул, дверь. Дверь не открывается никогда.</li>
     <li><strong>Лестница.</strong> Идеальные ступени вниз. Скидывает на 200 метров глубже мгновенно — бесплатный прогресс, от которого неуютно.</li>
-    <li><strong>Отражение.</strong> Точная копия куска твоего же тоннеля, включая ту стену, которую ты долбил десять минут назад. Оглянуться в нём можно.</li>
+    <li><strong>Отражение.</strong> Точная копия куска твоего же тоннеля, включая стену, которую ты долбил десять минут назад. Оглянуться в нём можно.</li>
     <li><strong>Пусто.</strong> Огромная полость, фонарь не достаёт до стен. Идёшь минуту в никуда.</li>
     <li><strong>Сад.</strong> Порода тёплая, мягкая, медленно пульсирует. Руды втрое больше обычного.</li>
     <li><strong>Архив.</strong> Стена сложена из блоков-дневников. Каждый разбитый даёт запись. Записи не про эту шахту.</li>
@@ -897,7 +977,6 @@
   </ul>
 
   <h3>Странные слои</h3>
-  <p>Иногда неправильным оказывается не блок, а <strong>целый горизонт</strong> метров на двадцать-тридцать. Тоже случайно, тоже без условий:</p>
   <ul>
     <li><strong>Ровный слой</strong> — идеальные кубы одинаковой прочности, ни одной трещины. Как будто нарезано.</li>
     <li><strong>Зарастающий слой</strong> — тоннель за спиной медленно затягивается. Оглянулся — пути назад нет.</li>
@@ -916,44 +995,34 @@
 
   <figure class="mock">
     <div class="screen">
-      <div class="hud">
-        <div><span class="k">ГЛУБИНА</span><span class="v lamp tight">1013 м (нас двое)</span></div>
-        <div><span class="k">РУДА</span><span class="v">88.1M</span></div>
-        <div><span class="k">ОСКОЛКИ</span><span class="v">34</span></div>
-      </div>
-      <div class="stage">
-        <canvas data-fp="glitch" width="160" height="144"></canvas>
-        <span class="arrow u">▲</span><span class="arrow d">▼</span>
-        <span class="arrow l">◀</span><span class="arrow r">▶</span>
-      </div>
-      <div class="strip">
-        <canvas data-map="main" width="160" height="34"></canvas>
-        <span class="back">ОГЛЯ-<br>НУТЬСЯ</span>
-      </div>
-      <div class="dock">
-        <div class="rhythm"><span class="lbl">РИТМ</span><span class="bar"><i style="inset:0 78% 0 0"></i></span><span class="mul">×1.5</span></div>
-        <div class="skills">
-          <b class="ready">КУР</b><b class="ready">ДИН</b><b class="cd">17</b><b class="ready">ГЛЗ</b><b class="cd">42</b><b class="cd">—</b>
+      <div class="stage rhythm1">
+        <canvas data-fp="glitch" width="144" height="200"></canvas>
+        <div class="hud-top">
+          <span class="depth">1013<i>М (НАС ДВОЕ)</i></span>
+          <span class="ore">88.1M<i>РУДА</i></span>
         </div>
-        <div class="tabs">
-          <span class="on">КИРКА</span><span>БРИГАДА</span><span>ЛАМПА</span><span>ОСКОЛКИ</span>
-        </div>
+        <div class="belt"><b class="ready">КУР</b><b class="ready">ДИН</b><b>42</b></div>
+      </div>
+      <div class="bar">
+        <span>↺</span>
+        <span class="cta none">КОПАЙ</span>
+        <span>▲</span>
       </div>
     </div>
-    <figcaption><b>Один кадр.</b> Стена съехала полосами, в породе на границе света проступило лицо в полный рост, счётчик глубины дописал себе скобку. Через 1/30 секунды всё на месте. Скриншот такое почти не ловит — запись ловит.</figcaption>
+    <figcaption><b>Один кадр.</b> Стена съехала полосами, в породе проступило лицо в полный рост, счётчик глубины дописал себе скобку. Через 1/30 секунды всё на месте. Скриншот такое почти не ловит — запись ловит.</figcaption>
   </figure>
 
   <h3>Что именно сбоит</h3>
   <ul>
     <li>Текстура стены на 1–2 кадра подменяется <strong>лицом</strong> — в полный экран, потому что стена и есть экран.</li>
-    <li>Кадр <strong>съезжает полосами</strong>, как битый сигнал, и тут же встаёт на место.</li>
+    <li>Кадр <strong>съезжает полосами</strong> и тут же встаёт на место.</li>
     <li>Игра <strong>«подвисает» на 300 мс</strong>. Это не лаг, это сделано специально.</li>
-    <li>Счётчик глубины на кадр показывает <strong>другое число</strong>. Или то же, но с припиской.</li>
+    <li>Счётчик глубины на кадр показывает <strong>другое число</strong> или то же, но с припиской.</li>
     <li>Кнопка снаряжения на кадр <strong>меняет надпись</strong> на слово, которого в игре нет.</li>
     <li>Во время поворота в кадр попадает <strong>лишний проход</strong>, которого ты не копал. Довернул — стена.</li>
-    <li>Один пиксель становится цвета «нечто» и <strong>не меняется обратно</strong> до перезагрузки страницы.</li>
-    <li>Панель бригады на долю секунды показывает <strong>лишнюю строку</strong>. Без имени.</li>
-    <li><strong>Схема-разрез внизу</strong> на кадр рисует ответвление, которого ты не копал.</li>
+    <li>Один пиксель становится цвета «нечто» и <strong>не меняется обратно</strong> до перезагрузки.</li>
+    <li>В штреке на кадр появляется <strong>седьмая строка</strong> без названия и без цены.</li>
+    <li>Схема шахты в архиве на кадр рисует <strong>ответвление, которого ты не копал</strong>.</li>
   </ul>
 
   <p class="note">Железное правило: <strong>глитчи никогда ни на что не влияют.</strong> Ничего не ломается, ничего не теряется. Именно поэтому страшно — доказать нельзя, и игрок не может решить, баг это или задумано. Как только сбой отнимает хоть единицу руды, он превращается в претензию к разработчику, и весь эффект пропадает.</p>
@@ -963,15 +1032,16 @@
   <p class="eyebrow">Правила</p>
   <h2>Как пугать, не ломая кликер</h2>
   <ol>
-    <li><strong>Никаких скримеров в момент клика.</strong> Игрок долбит по 8 раз в секунду; вопль в ответ на удар читается как баг и как издевательство.</li>
+    <li><strong>Никаких скримеров в момент клика.</strong> Игрок долбит по 8 раз в секунду; вопль в ответ на удар читается как баг.</li>
     <li><strong>Пугаем на периферии и во время поворота.</strong> Никогда в центре, никогда там, куда игрок целится.</li>
     <li><strong>Событие ничего не требует.</strong> Самое жуткое — то, на что нельзя нажать.</li>
-    <li><strong>Игра ничего не объясняет.</strong> Ни всплывашек, ни лога, ни лора «что это было».</li>
+    <li><strong>Игра ничего не объясняет.</strong> Всё, что есть — обрывки в чужих дневниках.</li>
     <li><strong>Интерфейс делает вид, что всё нормально.</strong> Счётчики спокойны, кнопки на месте.</li>
-    <li><strong>Первые 10 минут — ничего.</strong> Совсем. Игра честно притворяется милой.</li>
-    <li><strong>Не повторять эффект дважды подряд.</strong> Предсказал — страх кончился, осталось раздражение.</li>
+    <li><strong>Первые 10 минут — ничего.</strong> Совсем.</li>
+    <li><strong>Не повторять эффект дважды подряд.</strong> Предсказал — страх кончился.</li>
     <li><strong>Ужас ничего не отнимает</strong>, кроме пропажи копателей — единственного исключения, нарочно тихого и обратимого.</li>
-    <li><strong>В настройках есть «спокойный режим».</strong> Выключает слой целиком. Кто-то захочет просто копать — это нормально.</li>
+    <li><strong>Штрек неприкосновенен.</strong> Наверху не происходит ничего. Это делает низ страшнее любого эффекта.</li>
+    <li><strong>В настройках есть «спокойный режим».</strong> Выключает слой целиком.</li>
   </ol>
 
   <h3>Когда что</h3>
@@ -980,12 +1050,12 @@
     <li><span class="when">~300 м</span><span class="what">Оглянулся — в конце тоннеля, на границе света, что-то есть. Довернул фонарь — нет.</span></li>
     <li><span class="when">~400 м</span><span class="what">Из бригады пропадает копатель. Ударов сзади становится меньше.</span></li>
     <li><span class="when">~500 м</span><span class="what">Все звуки выключаются на десять секунд. Кирка бьёт беззвучно.</span></li>
-    <li><span class="when">~600 м</span><span class="what">Первый глитч: кадр съезжает полосами и встаёт на место.</span></li>
+    <li><span class="when">~600 м</span><span class="what">Первый глитч: кадр съезжает полосами.</span></li>
     <li><span class="when">~700 м</span><span class="what">Гаснет фонарь.</span></li>
     <li><span class="when">~800 м</span><span class="what">Блок кровоточит. Руда с него обычная.</span></li>
     <li><span class="when">~1000 м</span><span class="what">Счётчик глубины на кадр показывает <q>1013 м (нас двое)</q>.</span></li>
     <li><span class="when">~1200 м</span><span class="what">Во время поворота в кадре проезжает боковой проход. Довернул — сплошная стена.</span></li>
-    <li><span class="when">~1500 м</span><span class="what">В дневнике предыдущей смены появляется запись, датированная завтрашним числом.</span></li>
+    <li><span class="when">~1500 м</span><span class="what">В архиве появляется дневник, датированный завтрашним числом.</span></li>
     <li><span class="when">глубже</span><span class="what">Твари почти исчезают. Полости больше и пустее. Очень долго не происходит ничего.</span></li>
   </ul>
   <p class="note">Последний пункт — самый важный. Обычно игры на глубине наваливают монстров; мы наоборот убираем. Пустая шахта, где давно ничего не случалось, страшнее любой твари — потому что игрок уже знает, что тут что-то есть.</p>
@@ -1023,48 +1093,35 @@
         <tr><td>Цена уровня кирки</td><td>40 × 1.08^уровень</td></tr>
         <tr><td>Цена уровня фонаря</td><td>200 × 1.35^уровень</td></tr>
         <tr><td>Цена копателя</td><td>база × 1.07^уровень</td></tr>
-        <tr><td>Осколки за обвал</td><td>⌊3 × (глубина / 150)^1.7⌋</td></tr>
+        <tr><td>Осколки за обвал</td><td>⌊3 × (глубина / 90)^1.55⌋</td></tr>
         <tr><td>Шанс аномального блока</td><td>~1 на 2000, растёт с глубиной</td></tr>
       </tbody>
     </table>
   </div>
-  <p>Проверка: 150 м дают <strong>3 осколка</strong>, 500 м — <strong>22</strong>, 1000 м — <strong>72</strong>, 2000 м — <strong>234</strong>. Осколок = <code>+2%</code> к урону навсегда, так что повторный спуск до 150 метров занимает не двадцать минут, а полторы.</p>
+
+  <h3>Первый обвал — быстро, дальше дольше</h3>
+  <p>Первый престиж доступен уже с <strong>90 метров</strong> и наступает минут через двенадцать. Дальше показатель степени <code>1.55</code> делает своё: каждый следующий осколок требует ощутимо большей глубины, забеги естественно удлиняются, и к пятому-шестому они уже по часу.</p>
+  <p>Проверка: 90 м дают <strong>3 осколка</strong>, 200 м — <strong>10</strong>, 500 м — <strong>42</strong>, 1000 м — <strong>123</strong>. Осколок = <code>+2%</code> к урону навсегда.</p>
 
   <h3>Ритм первого часа</h3>
   <ul>
     <li><strong>0:00</strong> — клик по стене. Земля рассыпается. Ни меню, ни туториала.</li>
     <li><strong>0:10</strong> — первый шаг вперёд. Понял, как игра работает, без единого слова текста.</li>
-    <li><strong>0:30</strong> — пацан с лопатой. Сзади застучали.</li>
-    <li><strong>2:00</strong> — первая жила. Первые настоящие деньги.</li>
+    <li><strong>0:40</strong> — кнопка «КИРКА +1» загорелась сама. Первая покупка без единого меню.</li>
+    <li><strong>1:30</strong> — первый подъём в штрек. Нанял пацана с лопатой. Сзади застучали.</li>
     <li><strong>4:00</strong> — гранит. Понял, что можно пробить рядом и обойти.</li>
-    <li><strong>8:00</strong> — первая полость. Внутри стол и кости.</li>
-    <li><strong>12:00</strong> — 200 метров. <em>Стук.</em></li>
-    <li><strong>13:00</strong> — впервые нажал «Оглянуться».</li>
-    <li><strong>20:00</strong> — упёрся. Игра предлагает обвалить шахту.</li>
-    <li><strong>22:00</strong> — новая шахта, всё летит вчетверо быстрее. Крючок захлопнулся.</li>
+    <li><strong>8:00</strong> — первая полость. Внутри стол, кости и первый дневник.</li>
+    <li><strong>12:00</strong> — 90 метров, игра предлагает обвалить шахту.</li>
+    <li><strong>13:00</strong> — второй забег, всё летит вчетверо быстрее.</li>
+    <li><strong>25:00</strong> — 200 метров. <em>Стук.</em></li>
+    <li><strong>26:00</strong> — впервые нажал «Оглянуться».</li>
   </ul>
 </section>
 
 <section>
   <p class="eyebrow">Мета</p>
   <h2>Обвал</h2>
-  <p>С 150 метров доступно <strong>«Обрушить шахту»</strong>. Руда, кирка, фонарь и бригада обнуляются, глубина в ноль. Взамен — <strong>Осколки</strong>, которые не сгорают никогда.</p>
-
-  <figure class="mock">
-    <div class="screen">
-      <div class="collapse">
-        <div class="t">ОБРУШИТЬ ШАХТУ</div>
-        <div class="big">23<small>ОСКОЛКА</small></div>
-        <div class="loses">
-          <span>−  руда 44.8M</span><span>−  кирка ур. 61</span>
-          <span>−  фонарь ур. 9</span><span>−  бригада 6 чел.</span>
-          <span>+  +46% урон навсегда</span><span>+  тоннель в архив</span>
-        </div>
-        <div class="btn">ОБРУШИТЬ</div>
-      </div>
-    </div>
-    <figcaption><b>Экран обвала.</b> Всё, что теряешь, показано явно и без утешений — а рядом то, что остаётся. Игрок должен видеть обмен целиком, иначе первый престиж ощущается как ограбление.</figcaption>
-  </figure>
+  <p>Руда, кирка, фонарь и бригада обнуляются, глубина в ноль. Взамен — <strong>Осколки</strong>, которые не сгорают никогда. Экран обвала показывает обмен целиком, без утешений: слева что теряешь, справа что остаётся.</p>
 
   <div class="tbl">
     <table>
@@ -1078,15 +1135,13 @@
         <tr><td>Автокирка</td><td>+1 удар/сек</td><td>10/сек</td></tr>
         <tr><td>Глаз</td><td>трещины чаще и держатся дольше</td><td>×3</td></tr>
         <tr><td>Фонарь</td><td>+радиус, гаснет реже</td><td>—</td></tr>
-        <tr><td>Шаг</td><td>шаг вперёд быстрее и без потери ритма</td><td>—</td></tr>
+        <tr><td>Пояс</td><td>+1 слот снаряжения</td><td>5 слотов</td></tr>
       </tbody>
     </table>
   </div>
 
   <p class="note">Автокирка стоит дорого и упирается в 10 ударов/сек: её работа — убирать рутину в мягкой породе, а не заменять тебя. Трещины она не видит, повороты не делает и «Оглянуться» не нажимает.</p>
-
-  <h3>Что остаётся между забегами</h3>
-  <p>Осколки, достижения, прочитанные дневники и <strong>архив шахт</strong>: все прошлые тоннели лежат отдельным экраном в виде разрезов, слоями. К десятому забегу это выглядит как кладбище твоих попыток — единственное место, где игра позволяет собой полюбоваться.</p>
+  <p>Между забегами остаются осколки, достижения, прочитанные дневники и <strong>архив шахт</strong>: все прошлые тоннели лежат в штреке в виде разрезов, слоями. К десятому забегу это выглядит как кладбище твоих попыток.</p>
 </section>
 
 <section>
@@ -1094,26 +1149,25 @@
   <h2>Сочность</h2>
   <ul>
     <li>Блок трескается в три стадии — видно, что осталось чуть-чуть.</li>
-    <li>Осколки летят <strong>в камеру</strong> и уходят за края экрана. От первого лица это работает вдвое сильнее.</li>
+    <li>Осколки летят <strong>в камеру</strong> и уходят за края экрана.</li>
     <li>Тряска: 1–2 пикселя обычно, 6 на сколе, 12 на динамите.</li>
-    <li>Шаг вперёд — рывок камеры, пыль во весь экран, глухой удар. Главный ритмический акцент.</li>
+    <li>Шаг вперёд — рывок камеры, пыль во весь экран, глухой удар.</li>
     <li>Пыль висит в конусе фонаря и медленно оседает.</li>
-    <li>Звук удара разный по породе: земля глухо, известняк звонко, гранит — визг металла.</li>
-    <li>Тон удара ползёт вверх вместе с ритмом.</li>
-    <li>Фонарь всегда чуть дрожит и качается при шаге. Это половина атмосферы.</li>
-    <li>Удары бригады слышны сзади, вразнобой, тише твоих.</li>
+    <li>Фонарь всегда чуть дрожит и качается при шаге. Половина атмосферы.</li>
+    <li>Обводка кадра разгорается вместе с ритмом и гаснет, когда сбился.</li>
     <li>Счётчик метров прокручивается, а не перескакивает.</li>
-    <li>Апгрейд, который по карману, подсвечен. Всегда видно, куда нажать.</li>
+    <li>Кнопка покупки загорается сама, когда хватило руды.</li>
   </ul>
+  <p><strong>Звук — минимум:</strong> удар кирки (разный по породе, с растущим тоном), шаг, обвал породы. Плюс ровно три штуки ради атмосферы: удары бригады сзади, стук в ответ и дыхание в темноте. Всё синтезируется на месте, файлов нет.</p>
 </section>
 
 <section>
   <p class="eyebrow">Как рисуем</p>
   <h2>Арт</h2>
-  <p>Пиксель-арт. Стена — сетка <strong>6×6 блоков по 16×16</strong>, стены тоннеля уходят к камере четырьмя трапециями. Никакого настоящего 3D: перспектива нарисована, и этого достаточно — глаз достраивает объём сам, а мы получаем чёткий пиксель без единого полигона.</p>
-  <p>Девять цветов на всю игру; слои различаются перекраской, а не новой палитрой.</p>
+  <p>Пиксель-арт. Стена — сетка <strong>6×6 блоков по 16×16</strong>, стены тоннеля уходят к камере четырьмя трапециями, крепь через каждые несколько метров. Никакого настоящего 3D: перспектива нарисована, и этого достаточно.</p>
+  <p>Девять цветов на всю игру; слои различаются перекраской.</p>
   <ul class="swatches" id="palette"></ul>
-  <p>Цвет <strong>«нечто»</strong> — служебный: в нормальной породе он не встречается никогда. Если он появился на экране, значит появилось что-то ещё. Игрок считывает это подсознательно задолго до того, как поймёт.</p>
+  <p>Цвет <strong>«нечто»</strong> служебный: в нормальной породе он не встречается никогда. Если он появился, значит появилось что-то ещё. Игрок считывает это подсознательно задолго до того, как поймёт.</p>
 </section>
 
 <section>
@@ -1121,16 +1175,16 @@
   <h2>Техника</h2>
   <ul>
     <li><strong>Чистый HTML/CSS/JS</strong>, ES-модули, без сборщика и зависимостей.</li>
-    <li><strong>Canvas</strong> для вида от первого лица, <strong>DOM</strong> для панелей.</li>
-    <li>Перспектива — четыре трапеции, рисуются полосами по 1 пикселю. Дёшево, детерминированно, без райкаста и без WebGL.</li>
-    <li>Свет — радиальная маска поверх кадра плюс виньетка.</li>
-    <li>Мир процедурный по seed'у; хранится не картинка, а список того, что ты выкопал.</li>
-    <li>Глитчи — отдельный модуль поверх рендера, у которого <strong>нет доступа к состоянию игры</strong>. Архитектурная гарантия, что он ничего не сломает.</li>
+    <li><strong>Телефон первым делом:</strong> вертикально, зона большого пальца, минимальная кнопка 44 px, свайпы для поворота.</li>
+    <li><strong>Canvas</strong> для забоя, <strong>DOM</strong> для штрека — там нужны прокрутка, доступность и крупные попадания.</li>
+    <li>Перспектива — четыре трапеции полосами по 1 пикселю. Дёшево, детерминированно, без райкаста и WebGL.</li>
+    <li>Свет — радиальная маска плюс виньетка.</li>
+    <li>Мир процедурный по seed'у; хранится не картинка, а список выкопанного.</li>
+    <li>Глитчи — отдельный модуль поверх рендера, у которого <strong>нет доступа к состоянию игры</strong>.</li>
     <li><strong>Сохранение</strong> в <code>localStorage</code> каждые 5 секунд плюс экспорт строкой.</li>
-    <li><strong>Звук</strong> — WebAudio, синтез на месте, с панорамой: твои удары по центру, бригада сзади.</li>
     <li>Ни серверов, ни аккаунтов, ни аналитики. Работает офлайн.</li>
   </ul>
-  <p>Файлы: <code>index.html</code>, <code>style.css</code>, <code>src/</code> — <code>game.js</code>, <code>world.js</code>, <code>dig.js</code>, <code>view.js</code>, <code>crew.js</code>, <code>light.js</code>, <code>anomaly.js</code>, <code>glitch.js</code>, <code>audio.js</code>, <code>save.js</code>, <code>ui.js</code>.</p>
+  <p>Файлы: <code>index.html</code>, <code>style.css</code>, <code>src/</code> — <code>game.js</code>, <code>world.js</code>, <code>dig.js</code>, <code>view.js</code>, <code>hub.js</code>, <code>crew.js</code>, <code>light.js</code>, <code>anomaly.js</code>, <code>glitch.js</code>, <code>diary.js</code>, <code>audio.js</code>, <code>save.js</code>.</p>
 </section>
 
 <section>
@@ -1140,21 +1194,21 @@
     <div class="n">1</div>
     <div>
       <h4>Забой <span class="mvp">MVP</span></h4>
-      <p>Вид от первого лица, стена 6×6, клик, прочность, пробой 2×2, шаг вперёд, повороты, руда, глубина, типы породы, кирка, три копателя, сохранение.</p>
+      <p>Вид от первого лица, стена 6×6, клик, прочность, пробой 2×2, шаг вперёд, свайп-повороты, руда, глубина, типы породы, кнопка кирки, сохранение.</p>
     </div>
   </div>
   <div class="stage-row">
     <div class="n">2</div>
     <div>
-      <h4>Ощущение</h4>
-      <p>Фонарь, ритм, трещины, сколы, пыль, осколки в камеру, тряска, звук породы и бригады сзади, схема-разрез.</p>
+      <h4>Штрек и ощущение</h4>
+      <p>Хаб с шестью строками, бригада, фонарь, снаряжение на три слота. Ритм, трещины, сколы, пыль, тряска, свечение кадра, звук породы.</p>
     </div>
   </div>
   <div class="stage-row">
     <div class="n">3</div>
     <div>
       <h4>Шахта живая</h4>
-      <p>Полости, жилы, комнаты, дневники, твари, вода, погоня, «Оглянуться», снаряжение, оффлайн-смена.</p>
+      <p>Полости, жилы, комнаты, дневники, твари, вода, погоня, «Оглянуться», оффлайн-смена.</p>
     </div>
   </div>
   <div class="stage-row">
@@ -1168,41 +1222,36 @@
     <div class="n">5</div>
     <div>
       <h4>Глубина</h4>
-      <p>Восемь слоёв, аномалии, карманы, странные слои, глитч-модуль, спокойный режим, достижения, лор дневников.</p>
+      <p>Восемь слоёв, аномалии, карманы, странные слои, глитч-модуль, спокойный режим, полсотни дневников, достижения.</p>
     </div>
   </div>
-  <p class="note">Слой ужаса стоит последним осознанно. Он работает только поверх игры, в которую уже приятно играть: если долбить породу скучно, никакая жуть это не спасёт.</p>
 </section>
 
 <section>
   <p class="eyebrow">Решено</p>
   <h2>Что уже зафиксировано</h2>
   <ul>
-    <li>Название — <strong>ЗАБОЙ</strong>.</li>
-    <li>Вид — <strong>от первого лица</strong>, стена перед тобой.</li>
-    <li>Градус — <strong>странно и тревожно</strong>. Никакого мяса; намёки, глитчи и то, чего не видно.</li>
-    <li><strong>Проиграть нельзя.</strong> Только потери.</li>
-    <li>Направление — <strong>вниз, вверх, вбок</strong>; мелкое маневрирование через то, где именно пробиваешь стену.</li>
-    <li>Аномальные блоки и странные слои — <strong>чистый рандом без условий</strong>.</li>
+    <li>Название — <strong>ЗАБОЙ</strong>. Вид — <strong>от первого лица</strong>.</li>
+    <li>Платформа — <strong>телефон первым делом</strong>, вертикально, одной рукой.</li>
+    <li>Интерфейс — <strong>сцена во весь экран</strong>, три кнопки внизу, весь магазин в штреке.</li>
+    <li>Забег — <strong>первый обвал через 12 минут</strong>, дальше забеги растут.</li>
+    <li>Звук — <strong>минимум</strong>: кирка, шаг, порода плюс три атмосферных.</li>
+    <li>Текст — <strong>только дневники</strong>, обрывками, без объяснений.</li>
+    <li>Градус — <strong>странно и тревожно</strong>, без мяса. <strong>Проиграть нельзя.</strong></li>
+    <li>Аномалии и странные слои — <strong>чистый рандом без условий</strong>.</li>
   </ul>
 </section>
 
 <hr class="end">
-<p class="colophon">Забой · дизайн-док v0.4 · документ живой, правится по ходу</p>
+<p class="colophon">Забой · дизайн-док v0.5 · документ живой, правится по ходу</p>
 
 </div>
 
 <script>
   const PALETTE = [
-    ["мрак",   "#0d0b11"],
-    ["порода", "#2a2333"],
-    ["камень", "#453b52"],
-    ["земля",  "#5c4433"],
-    ["пыль",   "#9a8fa8"],
-    ["лампа",  "#ffc14d"],
-    ["руда",   "#4fb3d9"],
-    ["кровь",  "#a3283a"],
-    ["нечто",  "#6b2f8f"]
+    ["мрак", "#0d0b11"], ["порода", "#2a2333"], ["камень", "#453b52"],
+    ["земля", "#5c4433"], ["пыль", "#9a8fa8"], ["лампа", "#ffc14d"],
+    ["руда", "#4fb3d9"], ["кровь", "#a3283a"], ["нечто", "#6b2f8f"]
   ];
 
   const list = document.getElementById("palette");
@@ -1242,7 +1291,6 @@
     ctx.restore();
   }
 
-  // Спрайты — массив строк + палитра. Ровно так же они будут храниться в игре.
   const LANTERN = [
     "................", ".......aa.......", "......a..a......", ".....a....a.....",
     ".....a....a.....", "....aaaaaaaa....", "....abbbbbba....", "....abllllba....",
@@ -1272,10 +1320,7 @@
   ];
   const FKEY = { p: "#9a8fa8" };
 
-  /* ---------- вид от первого лица ---------- */
-
   const ROCK = {
-    earth:   { base: "#5c4433", lo: "#4a3628", hi: "#6d5240" },
     stone:   { base: "#453b52", lo: "#3a3145", hi: "#52465f" },
     granite: { base: "#38304a", lo: "#2c2540", hi: "#463d5c" },
     ore:     { base: "#453b52", lo: "#3a3145", hi: "#4fb3d9" },
@@ -1285,16 +1330,13 @@
   };
 
   const lerp = (a, b, t) => a + (b - a) * t;
-
-  // Стена забоя: 6x6 блоков по 16 px.
   const GRID = 6, TS = 16;
 
   const WALLS = {
-    // seed -> раскладка блоков лицевой стены
-    main:  ["ssssss", "ssgsss", "ssssss", "osssgs", "oosssg", "oossss"],
-    hole:  ["ssssss", "sshhss", "sshhss", "ssssss", "osssss", "oossgs"],
-    room:  ["wwwwww", "wwwwww", "wwwwww", "wwwwww", "wwwwww", "wwwwww"],
-    glitch:["ssssss", "ssgsss", "sssfss", "osssgs", "oosssg", "oossss"]
+    main:   ["ssssss", "ssgsss", "ssssss", "osssgs", "oosssg", "oossss"],
+    hole:   ["ssssss", "sshhss", "sshhss", "ssssss", "osssss", "oossgs"],
+    room:   ["wwwwww", "wwwwww", "wwwwww", "wwwwww", "wwwwww", "wwwwww"],
+    glitch: ["ssssss", "ssgsss", "sssfss", "osssgs", "oosssg", "oossss"]
   };
   const LETTER = { s: "stone", g: "granite", o: "ore", h: "hole", w: "weird", f: "flesh" };
 
@@ -1304,7 +1346,6 @@
     const VW = cv.width, VH = cv.height;
     const r = rng(mode === "main" ? 7 : mode === "hole" ? 23 : mode === "room" ? 41 : 59);
 
-    // Геометрия: прямоугольник лицевой стены и сходящиеся к нему стены тоннеля.
     const back = mode === "back";
     const FW = back ? 22 : GRID * TS, FH = back ? 22 : GRID * TS;
     const FX = ((VW - FW) / 2) | 0, FY = ((VH - FH) / 2) | 0;
@@ -1312,25 +1353,23 @@
     ctx.fillStyle = "#0d0b11";
     ctx.fillRect(0, 0, VW, VH);
 
-    const wallShade = mode === "room" ? ROCK.weird : ROCK.stone;
+    const shade = mode === "room" ? ROCK.weird : ROCK.stone;
 
     function strip(x0, y0, x1, y1, t) {
-      // t = 0 у камеры, 1 у дальнего конца
       const dim = back ? 0.58 - 0.44 * t : 0.30 + 0.55 * t;
-      ctx.fillStyle = wallShade.base;
       ctx.globalAlpha = dim;
+      ctx.fillStyle = shade.base;
       if (x0 === x1) ctx.fillRect(x0, y0, 1, y1 - y0);
       else ctx.fillRect(x0, y0, x1 - x0, 1);
       const n = Math.max(2, (Math.abs(x1 - x0 + y1 - y0) / 5) | 0);
       for (let i = 0; i < n; i++) {
-        ctx.fillStyle = r() < 0.5 ? wallShade.lo : wallShade.hi;
+        ctx.fillStyle = r() < 0.5 ? shade.lo : shade.hi;
         if (x0 === x1) ctx.fillRect(x0, y0 + ((r() * (y1 - y0)) | 0), 1, 1);
         else ctx.fillRect(x0 + ((r() * (x1 - x0)) | 0), y0, 1, 1);
       }
       ctx.globalAlpha = 1;
     }
 
-    // потолок и пол
     for (let y = 0; y < FY; y++) {
       const t = y / FY;
       strip(Math.round(lerp(0, FX, t)), y, Math.round(lerp(VW, FX + FW, t)), y, t);
@@ -1339,7 +1378,6 @@
       const t = (VH - 1 - y) / (VH - 1 - FY - FH);
       strip(Math.round(lerp(0, FX, t)), y, Math.round(lerp(VW, FX + FW, t)), y, t);
     }
-    // боковые стены
     for (let x = 0; x < FX; x++) {
       const t = x / FX;
       strip(x, Math.round(lerp(0, FY, t)), x, Math.round(lerp(VH, FY + FH, t)), t);
@@ -1349,8 +1387,7 @@
       strip(x, Math.round(lerp(0, FY, t)), x, Math.round(lerp(VH, FY + FH, t)), t);
     }
 
-    // Крепь — деревянные рамы через каждые несколько метров.
-    // Это главный признак глубины: чем дальше рама, тем она меньше и темнее.
+    // Крепь: главный признак глубины. Чем дальше рама, тем меньше и темнее.
     function timber(t, wood) {
       const x0 = Math.round(lerp(0, FX, t)), x1 = Math.round(lerp(VW, FX + FW, t));
       const y0 = Math.round(lerp(0, FY, t)), y1 = Math.round(lerp(VH, FY + FH, t));
@@ -1362,15 +1399,13 @@
     }
     const frames = back
       ? [[0.14, "#4c3726"], [0.34, "#3c2b1e"], [0.54, "#2c2016"], [0.74, "#1d150f"]]
-      : [[0.32, "#3f2d20"], [0.66, "#2a1e15"]];
+      : [[0.34, "#3f2d20"], [0.68, "#2a1e15"]];
     for (const [t, wood] of frames) timber(t, wood);
 
     if (back) {
-      // тоннель уходит в черноту
       ctx.fillStyle = "#08070b";
       ctx.fillRect(FX, FY, FW, FH);
     } else {
-      // лицевая стена
       const map = WALLS[mode] || WALLS.main;
       for (let gy = 0; gy < GRID; gy++) {
         for (let gx = 0; gx < GRID; gx++) {
@@ -1395,7 +1430,6 @@
       }
 
       if (mode === "room") {
-        // ровная кладка и дверь, которая не открывается
         ctx.fillStyle = "rgba(13,11,17,.5)";
         for (let gy = 0; gy <= GRID; gy++) ctx.fillRect(FX, FY + gy * TS, FW, 1);
         for (let gx = 0; gx <= GRID; gx++) ctx.fillRect(FX + gx * TS + (gx % 2 ? 8 : 0), FY, 1, FH);
@@ -1408,7 +1442,6 @@
       }
 
       if (mode === "main" || mode === "glitch") {
-        // трещина
         ctx.fillStyle = "#ffc14d";
         const cx = FX + 3 * TS, cy = FY + 2 * TS;
         [[6,2],[7,3],[6,4],[7,5],[8,6],[7,7],[8,8],[9,9],[8,11]].forEach(([a, b]) => {
@@ -1424,12 +1457,10 @@
       }
     }
 
-    // свет фонаря
     const cx = FX + FW / 2, cy = FY + FH / 2;
-    const R = back ? 96 : 86;
+    const R = back ? 96 : 88;
     const g = ctx.createRadialGradient(cx, cy, back ? 30 : 4, cx, cy, R);
     if (back) {
-      // Свет не достаёт до конца тоннеля: центр кадра — самое тёмное место.
       g.addColorStop(0, "rgba(13,11,17,.86)");
       g.addColorStop(0.35, "rgba(13,11,17,.34)");
       g.addColorStop(1, "rgba(13,11,17,.06)");
@@ -1451,67 +1482,26 @@
     ctx.fillRect(0, 0, VW, VH);
     ctx.restore();
 
-    // виньетка по углам кадра
-    const v = ctx.createRadialGradient(VW / 2, VH / 2, 40, VW / 2, VH / 2, 118);
+    const v = ctx.createRadialGradient(VW / 2, VH / 2, VW * 0.38, VW / 2, VH / 2, VH * 0.78);
     v.addColorStop(0, "rgba(13,11,17,0)");
-    v.addColorStop(1, "rgba(13,11,17,.9)");
+    v.addColorStop(1, "rgba(13,11,17,.82)");
     ctx.fillStyle = v;
     ctx.fillRect(0, 0, VW, VH);
 
-    // сбой — рисуется поверх света, глитч не подчиняется правилам сцены
+    // сбой рисуется поверх света: глитч не подчиняется правилам сцены
     if (mode === "glitch") {
-      blit(ctx, FACE, FKEY, FX + 32, FY + 30, 0.34);
-      for (const [by, bh, dx] of [[30, 10, 5], [74, 6, -7], [112, 8, 4]]) {
+      blit(ctx, FACE, FKEY, FX + 32, FY + 34, 0.34);
+      for (const [by, bh, dx] of [[42, 9, 5], [100, 6, -7], [150, 8, 4]]) {
         const slice = ctx.getImageData(0, by, VW, bh);
         ctx.fillStyle = "#0d0b11";
         ctx.fillRect(0, by, VW, bh);
         ctx.putImageData(slice, dx, by);
       }
       ctx.fillStyle = "rgba(107,47,143,.5)";
-      ctx.fillRect(0, 31, VW, 1);
-      ctx.fillRect(0, 75, VW, 1);
+      ctx.fillRect(0, 43, VW, 1);
+      ctx.fillRect(0, 101, VW, 1);
     }
-  }
-
-  /* ---------- схема-разрез ---------- */
-
-  function drawMap(cv) {
-    const ctx = cv.getContext("2d");
-    const VW = cv.width, VH = cv.height;
-    ctx.fillStyle = "#0d0b11";
-    ctx.fillRect(0, 0, VW, VH);
-    if (cv.dataset.map === "void") return;
-
-    // сетка глубины
-    ctx.fillStyle = "#1c1826";
-    for (let x = 0; x < VW; x += 16) ctx.fillRect(x, 0, 1, VH);
-
-    // прокопанный тоннель, вид сбоку
-    const pts = [[4,4],[10,5],[16,7],[22,7],[28,10],[34,12],[40,12],[46,15],[52,16],
-                 [58,19],[64,19],[70,22],[76,24],[82,24],[88,26],[94,27],[100,25],
-                 [106,27],[112,29],[118,29],[124,27]];
-    ctx.fillStyle = "#4a4160";
-    for (let i = 0; i < pts.length - 1; i++) {
-      const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
-      const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
-      for (let s = 0; s <= steps; s++) {
-        ctx.fillRect(Math.round(lerp(x0, x1, s / steps)), Math.round(lerp(y0, y1, s / steps)), 2, 2);
-      }
-    }
-    // боковая ветка к жиле
-    ctx.fillStyle = "#3a3350";
-    for (let i = 0; i < 14; i++) ctx.fillRect(64 - i, 19 + ((i / 3) | 0), 2, 2);
-    ctx.fillStyle = "#2f6f8a";
-    ctx.fillRect(48, 23, 3, 3);
-
-    // ты здесь
-    const [ex, ey] = pts[pts.length - 1];
-    ctx.fillStyle = "#ffc14d";
-    ctx.fillRect(ex, ey, 3, 3);
-    ctx.fillStyle = "rgba(255,193,77,.25)";
-    ctx.fillRect(ex - 2, ey - 2, 7, 7);
   }
 
   document.querySelectorAll("canvas[data-fp]").forEach(drawFP);
-  document.querySelectorAll("canvas[data-map]").forEach(drawMap);
 </script>
