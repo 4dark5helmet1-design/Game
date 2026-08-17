@@ -14,7 +14,6 @@
     --lamp:     #8a5500;
     --blood:    #a3283a;
     --wrong:    #6b2f8f;
-    --ore:      #1c6d8c;
 
     --f-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
     --f-body: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
@@ -36,7 +35,6 @@
       --lamp:     #ffc14d;
       --blood:    #e0505f;
       --wrong:    #b07ce0;
-      --ore:      #58bede;
     }
   }
 
@@ -53,7 +51,6 @@
     --lamp:     #ffc14d;
     --blood:    #e0505f;
     --wrong:    #b07ce0;
-    --ore:      #58bede;
   }
 
   * { box-sizing: border-box; }
@@ -100,11 +97,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(255,255,255,.03) 0 1px,
-      transparent 1px 3px
-    );
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0 1px, transparent 1px 3px);
   }
   .hero-inner {
     max-width: var(--col);
@@ -126,8 +119,8 @@
   }
   @keyframes flicker {
     0%, 44%, 48%, 92%, 100% { opacity: 1; }
-    46%  { opacity: .82; }
-    94%  { opacity: .74; }
+    46% { opacity: .82; }
+    94% { opacity: .74; }
   }
   .hero h1 {
     font-family: var(--f-mono);
@@ -232,18 +225,233 @@
     font-weight: 400;
   }
 
-  /* mine cross-section */
+  /* ---------- МАКЕТЫ ---------- */
+
+  .mock {
+    margin: 26px 0 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .screen {
+    width: 100%;
+    max-width: 330px;
+    background: #0d0b11;
+    border: 1px solid var(--line-2);
+    box-shadow: 0 10px 30px rgba(0,0,0,.28);
+    font-family: var(--f-mono);
+    color: #cfc7dd;
+    overflow: hidden;
+    user-select: none;
+  }
+  .mock figcaption {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    line-height: 1.55;
+    letter-spacing: .04em;
+    color: var(--ink-3);
+    max-width: 44ch;
+    text-align: center;
+  }
+  .mock figcaption b { color: var(--ink-2); font-weight: 700; }
+
+  .hud {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    border-bottom: 1px solid #2a2333;
+    background: #14111b;
+  }
+  .hud div { padding: 7px 10px; }
+  .hud div + div { border-left: 1px solid #2a2333; }
+  .hud .k {
+    display: block;
+    font-size: 8px;
+    letter-spacing: .2em;
+    color: #6b6382;
+  }
+  .hud .v {
+    display: block;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    color: #e7e2ee;
+    letter-spacing: .02em;
+  }
+  .hud .v.lamp { color: #ffc14d; }
+  .hud .v.tight { font-size: 11px; letter-spacing: 0; white-space: nowrap; padding-top: 3px; }
+
+  .stage { position: relative; line-height: 0; }
+  .stage canvas {
+    width: 100%;
+    display: block;
+    image-rendering: pixelated;
+  }
+  .stage .float {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    line-height: 1;
+    text-shadow: 0 1px 0 #0d0b11, 0 0 6px rgba(0,0,0,.9);
+    pointer-events: none;
+  }
+  .float.dmg  { color: #e7e2ee; }
+  .float.crit { color: #ffc14d; font-size: 16px; }
+  .float.ore  { color: #4fb3d9; }
+  .float.bad  { color: #b07ce0; }
+
+  .whisper {
+    position: absolute;
+    left: 0; right: 0; bottom: 6px;
+    text-align: center;
+    font-size: 9.5px;
+    letter-spacing: .14em;
+    color: #6b6382;
+  }
+  .whisper.bad { color: #7d4aa8; }
+
+  .dock { border-top: 1px solid #2a2333; background: #14111b; }
+  .rhythm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px 6px;
+  }
+  .rhythm .bar {
+    flex: 1;
+    height: 6px;
+    background: #241f30;
+    position: relative;
+    overflow: hidden;
+  }
+  .rhythm .bar i {
+    position: absolute;
+    inset: 0 32% 0 0;
+    background: linear-gradient(90deg, #8a6520, #ffc14d);
+  }
+  .rhythm .mul {
+    font-size: 12px;
+    color: #ffc14d;
+    letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .rhythm .lbl { font-size: 8px; letter-spacing: .18em; color: #6b6382; }
+
+  .skills {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    padding: 2px 10px 8px;
+  }
+  .skills b {
+    display: block;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    padding: 8px 0;
+    background: #241f30;
+    border: 1px solid #332c44;
+    color: #cfc7dd;
+  }
+  .skills b.ready { border-color: #8a6520; color: #ffc14d; }
+  .skills b.cd { color: #544c68; background: #1b1725; }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid #2a2333;
+  }
+  .tabs span {
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: .1em;
+    padding: 9px 0;
+    color: #6b6382;
+  }
+  .tabs span + span { border-left: 1px solid #2a2333; }
+  .tabs span.on { color: #ffc14d; background: #1b1725; }
+
+  /* panel-style mockups */
+  .panel { padding: 12px 12px 14px; }
+  .panel-h {
+    font-size: 10px;
+    letter-spacing: .22em;
+    color: #6b6382;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #2a2333;
+    margin-bottom: 4px;
+  }
+  .crew-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid #1e1a29;
+    align-items: center;
+  }
+  .crew-row .nm { font-size: 12px; color: #e7e2ee; }
+  .crew-row .sub { font-size: 9.5px; color: #6b6382; letter-spacing: .06em; }
+  .crew-row .buy {
+    grid-row: span 2;
+    font-size: 11px;
+    padding: 7px 10px;
+    border: 1px solid #332c44;
+    background: #241f30;
+    color: #786f8c;
+    font-variant-numeric: tabular-nums;
+  }
+  .crew-row .buy.can { border-color: #8a6520; color: #ffc14d; }
+  .crew-row.gone .nm { color: #5b5370; text-decoration: line-through; }
+  .crew-row.gone .sub { color: #7d4aa8; }
+
+  .collapse { padding: 20px 16px 18px; text-align: center; }
+  .collapse .t {
+    font-size: 13px;
+    letter-spacing: .22em;
+    color: #e0505f;
+    margin-bottom: 14px;
+  }
+  .collapse .big {
+    font-size: 40px;
+    color: #ffc14d;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .collapse .big small { font-size: 12px; color: #6b6382; display: block; letter-spacing: .2em; margin-top: 6px; }
+  .collapse .loses {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: #2a2333;
+    border: 1px solid #2a2333;
+    margin: 18px 0 16px;
+  }
+  .collapse .loses span {
+    background: #14111b;
+    padding: 8px 6px;
+    font-size: 9.5px;
+    letter-spacing: .08em;
+    color: #786f8c;
+  }
+  .collapse .btn {
+    display: block;
+    padding: 11px;
+    border: 1px solid #8a6520;
+    color: #ffc14d;
+    font-size: 12px;
+    letter-spacing: .18em;
+  }
+
+  /* ---------- shaft table ---------- */
   .shaft {
     display: grid;
     grid-template-columns: 7.5rem 1fr;
-    gap: 0;
     border: 1px solid var(--line);
     background: var(--surface);
     margin: 22px 0 26px;
   }
-  .shaft-row {
-    display: contents;
-  }
+  .shaft-row { display: contents; }
   .shaft .d {
     font-family: var(--f-mono);
     font-size: 11.5px;
@@ -256,10 +464,7 @@
     background: var(--surface-2);
     white-space: nowrap;
   }
-  .shaft .l {
-    padding: 13px 16px;
-    border-bottom: 1px solid var(--line);
-  }
+  .shaft .l { padding: 13px 16px; border-bottom: 1px solid var(--line); }
   .shaft-row:last-child .d,
   .shaft-row:last-child .l { border-bottom: 0; }
   .shaft .l b {
@@ -270,10 +475,7 @@
     display: block;
     margin-bottom: 2px;
   }
-  .shaft .l span {
-    font-size: 15px;
-    color: var(--ink-2);
-  }
+  .shaft .l span { font-size: 15px; color: var(--ink-2); }
   .shaft-row.deep .d { color: var(--wrong); }
   .shaft-row.deep .l b { color: var(--wrong); }
 
@@ -286,10 +488,7 @@
     list-style: none;
   }
   .swatches li { margin: 0; }
-  .chip {
-    height: 44px;
-    border: 1px solid rgba(0,0,0,.3);
-  }
+  .chip { height: 44px; border: 1px solid rgba(0,0,0,.3); }
   .swatches .name {
     display: block;
     font-family: var(--f-mono);
@@ -320,11 +519,7 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  th, td {
-    text-align: left;
-    padding: 9px 14px;
-    border-bottom: 1px solid var(--line);
-  }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); }
   th {
     font-size: 10px;
     letter-spacing: .13em;
@@ -336,13 +531,7 @@
   tr:last-child td { border-bottom: 0; }
   td.num { text-align: right; }
 
-  /* horror event log */
-  .log {
-    list-style: none;
-    padding: 0;
-    margin: 20px 0 24px;
-    border-top: 1px solid var(--line);
-  }
+  .log { list-style: none; padding: 0; margin: 20px 0 24px; border-top: 1px solid var(--line); }
   .log li {
     display: grid;
     grid-template-columns: 5.5rem 1fr;
@@ -360,13 +549,9 @@
     color: var(--ink-3);
   }
   .log .what { font-size: 15.5px; }
-  .log .what q {
-    quotes: "«" "»";
-    color: var(--wrong);
-    font-style: italic;
-  }
+  .log .what q { quotes: "«" "»"; color: var(--wrong); font-style: italic; }
 
-  .stage {
+  .stage-row {
     display: grid;
     grid-template-columns: 2.6rem 1fr;
     gap: 0 16px;
@@ -374,23 +559,23 @@
     padding: 18px 0;
     align-items: start;
   }
-  .stage:last-of-type { border-bottom: 1px solid var(--line); }
-  .stage .n {
+  .stage-row:last-of-type { border-bottom: 1px solid var(--line); }
+  .stage-row .n {
     font-family: var(--f-mono);
     font-size: 22px;
     font-weight: 700;
     color: var(--line-2);
     line-height: 1.2;
   }
-  .stage h4 {
+  .stage-row h4 {
     font-family: var(--f-mono);
     font-size: 14px;
     letter-spacing: .05em;
     text-transform: uppercase;
     margin: 0 0 6px;
   }
-  .stage p { margin: 0; font-size: 15.5px; color: var(--ink-2); }
-  .stage .mvp {
+  .stage-row p { margin: 0; font-size: 15.5px; color: var(--ink-2); }
+  .stage-row .mvp {
     display: inline-block;
     font-family: var(--f-mono);
     font-size: 9.5px;
@@ -428,11 +613,7 @@
   }
   .q .why { font-size: 15px; color: var(--ink-2); }
 
-  hr.end {
-    border: 0;
-    border-top: 1px solid var(--line);
-    margin: 48px 0 20px;
-  }
+  hr.end { border: 0; border-top: 1px solid var(--line); margin: 48px 0 20px; }
   .colophon {
     font-family: var(--f-mono);
     font-size: 11px;
@@ -449,7 +630,7 @@
 <header class="hero">
   <div class="hero-inner">
     <canvas id="sprite" width="16" height="16" aria-label="Пиксельная шахтёрская лампа"></canvas>
-    <p class="kicker">Дизайн-док · v0.2 · рабочее название</p>
+    <p class="kicker">Дизайн-док · v0.3 · с макетами</p>
     <h1>Забой</h1>
     <p class="lede">Кликер про копание вниз. Начинается как уютная возня с землёй и червяками. Дальше — как получится.</p>
   </div>
@@ -460,61 +641,95 @@
 <section>
   <p class="eyebrow">Что это</p>
   <h2>Идея</h2>
-  <p>Экран — вертикальный срез породы. Ты стоишь в шахте и <strong>долбишь киркой вниз</strong>. Клик = удар, у блока есть прочность, разбил — он осыпался, ты продвинулся. Порода твердеет с глубиной, ты качаешь кирку и нанимаешь бригаду.</p>
-  <p>Никакой моб по центру никуда не выходит. Всё, что есть на экране — <strong>дыра, которую ты сам прокопал</strong>, и темнота вокруг неё. Прогресс не надо читать в цифрах, он нарисован: чем дальше ты зашёл, тем длиннее туннель у тебя за спиной.</p>
-  <p class="note">И главное. Первые минут десять это добрая игра про землю, корни и старые монеты. Потом ты находишь то, что до тебя тут уже копали. Потом становится понятно, почему они бросили. Ужас работает только на контрасте — если пугать с первой секунды, к пятой минуте не страшно вообще.</p>
+  <p>Экран — вертикальный срез породы. Ты <strong>долбишь киркой</strong>: клик = удар, у блока есть прочность, разбил — он осыпался, ты продвинулся. Порода твердеет с глубиной, ты качаешь кирку, лампу и нанимаешь бригаду.</p>
+  <p>Никакой моб по центру никуда не выходит. Всё, что есть на экране — <strong>дыра, которую ты сам прокопал</strong>, и темнота вокруг. Прогресс не надо читать в цифрах, он нарисован.</p>
+  <p class="note">Первые минут десять это добрая игра про землю, корни и старые монеты. Потом ты находишь то, что тут копали до тебя. Потом становится понятно, почему бросили. Ужас работает только на контрасте: если пугать с первой секунды, к пятой минуте не страшно вообще.</p>
+</section>
 
-  <h3>Варианты названия</h3>
+<section>
+  <p class="eyebrow">Макет</p>
+  <h2>Главный экран</h2>
+  <p>Вот так это выглядит. Вертикально, одинаково работает на телефоне и на компе.</p>
+
+  <figure class="mock">
+    <div class="screen">
+      <div class="hud">
+        <div><span class="k">ГЛУБИНА</span><span class="v lamp">247 м</span></div>
+        <div><span class="k">РУДА</span><span class="v">1.24M</span></div>
+        <div><span class="k">ОСКОЛКИ</span><span class="v">34</span></div>
+      </div>
+      <div class="stage">
+        <canvas data-mock="main" width="144" height="224"></canvas>
+        <span class="float dmg" style="left:31%; top:44%">8.4K</span>
+        <span class="float crit" style="left:57%; top:33%">×10</span>
+        <span class="float ore" style="left:20%; top:62%">+120</span>
+      </div>
+      <div class="dock">
+        <div class="rhythm">
+          <span class="lbl">РИТМ</span>
+          <span class="bar"><i></i></span>
+          <span class="mul">×3.2</span>
+        </div>
+        <div class="skills">
+          <b class="ready">КУР</b><b class="ready">ДИН</b><b class="cd">17</b><b class="ready">ГЛЗ</b><b class="cd">42</b><b class="cd">—</b>
+        </div>
+        <div class="tabs">
+          <span class="on">КИРКА</span><span>БРИГАДА</span><span>ЛАМПА</span><span>ОСКОЛКИ</span>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>Главный экран.</b> Свет — круг вокруг шахтёра. Дальше границы порода нарисована, но не читается: тип не виден, трещины не появляются, жилы не блестят. Слева видна жила руды, справа наверху — трещина, по которой прилетело ×10.</figcaption>
+  </figure>
+
+  <h3>Что где</h3>
   <ul>
-    <li><strong>Забой</strong> — шахтёрский термин и одновременно то, что там происходит.</li>
-    <li><strong>Глубже</strong> — единственная цель игры, вынесенная в название.</li>
-    <li><strong>Стук</strong> — по главному звуку в игре. И по второму главному звуку.</li>
-    <li><strong>Порода</strong> — сухо и двусмысленно.</li>
+    <li><strong>Сверху</strong> — глубина (главный счётчик игры), руда, осколки. Всё.</li>
+    <li><strong>По центру</strong> — шахта. Камера едет за шахтёром, вверх можно отмотать и посмотреть весь свой туннель.</li>
+    <li><strong>Полоска ритма</strong> — прямо под сценой, чтобы видеть её боковым зрением, не отрывая глаз от породы.</li>
+    <li><strong>Шесть кнопок снаряжения</strong> — большие, попадаются пальцем, показывают секунды кулдауна прямо на себе.</li>
+    <li><strong>Четыре вкладки</strong> внизу. Открываются поверх, шахта не пропадает — бригада продолжает копать, ты видишь это краем глаза.</li>
   </ul>
 </section>
 
 <section>
-  <p class="eyebrow">Как выглядит</p>
-  <h2>Экран</h2>
-  <p>Поле — <strong>9 блоков в ширину</strong> и бесконечное вниз. Камера едет за тобой, вверх можно отмотать и посмотреть на весь свой туннель.</p>
+  <p class="eyebrow">Поле</p>
+  <h2>Копать можно куда угодно</h2>
+  <p>Поле — <strong>9 блоков в ширину</strong>, бесконечное вниз, и заметный запас вверх. Долбить можно <strong>любой блок, граничащий с пустотой</strong>, включая диагонали: вниз, вверх, вбок, наискось.</p>
   <ul>
-    <li><strong>Копать можно любой блок, граничащий с пустотой.</strong> То есть ты сам выбираешь направление: строго вниз — быстро, но в лоб; вбок — обойти гранит, дойти до жилы, вскрыть полость.</li>
-    <li><strong>Шахтёр</strong> — маленький спрайт, перепрыгивает в последний прокопанный блок. Он и есть источник света.</li>
-    <li><strong>Свет</strong> — круг вокруг шахтёра, радиус зависит от лампы. За его границей порода нарисована почти чёрным: копать можно, но не видно ни типа блока, ни трещин, ни того, что за ним.</li>
-    <li><strong>Бригада</strong> — нанятые копатели стоят рядом и долбят сами. Они видны. Их можно посчитать глазами.</li>
-    <li><strong>Слева — линейка глубины</strong> в метрах. Это главный счётчик игры, всё остальное вторично.</li>
+    <li><strong>Вниз</strong> — прогресс. Метры и глубина.</li>
+    <li><strong>Вбок</strong> — обойти гранит, дойти до жилы, вскрыть полость. Метры не растут, но денег больше.</li>
+    <li><strong>Наискось</strong> — самый быстрый способ смещаться, но диагональный блок стоит <code>×1.4</code> прочности: за срез надо платить.</li>
+    <li><strong>Вверх</strong> — обычно незачем. Кроме двух случаев: тебя топит и за тобой идут.</li>
   </ul>
-  <p>Вертикальная компоновка, работает на телефоне без переделок: сверху ресурсы и глубина, по центру шахта, снизу кирка / бригада / снаряжение.</p>
+  <p>Шахтёр — маленький спрайт, перепрыгивает в последний прокопанный блок, и он же источник света. Бригада стоит рядом и долбит соседние блоки сама.</p>
+  <p class="note">Свобода копания — это то, что превращает клик из «жми» в «выбирай». Игрок каждые несколько секунд решает: продавливаться вниз или отвернуть за жилой. Это дешёвое решение с точки зрения кода и очень дорогое с точки зрения ощущений.</p>
 </section>
 
 <section>
   <p class="eyebrow">70% игры</p>
   <h2>Удар</h2>
-  <p>Всё, что раньше было боевыми механиками, переезжает в породу — и, честно говоря, садится там лучше.</p>
 
   <div class="card">
-    <p class="card-title">Ритм <span class="tag">бывшее комбо</span></p>
-    <p>Долбишь без пауз — кирка разгоняется. Каждые <strong>8 ударов</strong> множитель <code>+0.25×</code>, потолок <code>×5</code>. Пауза больше <strong>1.5 сек</strong> — сбился, начинай заново. Звук удара поднимается по тону вместе с разгоном, и на пятёрке это уже почти истерика.</p>
+    <p class="card-title">Ритм <span class="tag">непрерывность</span></p>
+    <p>Долбишь без пауз — кирка разгоняется. Каждые <strong>8 ударов</strong> множитель <code>+0.25×</code>, потолок <code>×5</code>. Пауза больше <strong>1.5 сек</strong> — сбился полностью. Тон удара ползёт вверх вместе с разгоном, и на пятёрке это уже почти истерика.</p>
   </div>
 
   <div class="card">
-    <p class="card-title">Трещины <span class="tag">бывшие слабые точки</span></p>
-    <p>На блоке проступает трещина и висит <strong>2 секунды</strong>. Ударил точно в неё — блок раскалывается <em>целиком</em>, вместе с четырьмя соседними. Трещины видно <strong>только в свете лампы</strong>, и автокирка по ним не попадает. Это то, за что игра платит внимательному игроку.</p>
+    <p class="card-title">Трещины <span class="tag">меткость</span></p>
+    <p>На блоке проступает трещина и висит <strong>2 секунды</strong>. Попал точно в неё — блок раскалывается целиком, вместе с четырьмя соседними. Трещины видно <strong>только в свете лампы</strong>, и автокирка по ним не попадает. Это то, за что игра платит внимательному игроку.</p>
   </div>
 
   <div class="card">
-    <p class="card-title">Скол <span class="tag">бывший крит</span></p>
-    <p>5% базовый шанс, <code>×5</code> урона, порода брызжет осколками во все стороны, экран дёргается. Растёт от кирки и Осколков.</p>
+    <p class="card-title">Скол <span class="tag">случайность</span></p>
+    <p>5% базовый шанс, <code>×5</code> урона, порода брызжет осколками, экран дёргается на 6 пикселей.</p>
   </div>
 
   <div class="card">
-    <p class="card-title">Порода <span class="tag">новое</span></p>
-    <p>Блоки разные, и это не косметика. <strong>Земля</strong> — рассыпается с одного удара. <strong>Известняк</strong> — обычный. <strong>Гранит</strong> — ×8 прочности, дешевле обойти. <strong>Жила</strong> — ×20 руды. <strong>Обсидиан</strong> — не берётся киркой вообще, только динамитом. <strong>Пустота</strong> — проход бесплатный, но что-то же её выкопало.</p>
+    <p class="card-title">Порода <span class="tag">выбор</span></p>
+    <p><strong>Земля</strong> — с одного удара. <strong>Известняк</strong> — обычный. <strong>Гранит</strong> — ×8 прочности, дешевле обойти. <strong>Жила</strong> — ×20 руды. <strong>Обсидиан</strong> — киркой не берётся вообще, только динамитом. <strong>Пустота</strong> — проход бесплатный, но что-то же её выкопало.</p>
   </div>
 
   <h3>Снаряжение</h3>
-  <p>Шесть кнопок с кулдаунами вместо боевых скиллов:</p>
-
   <div class="tbl">
     <table>
       <thead>
@@ -522,7 +737,7 @@
       </thead>
       <tbody>
         <tr><td>Кураж</td><td>урон кирки ×3</td><td class="num">15 с</td><td class="num">45 с</td><td class="num">30 м</td></tr>
-        <tr><td>Динамит</td><td>сносит область 3×3 целиком</td><td class="num">—</td><td class="num">40 с</td><td class="num">120 м</td></tr>
+        <tr><td>Динамит</td><td>сносит область 3×3</td><td class="num">—</td><td class="num">40 с</td><td class="num">120 м</td></tr>
         <tr><td>Вспышка</td><td>свет на весь экран</td><td class="num">8 с</td><td class="num">90 с</td><td class="num">250 м</td></tr>
         <tr><td>Жадный глаз</td><td>руда ×5</td><td class="num">20 с</td><td class="num">120 с</td><td class="num">500 м</td></tr>
         <tr><td>Смена</td><td>бригада копает ×3</td><td class="num">25 с</td><td class="num">120 с</td><td class="num">900 м</td></tr>
@@ -533,9 +748,84 @@
 </section>
 
 <section>
+  <p class="eyebrow">Макет</p>
+  <h2>Свет и темнота</h2>
+  <p>Лампа — отдельная ветка прокачки, и она важнее, чем кажется. В темноте копать <em>можно</em>, но не видно типа породы, не появляются трещины, не блестят жилы и не видно, что за стеной.</p>
+
+  <figure class="mock">
+    <div class="screen">
+      <div class="hud">
+        <div><span class="k">ГЛУБИНА</span><span class="v lamp">712 м</span></div>
+        <div><span class="k">РУДА</span><span class="v">44.8M</span></div>
+        <div><span class="k">ОСКОЛКИ</span><span class="v">34</span></div>
+      </div>
+      <div class="stage">
+        <canvas data-mock="dark" width="144" height="224"></canvas>
+        <span class="whisper">ЛАМПА ПОГАСЛА · КЛИКАЙ ПО НЕЙ</span>
+      </div>
+      <div class="dock">
+        <div class="rhythm">
+          <span class="lbl">РИТМ</span>
+          <span class="bar"></span>
+          <span class="mul">×1.0</span>
+        </div>
+        <div class="skills">
+          <b class="cd">—</b><b class="cd">—</b><b class="ready">ВСП</b><b class="cd">—</b><b class="cd">—</b><b class="cd">—</b>
+        </div>
+        <div class="tabs">
+          <span class="on">КИРКА</span><span>БРИГАДА</span><span>ЛАМПА</span><span>ОСКОЛКИ</span>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>Лампа погасла.</b> Пять секунд. Радиус падает до двух блоков, звуки глохнут, кроме дыхания. Ничего при этом не происходит — просто пять секунд темноты. Единственная активная кнопка — Вспышка.</figcaption>
+  </figure>
+
+  <p class="note">Свет — это ещё и то, чем игра управляет вниманием. Всё странное происходит на границе освещённого круга: там, где глаз уже что-то видит, но ещё не разбирает.</p>
+</section>
+
+<section>
   <p class="eyebrow">30% игры</p>
   <h2>Бригада</h2>
-  <p>Нанятые копатели дают урон в секунду по соседним блокам. Цена уровня: <code>база × 1.07^уровень</code>, вехи на <strong>10 / 25 / 50 / 100 / 200</strong> удваивают их выработку.</p>
+  <p>Нанятые копатели долбят соседние блоки сами. Цена уровня: <code>база × 1.07^уровень</code>, вехи на <strong>10 / 25 / 50 / 100 / 200</strong> удваивают выработку.</p>
+
+  <figure class="mock">
+    <div class="screen">
+      <div class="panel">
+        <div class="panel-h">БРИГАДА · 6 ЧЕЛОВЕК</div>
+        <div class="crew-row">
+          <span class="nm">Пацан с лопатой</span>
+          <span class="buy can">340</span>
+          <span class="sub">ур. 42 · 1.2K/с</span>
+        </div>
+        <div class="crew-row">
+          <span class="nm">Землекоп</span>
+          <span class="buy can">2.8K</span>
+          <span class="sub">ур. 38 · 9.5K/с</span>
+        </div>
+        <div class="crew-row">
+          <span class="nm">Крепильщик</span>
+          <span class="buy can">41K</span>
+          <span class="sub">ур. 25 · 31K/с · ВЕХА</span>
+        </div>
+        <div class="crew-row gone">
+          <span class="nm">Рудознатец</span>
+          <span class="buy">12K</span>
+          <span class="sub">нет на месте</span>
+        </div>
+        <div class="crew-row">
+          <span class="nm">Взрывник</span>
+          <span class="buy">1.4M</span>
+          <span class="sub">ур. 9 · 5.4K/с</span>
+        </div>
+        <div class="crew-row">
+          <span class="nm">Ламповщик</span>
+          <span class="buy">18M</span>
+          <span class="sub">не нанят</span>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>Панель бригады.</b> Рудознатец был прокачан до 31 уровня. Теперь его нет, уровни обнулились, нанимать надо заново. Игра не говорит, куда он делся, и никогда не скажет.</figcaption>
+  </figure>
 
   <div class="tbl">
     <table>
@@ -557,85 +847,175 @@
     </table>
   </div>
 
-  <div class="card">
-    <p class="card-title">Бригада пропадает</p>
-    <p>Глубже 400 метров копатели иногда <strong>исчезают</strong>. Не умирают на экране, не кричат — просто в какой-то момент их на один меньше, и в углу появляется строчка: <q>Прошки нет на месте</q>. Ты теряешь его уровни и можешь нанять заново, с нуля.</p>
-    <p>Это одновременно жуть и честная игровая механика: у страха есть цена в цифрах, а значит, его нельзя проигнорировать. Чем глубже — тем чаще. Крепильщик и Глухой Фома снижают шанс.</p>
-  </div>
+  <h3>Бригада пропадает</h3>
+  <p>Глубже 400 метров копатели иногда <strong>исчезают</strong>. Не умирают на экране, не кричат — просто их становится на одного меньше, а в панели появляется строчка «нет на месте». Уровни обнуляются, нанимать заново. Чем глубже — тем чаще; Крепильщик и Глухой Фома снижают шанс.</p>
+  <p>Это одновременно жуть и честная механика: у страха есть цена в цифрах, а значит его нельзя проигнорировать.</p>
 
   <h3>Пока тебя нет</h3>
-  <p>Вернулся — экран сводки: <em>«Смена работала 4 ч 12 мин, прошли 34 метра, добыли 8.2M руды»</em>. Считаем 50% выработки, потолок 8 часов. Иногда в сводке есть <strong>вторая строчка</strong>, которую ты не заказывал.</p>
+  <p>Вернулся — сводка: <em>«Смена работала 4 ч 12 мин, прошли 34 метра, добыли 8.2M руды»</em>. 50% выработки, потолок 8 часов. Иногда в сводке есть <strong>вторая строчка</strong>, которую ты не заказывал.</p>
 </section>
 
 <section>
-  <p class="eyebrow">Главная новая механика</p>
-  <h2>Свет</h2>
-  <p>Лампа — отдельная ветка прокачки, и она важнее, чем кажется. В темноте ты <em>можешь</em> копать, но:</p>
+  <p class="eyebrow">Главное</p>
+  <h2>Аномалии</h2>
+  <p>Изредка — <strong>без всяких условий, чистый рандом</strong> — в породе попадается блок, который выглядит не так. Он не подсвечен, не помечен, о нём нет подсказки. Просто чуть-чуть другой оттенок, чуть-чуть неправильная текстура. Половина игроков разобьёт его, не заметив.</p>
+  <p>Разбил — и ты не в своей шахте. Ты в <strong>кармане</strong>: закрытая область на 20–60 блоков со своими правилами. Прокопался наружу — вернулся в обычную шахту, как будто ничего не было. Никаких объяснений, ни до, ни после.</p>
+
+  <figure class="mock">
+    <div class="screen">
+      <div class="hud">
+        <div><span class="k">ГЛУБИНА</span><span class="v lamp">— м</span></div>
+        <div><span class="k">РУДА</span><span class="v">44.8M</span></div>
+        <div><span class="k">ОСКОЛКИ</span><span class="v">34</span></div>
+      </div>
+      <div class="stage">
+        <canvas data-mock="pocket" width="144" height="224"></canvas>
+        <span class="whisper bad">·</span>
+      </div>
+      <div class="dock">
+        <div class="rhythm">
+          <span class="lbl">РИТМ</span>
+          <span class="bar"></span>
+          <span class="mul">×1.0</span>
+        </div>
+        <div class="skills">
+          <b class="ready">КУР</b><b class="ready">ДИН</b><b class="ready">ВСП</b><b class="ready">ГЛЗ</b><b class="ready">СМЕ</b><b class="ready">КРП</b>
+        </div>
+        <div class="tabs">
+          <span class="on">КИРКА</span><span>БРИГАДА</span><span>ЛАМПА</span><span>ОСКОЛКИ</span>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>Карман «Комната».</b> Ровные стены, дверной проём, который не открывается. Счётчик глубины показывает прочерк — игра не знает, где ты. Бригады рядом нет. Кулдауны все обнулились, хотя ты их только что тратил.</figcaption>
+  </figure>
+
+  <h3>Виды карманов</h3>
   <ul>
-    <li>не видно типа породы — воткнёшься в гранит и потеряешь минуту;</li>
-    <li>не появляются трещины — теряешь главный источник урона;</li>
-    <li>не видно жил и находок — копаешь мимо денег;</li>
-    <li>не видно, что в полости, пока не влез в неё.</li>
+    <li><strong>Комната.</strong> Ровные стены, стол, стул, дверной проём. Дверь не открывается никогда.</li>
+    <li><strong>Лестница.</strong> Идеальные ступени вниз. Ведёт на 200 метров глубже мгновенно — бесплатный прогресс, от которого неуютно.</li>
+    <li><strong>Отражение.</strong> Точная копия куска твоей же шахты, включая туннель, который ты копал десять минут назад. Только бригады в нём нет.</li>
+    <li><strong>Пусто.</strong> Огромная чёрная полость, свет не достаёт до стен. Идёшь минуту. Ничего.</li>
+    <li><strong>Сад.</strong> Порода тёплых оттенков, мягкая, всё медленно пульсирует. Руды даёт втрое больше обычного.</li>
+    <li><strong>Архив.</strong> Стены сложены из блоков-дневников. Каждый разбитый даёт запись. Записи не про эту шахту.</li>
+    <li><strong>Он.</strong> Пустая комната, в центре один блок. Разбиваешь. Ничего не происходит. Совсем ничего.</li>
   </ul>
-  <p>Поэтому лампу качают. И поэтому <strong>самое неприятное, что может случиться, — она гаснет.</strong> Редкое событие: экран уходит почти в чёрное, остаётся кружок в два блока, звуки глохнут, кроме дыхания. Чтобы раздуть обратно, надо быстро кликать по лампе. Секунд пять. Ничего при этом не происходит — просто пять секунд темноты.</p>
-  <p class="note">Свет — это ещё и то, чем игра управляет твоим вниманием. Всё страшное происходит на границе освещённого круга, где глаз уже что-то видит, но ещё не разбирает.</p>
+
+  <h3>Странные слои</h3>
+  <p>Иногда неправильным оказывается не блок, а <strong>целый горизонт</strong> метров на двадцать-тридцать. Тоже без условий, тоже случайно:</p>
+  <ul>
+    <li><strong>Ровный слой</strong> — идеальные кубы одинаковой прочности, ни одной трещины. Как будто нарезано.</li>
+    <li><strong>Зарастающий слой</strong> — копаешь, а за спиной туннель медленно затягивается. Обернулся — пути назад нет.</li>
+    <li><strong>Тихий слой</strong> — в нём просто нет звука. Ни ударов, ни бригады. Ничего.</li>
+    <li><strong>Слой, который смотрит</strong> — в текстуре породы среди шума иногда складываются глаза. Не спрайт, не событие: просто шум, который иногда так выпадает.</li>
+    <li><strong>Мокрый слой</strong> — стены влажные и тёплые. Руда с них идёт красная.</li>
+  </ul>
+
+  <p class="note">Ключевое правило аномалий: <strong>игра не признаёт, что они были</strong>. Нет достижения «вы нашли карман», нет записи в логе, нет счётчика. Вышел — и доказать нечем. В списке достижений есть одна строка «<code>???</code>», которая не открывается никогда, и это единственный намёк на то, что тебе не показалось.</p>
+</section>
+
+<section>
+  <p class="eyebrow">То, чего ты не видишь</p>
+  <h2>Глитчи</h2>
+  <p>Второй слой ужаса — сбои самой игры. Игрок пялится в экран часами и начинает ему доверять. Вот это доверие мы и ломаем.</p>
+
+  <figure class="mock">
+    <div class="screen">
+      <div class="hud">
+        <div><span class="k">ГЛУБИНА</span><span class="v lamp tight">1013 м (нас двое)</span></div>
+        <div><span class="k">РУДА</span><span class="v">88.1M</span></div>
+        <div><span class="k">ОСКОЛКИ</span><span class="v">34</span></div>
+      </div>
+      <div class="stage">
+        <canvas data-mock="glitch" width="144" height="224"></canvas>
+        <span class="float bad" style="left:12%; top:22%">—</span>
+      </div>
+      <div class="dock">
+        <div class="rhythm">
+          <span class="lbl">РИТМ</span>
+          <span class="bar"><i style="inset:0 78% 0 0"></i></span>
+          <span class="mul">×1.5</span>
+        </div>
+        <div class="skills">
+          <b class="ready">КУР</b><b class="ready">ДИН</b><b class="cd">17</b><b class="ready">ГЛЗ</b><b class="cd">42</b><b class="cd">—</b>
+        </div>
+        <div class="tabs">
+          <span class="on">КИРКА</span><span>БРИГАДА</span><span>ЛАМПА</span><span>ОСКОЛКИ</span>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>Один кадр.</b> Порода съехала на четыре пикселя, в стене на границе света проступило лицо, счётчик глубины дописал себе скобку. Через 1/30 секунды всё на месте. Скриншот такое почти не ловит — запись ловит.</figcaption>
+  </figure>
+
+  <h3>Что именно сбоит</h3>
+  <ul>
+    <li>Текстура блока на 1–2 кадра подменяется <strong>лицом</strong>. Всегда на периферии, никогда там, куда ты целишься.</li>
+    <li>Порода <strong>съезжает полосами</strong>, как битый сигнал, и тут же встаёт на место.</li>
+    <li>Игра <strong>«подвисает» на 300 мс</strong>. Это не лаг, это сделано специально. Потом продолжается как ни в чём не бывало.</li>
+    <li>Счётчик глубины на кадр показывает <strong>другое число</strong>. Или то же самое, но с припиской.</li>
+    <li>Кнопка снаряжения на кадр <strong>меняет надпись</strong> на слово, которого в игре нет.</li>
+    <li>Кирка на кадр оказывается <strong>не там, куда ты кликнул</strong>.</li>
+    <li>Один пиксель на экране становится цвета «нечто» и <strong>не меняется обратно</strong> до перезагрузки страницы.</li>
+    <li>Панель бригады на долю секунды показывает <strong>лишнюю строку</strong>. Без имени.</li>
+  </ul>
+
+  <p class="note">Железное правило: <strong>глитчи никогда ни на что не влияют.</strong> Ничего не ломается, ничего не теряется, прогресс не страдает. Именно поэтому страшно — потому что доказать нельзя, и потому что игрок не может решить, баг это или задумано. Как только сбой отнимает хоть единицу руды, он превращается в претензию к разработчику, и весь эффект пропадает.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Правила</p>
+  <h2>Как пугать, не ломая кликер</h2>
+  <ol>
+    <li><strong>Никаких скримеров в момент клика.</strong> Игрок долбит по 8 раз в секунду; резкий вопль в ответ на удар читается как баг и как издевательство, а не как страх.</li>
+    <li><strong>Пугаем на периферии.</strong> На границе света, в углу экрана, в строчке панели, в звуке. Никогда не в центре и никогда не крупно.</li>
+    <li><strong>Событие ничего не требует.</strong> Самое жуткое — то, на что нельзя нажать.</li>
+    <li><strong>Игра ничего не объясняет.</strong> Ни всплывашек, ни лога, ни лора «что это было».</li>
+    <li><strong>Интерфейс делает вид, что всё нормально.</strong> Счётчики спокойны, кнопки на месте. Ужас, который UI не признаёт, работает вдвое сильнее.</li>
+    <li><strong>Первые 10 минут — ничего.</strong> Совсем. Игра честно притворяется милой.</li>
+    <li><strong>Никогда не повторять эффект дважды подряд.</strong> Предсказал — страх кончился, осталось раздражение.</li>
+    <li><strong>Ужас ничего не отнимает.</strong> Кроме пропажи копателей — единственного исключения, и оно нарочно сделано тихим и обратимым.</li>
+    <li><strong>В настройках есть «спокойный режим».</strong> Выключает слой целиком, игра остаётся полноценным кликером. Кто-то захочет просто копать — это нормально.</li>
+  </ol>
+
+  <h3>Когда что</h3>
+  <ul class="log">
+    <li><span class="when">~200 м</span><span class="what">Стук. Ты бьёшь — и через секунду где-то в породе стучат в ответ, один раз.</span></li>
+    <li><span class="when">~300 м</span><span class="what">Разбил блок — за ним, на границе света, глаз. Один пиксель. Через кадр его нет.</span></li>
+    <li><span class="when">~400 м</span><span class="what">Из бригады пропадает копатель.</span></li>
+    <li><span class="when">~500 м</span><span class="what">Все звуки выключаются на десять секунд. Кирка бьёт беззвучно.</span></li>
+    <li><span class="when">~600 м</span><span class="what">Первый глитч: порода съезжает полосами и встаёт на место.</span></li>
+    <li><span class="when">~700 м</span><span class="what">Гаснет лампа.</span></li>
+    <li><span class="when">~800 м</span><span class="what">Блок кровоточит. Руда с него обычная.</span></li>
+    <li><span class="when">~1000 м</span><span class="what">Счётчик глубины на кадр показывает <q>1013 м (нас двое)</q>.</span></li>
+    <li><span class="when">~1200 м</span><span class="what">За неоткрытой породой на секунду проходит силуэт. Он не в твоём туннеле — он в камне.</span></li>
+    <li><span class="when">~1500 м</span><span class="what">В дневнике предыдущей смены появляется запись, датированная завтрашним числом.</span></li>
+    <li><span class="when">глубже</span><span class="what">Твари почти исчезают. Полости становятся больше и пустее. Очень долго не происходит ничего.</span></li>
+  </ul>
+  <p class="note">Последний пункт — самый важный. Обычно игры на глубине наваливают монстров; мы наоборот убираем. Пустая шахта, где давно ничего не случалось, страшнее любой твари — потому что игрок уже знает, что тут что-то есть.</p>
 </section>
 
 <section>
   <p class="eyebrow">Что в породе</p>
   <h2>Полости и находки</h2>
-  <p>Иногда за блоком оказывается пустота. Что в ней:</p>
   <ul>
-    <li><strong>Жила</strong> — гроздь рудных блоков. Чистая радость, много денег.</li>
-    <li><strong>Тварь</strong> — вылезает и грызёт бригаду (минус выработка, пока жива). Закликивается насмерть. Это единственный «бой» в игре, и он редкий — тем и ценен.</li>
-    <li><strong>Комната</strong> — стол, стул, кости, каска, дневник. Лут плюс кусок лора. Дневники идут по порядку и складываются в историю предыдущей смены.</li>
-    <li><strong>Вода</strong> — начинает затапливать снизу, надо срочно копать вверх или вбок. Смена ритма.</li>
-    <li><strong>Ничего.</strong> Просто полость. Иногда — очень большая, метров на двадцать, и ты падаешь через неё вниз без единого удара. Внутри пусто. Совсем.</li>
+    <li><strong>Жила</strong> — гроздь рудных блоков. Чистая радость.</li>
+    <li><strong>Тварь</strong> — вылезает и грызёт бригаду, пока жива. Закликивается насмерть. Единственный «бой» в игре, и он редкий — тем и ценен.</li>
+    <li><strong>Комната</strong> — стол, кости, каска, дневник. Лут плюс кусок лора. Дневники идут по порядку и складываются в историю предыдущей смены.</li>
+    <li><strong>Вода</strong> — затапливает снизу, надо срочно копать вверх или вбок.</li>
+    <li><strong>Ничего.</strong> Просто полость. Иногда очень большая, и ты проваливаешься через неё вниз без единого удара.</li>
   </ul>
-  <p>И примерно раз на слой — <strong>погоня</strong>: снизу что-то поднимается, и надо за 40 секунд прокопать 15 метров <em>вверх или вбок</em>. Не успел — теряешь часть бригады и половину несданной руды. Это единственный момент, когда игра просит копать не вниз, и именно поэтому он запоминается.</p>
-</section>
-
-<section>
-  <p class="eyebrow">Правила ужаса</p>
-  <h2>Как пугать, не ломая кликер</h2>
-  <p>Тут легко всё испортить, поэтому фиксирую жёстко.</p>
-  <ol>
-    <li><strong>Никаких скримеров в момент клика.</strong> Игрок долбит по 8 раз в секунду — резкий вопль в ответ на удар читается как баг и как издевательство, а не как страх.</li>
-    <li><strong>Пугаем в паузах и на периферии.</strong> На границе света, в углу экрана, в строчке лога, в звуке. Никогда не в центре и никогда не крупно.</li>
-    <li><strong>Событие ничего от тебя не требует.</strong> Ты не обязан реагировать. Самое жуткое — то, на что нельзя нажать.</li>
-    <li><strong>Игра ничего не объясняет.</strong> Нет всплывашки «вы встретили Существо». Есть только то, что ты успел увидеть, и ощущение, что тебе показалось.</li>
-    <li><strong>Интерфейс делает вид, что всё нормально.</strong> Счётчики спокойны, кнопки на месте. Ужас, который UI не признаёт, работает вдвое сильнее.</li>
-    <li><strong>Первые 10 минут — ничего.</strong> Совсем. Игра честно притворяется милой. Первая странность — около 200 метров.</li>
-    <li><strong>Никогда не повторять один и тот же эффект дважды подряд.</strong> Как только игрок предсказал — страх кончился, осталось раздражение.</li>
-    <li><strong>В настройках есть «спокойный режим».</strong> Выключает весь слой целиком, игра остаётся полноценным кликером. Кто-то захочет просто копать — и это нормально.</li>
-  </ol>
-
-  <h3>Что именно происходит</h3>
-  <ul class="log">
-    <li><span class="when">~200 м</span><span class="what">Стук. Ты бьёшь — и через секунду где-то в породе стучат в ответ, один раз. Больше ничего.</span></li>
-    <li><span class="when">~300 м</span><span class="what">Разбил блок — за ним, на границе света, глаз. Один пиксель. Через кадр его нет.</span></li>
-    <li><span class="when">~400 м</span><span class="what">Из бригады пропадает копатель. В логе: <q>Прошки нет на месте</q>.</span></li>
-    <li><span class="when">~500 м</span><span class="what">Все звуки выключаются на десять секунд. Кирка бьёт беззвучно. Потом возвращаются.</span></li>
-    <li><span class="when">~700 м</span><span class="what">Гаснет лампа.</span></li>
-    <li><span class="when">~800 м</span><span class="what">Блок кровоточит. Обычный блок, обычная руда с него.</span></li>
-    <li><span class="when">~1000 м</span><span class="what">Счётчик глубины на один кадр показывает <q>1013 м (нас двое)</q>. Скриншот не поймает.</span></li>
-    <li><span class="when">~1200 м</span><span class="what">За неоткрытой породой на секунду проходит силуэт. Он не в твоём туннеле — он в камне.</span></li>
-    <li><span class="when">~1500 м</span><span class="what">В дневнике предыдущей смены появляется запись, датированная завтрашним числом.</span></li>
-    <li><span class="when">глубже</span><span class="what">Твари почти исчезают. Полости становятся больше и пустее. Ничего не происходит очень долго.</span></li>
-  </ul>
-  <p class="note">Последний пункт — самый важный. Обычно игры на глубине наваливают монстров; мы наоборот убираем. Пустая шахта, в которой давно ничего не случалось, страшнее любой твари, потому что игрок уже знает: тут что-то есть.</p>
+  <p>Примерно раз на слой — <strong>погоня</strong>: снизу что-то поднимается, надо за 40 секунд прокопать 15 метров <em>вверх или вбок</em>. Не успел — теряешь часть бригады и половину несданной руды. Единственный момент, когда игра просит копать не вниз, и именно поэтому он запоминается.</p>
+  <p class="note">Проиграть в «Забое» нельзя. Худшее, что бывает — потерять людей и руду. Игра никогда не отнимает забег целиком: это кликер, а не рогалик, и наказание здесь убивает желание вернуться.</p>
 </section>
 
 <section>
   <p class="eyebrow">Куда идём</p>
   <h2>Глубина</h2>
-
   <div class="shaft">
     <div class="shaft-row"><div class="d">0 — 150 м</div><div class="l"><b>Земля и корни</b><span>Червяки, жуки, старые монеты, чей-то ботинок. Тепло и уютно.</span></div></div>
     <div class="shaft-row"><div class="d">150 — 400 м</div><div class="l"><b>Известняк</b><span>Кости животных в стенах. Первый стук в ответ.</span></div></div>
     <div class="shaft-row"><div class="d">400 — 800 м</div><div class="l"><b>Чужая шахта</b><span>Рельсы, каски, крепь, дневники. Здесь уже копали — и ушли быстро.</span></div></div>
-    <div class="shaft-row"><div class="d">800 — 1500 м</div><div class="l"><b>Тёплая порода</b><span>Стены тёплые на ощупь. Местами пульсируют. Пахнет железом.</span></div></div>
-    <div class="shaft-row deep"><div class="d">1500 — 2500 м</div><div class="l"><b>Город</b><span>Ступени, дверные проёмы, ровные углы. На глубине, где их быть не может.</span></div></div>
+    <div class="shaft-row"><div class="d">800 — 1500 м</div><div class="l"><b>Тёплая порода</b><span>Стены тёплые. Местами пульсируют. Пахнет железом.</span></div></div>
+    <div class="shaft-row deep"><div class="d">1500 — 2500 м</div><div class="l"><b>Город</b><span>Ступени, дверные проёмы, ровные углы. Там, где их быть не может.</span></div></div>
     <div class="shaft-row deep"><div class="d">2500 — 4000 м</div><div class="l"><b>Гнездо</b><span>Пусто. Очень аккуратно пусто.</span></div></div>
     <div class="shaft-row deep"><div class="d">4000 — 6000 м</div><div class="l"><b>Оно спит</b><span>Порода поднимается и опускается. Медленно.</span></div></div>
     <div class="shaft-row deep"><div class="d">6000 м и ниже</div><div class="l"><b>Оно знает</b><span>Лампа больше не гаснет. Незачем.</span></div></div>
@@ -645,7 +1025,6 @@
 <section>
   <p class="eyebrow">Цифры</p>
   <h2>Экономика</h2>
-
   <div class="tbl">
     <table>
       <thead>
@@ -654,6 +1033,7 @@
       <tbody>
         <tr><td>Прочность блока на глубине D</td><td>5 × 1.028^D</td></tr>
         <tr><td>Гранит / обсидиан</td><td>×8 / ×60</td></tr>
+        <tr><td>Диагональный удар</td><td>×1.4 прочности</td></tr>
         <tr><td>Руда с блока</td><td>прочность / 8</td></tr>
         <tr><td>Руда с жилы</td><td>обычная × 20</td></tr>
         <tr><td>Урон кирки</td><td>(1 + кирка) × ритм × скол × (1 + осколки)</td></tr>
@@ -661,11 +1041,11 @@
         <tr><td>Цена уровня лампы</td><td>200 × 1.35^уровень</td></tr>
         <tr><td>Цена копателя</td><td>база × 1.07^уровень</td></tr>
         <tr><td>Осколки за обвал</td><td>⌊3 × (глубина / 150)^1.7⌋</td></tr>
+        <tr><td>Шанс аномального блока</td><td>~1 на 2000 блоков, растёт с глубиной</td></tr>
       </tbody>
     </table>
   </div>
-
-  <p>Проверка: 150 м дают <strong>3 осколка</strong>, 500 м — <strong>22</strong>, 1000 м — <strong>72</strong>, 2000 м — <strong>234</strong>. Осколок = <code>+2%</code> к урону кирки навсегда, так что первый спуск заново до 150 метров занимает не двадцать минут, а полторы.</p>
+  <p>Проверка: 150 м дают <strong>3 осколка</strong>, 500 м — <strong>22</strong>, 1000 м — <strong>72</strong>, 2000 м — <strong>234</strong>. Осколок = <code>+2%</code> к урону кирки навсегда, так что повторный спуск до 150 метров занимает не двадцать минут, а полторы.</p>
 
   <h3>Ритм первого часа</h3>
   <ul>
@@ -675,7 +1055,7 @@
     <li><strong>4:00</strong> — первый гранит: понял, что можно копать вбок.</li>
     <li><strong>8:00</strong> — первая полость. Внутри стол и кости.</li>
     <li><strong>12:00</strong> — 200 метров. <em>Стук.</em></li>
-    <li><strong>20:00</strong> — упёрся в породу. Игра предлагает обвалить шахту.</li>
+    <li><strong>20:00</strong> — упёрся. Игра предлагает обвалить шахту.</li>
     <li><strong>22:00</strong> — новая шахта, всё летит вчетверо быстрее. Крючок захлопнулся.</li>
   </ul>
 </section>
@@ -683,7 +1063,26 @@
 <section>
   <p class="eyebrow">Мета</p>
   <h2>Обвал</h2>
-  <p>С 150 метров доступно <strong>«Обрушить шахту»</strong>. Руда, кирка, лампа и бригада обнуляются, глубина сбрасывается в ноль. Взамен — <strong>Осколки</strong>: то, что ты успел вынести. Они не сгорают никогда.</p>
+  <p>С 150 метров доступно <strong>«Обрушить шахту»</strong>. Руда, кирка, лампа и бригада обнуляются, глубина в ноль. Взамен — <strong>Осколки</strong>, которые не сгорают никогда.</p>
+
+  <figure class="mock">
+    <div class="screen">
+      <div class="collapse">
+        <div class="t">ОБРУШИТЬ ШАХТУ</div>
+        <div class="big">23<small>ОСКОЛКА</small></div>
+        <div class="loses">
+          <span>−  руда 44.8M</span>
+          <span>−  кирка ур. 61</span>
+          <span>−  лампа ур. 9</span>
+          <span>−  бригада 6 чел.</span>
+          <span>+  +46% урон навсегда</span>
+          <span>+  туннель в архив</span>
+        </div>
+        <div class="btn">ОБРУШИТЬ</div>
+      </div>
+    </div>
+    <figcaption><b>Экран обвала.</b> Всё, что теряешь, показано явно и без утешений — а справа то, что остаётся. Игрок должен видеть обмен целиком, иначе первый престиж ощущается как ограбление.</figcaption>
+  </figure>
 
   <div class="tbl">
     <table>
@@ -698,28 +1097,28 @@
         <tr><td>Фитиль</td><td>−2% ко всем кулдаунам</td><td>−60%</td></tr>
         <tr><td>Автокирка</td><td>+1 удар/сек</td><td>10/сек</td></tr>
         <tr><td>Глаз</td><td>трещины чаще и держатся дольше</td><td>×3</td></tr>
-        <tr><td>Фитиль лампы</td><td>+радиус света, лампа гаснет реже</td><td>—</td></tr>
+        <tr><td>Лампа</td><td>+радиус света, гаснет реже</td><td>—</td></tr>
       </tbody>
     </table>
   </div>
 
-  <p class="note">Автокирка стоит дорого и упирается в 10 ударов/сек: её работа — избавлять от рутины в мягкой породе, а не заменять тебя на глубине. Трещины она не видит, как и всё остальное, что требует смотреть на экран.</p>
+  <p class="note">Автокирка стоит дорого и упирается в 10 ударов/сек: её работа — убирать рутину в мягкой породе, а не заменять тебя на глубине. Трещины она не видит, как и всё остальное, что требует смотреть на экран.</p>
 
   <h3>Что остаётся между забегами</h3>
-  <p>Осколки, достижения, <strong>прочитанные дневники</strong> и <strong>карта старых шахт</strong>: все твои прошлые туннели остаются в отдельном экране, слоями. К десятому забегу это выглядит как кладбище твоих попыток — и это единственное место, где игра позволяет собой полюбоваться.</p>
+  <p>Осколки, достижения, прочитанные дневники и <strong>архив шахт</strong>: все прошлые туннели лежат отдельным экраном, слоями. К десятому забегу это выглядит как кладбище твоих попыток — единственное место, где игра позволяет собой полюбоваться.</p>
 </section>
 
 <section>
   <p class="eyebrow">Почему это приятно</p>
   <h2>Сочность</h2>
   <ul>
-    <li>Блок трескается в три стадии, видно, что осталось чуть-чуть.</li>
+    <li>Блок трескается в три стадии — видно, что осталось чуть-чуть.</li>
     <li>Осколки породы разлетаются с гравитацией и оседают на дне туннеля. Не исчезают.</li>
     <li>Тряска экрана: 1–2 пикселя обычно, 6 на сколе, 12 на динамите.</li>
-    <li>Пыль столбом после каждого разбитого блока, медленно оседает в свете лампы.</li>
-    <li>Звук удара разный по породе: земля — глухо, известняк — звонко, гранит — визг металла.</li>
+    <li>Пыль столбом после каждого блока, медленно оседает в свете лампы.</li>
+    <li>Звук удара разный по породе: земля глухо, известняк звонко, гранит — визг металла.</li>
     <li>Тон удара ползёт вверх вместе с ритмом.</li>
-    <li>Свет лампы чуть дрожит. Всегда. Это половина атмосферы.</li>
+    <li>Свет лампы всегда чуть дрожит. Это половина атмосферы.</li>
     <li>Счётчик метров не перескакивает, а прокручивается.</li>
     <li>Руда сыпется монетками и втягивается в счётчик.</li>
     <li>Апгрейд, который по карману, подсвечен. Всегда видно, куда нажать.</li>
@@ -729,9 +1128,9 @@
 <section>
   <p class="eyebrow">Как рисуем</p>
   <h2>Арт</h2>
-  <p>Пиксель-арт, блоки <strong>16×16</strong>, спрайты рисуем массивами строк прямо в коде — без внешних файлов. Девять цветов на всю игру; слои различаются перекраской, а не новой палитрой.</p>
+  <p>Пиксель-арт, блоки <strong>16×16</strong>, спрайты — массивы строк прямо в коде, без внешних файлов. Девять цветов на всю игру; слои различаются перекраской, а не новой палитрой.</p>
   <ul class="swatches" id="palette"></ul>
-  <p>Цвет <strong>«нечто»</strong> — служебный: он не встречается в породе никогда. Если он появился на экране, значит появилось что-то ещё. Игрок это считает подсознательно задолго до того, как поймёт.</p>
+  <p>Цвет <strong>«нечто»</strong> — служебный: в нормальной породе он не встречается никогда. Если он появился на экране, значит появилось что-то ещё. Игрок считывает это подсознательно задолго до того, как поймёт.</p>
 </section>
 
 <section>
@@ -739,102 +1138,86 @@
   <h2>Техника</h2>
   <ul>
     <li><strong>Чистый HTML/CSS/JS</strong>, ES-модули, без сборщика и зависимостей. Открыл файл — играешь.</li>
-    <li><strong>Canvas</strong> для шахты (блоки, свет, пыль, осколки), <strong>DOM</strong> для панелей.</li>
+    <li><strong>Canvas</strong> для шахты, <strong>DOM</strong> для панелей.</li>
     <li>Свет — маска поверх сцены, не попиксельное освещение. Дёшево и выглядит правильно.</li>
-    <li>Мир — процедурный по seed'у: одинаковый seed даёт одинаковую шахту, можно делиться.</li>
-    <li>Держим в памяти только видимую часть плюс запас; туннель для карты пишем сжато.</li>
+    <li>Мир процедурный по seed'у: одинаковый seed даёт одинаковую шахту.</li>
+    <li>Глитчи — отдельный модуль поверх рендера, у которого <strong>нет доступа к состоянию игры</strong>. Архитектурная гарантия, что он ничего не сломает.</li>
     <li><strong>Сохранение</strong> в <code>localStorage</code> каждые 5 секунд, плюс экспорт строкой.</li>
-    <li><strong>Звук</strong> — WebAudio, синтез на месте. Никаких файлов, нулевой вес.</li>
+    <li><strong>Звук</strong> — WebAudio, синтез на месте. Никаких файлов.</li>
     <li>Ни серверов, ни аккаунтов, ни аналитики. Работает офлайн.</li>
   </ul>
-  <p>Файлы: <code>index.html</code>, <code>style.css</code>, <code>src/</code> — <code>game.js</code>, <code>world.js</code>, <code>dig.js</code>, <code>crew.js</code>, <code>light.js</code>, <code>dread.js</code>, <code>render.js</code>, <code>audio.js</code>, <code>save.js</code>, <code>ui.js</code>.</p>
+  <p>Файлы: <code>index.html</code>, <code>style.css</code>, <code>src/</code> — <code>game.js</code>, <code>world.js</code>, <code>dig.js</code>, <code>crew.js</code>, <code>light.js</code>, <code>anomaly.js</code>, <code>glitch.js</code>, <code>render.js</code>, <code>audio.js</code>, <code>save.js</code>, <code>ui.js</code>.</p>
 </section>
 
 <section>
   <p class="eyebrow">Порядок работ</p>
   <h2>Роадмап</h2>
-  <p>Каждый этап заканчивается версией, в которую можно играть.</p>
-
-  <div class="stage">
+  <div class="stage-row">
     <div class="n">1</div>
     <div>
       <h4>Копка <span class="mvp">MVP</span></h4>
-      <p>Поле блоков, клик, прочность, руда, глубина, типы породы, кирка, три копателя, сохранение. Некрасиво, но уже затягивает.</p>
+      <p>Поле блоков, клик в восьми направлениях, прочность, руда, глубина, типы породы, кирка, три копателя, сохранение.</p>
     </div>
   </div>
-  <div class="stage">
+  <div class="stage-row">
     <div class="n">2</div>
     <div>
       <h4>Ощущение</h4>
       <p>Свет и лампа, ритм, трещины, сколы, пыль, осколки, тряска, звук породы. После этого этапа долбить становится физически приятно.</p>
     </div>
   </div>
-  <div class="stage">
+  <div class="stage-row">
     <div class="n">3</div>
     <div>
       <h4>Шахта живая</h4>
       <p>Полости, жилы, комнаты, дневники, твари, вода, погоня, снаряжение с кулдаунами, оффлайн-смена.</p>
     </div>
   </div>
-  <div class="stage">
+  <div class="stage-row">
     <div class="n">4</div>
     <div>
       <h4>Обвал</h4>
-      <p>Престиж, Осколки, ветви, автокирка, карта старых шахт. Игра становится недельной.</p>
+      <p>Престиж, осколки, ветви, автокирка, архив шахт.</p>
     </div>
   </div>
-  <div class="stage">
+  <div class="stage-row">
     <div class="n">5</div>
     <div>
       <h4>Глубина</h4>
-      <p>Восемь слоёв, слой ужаса целиком, спокойный режим, достижения, лор дневников, полировка баланса.</p>
+      <p>Восемь слоёв, аномалии, карманы, странные слои, глитч-модуль, спокойный режим, достижения, лор дневников.</p>
     </div>
   </div>
   <p class="note">Слой ужаса стоит последним осознанно. Он работает только поверх игры, в которую уже приятно играть: если долбить породу скучно, никакая жуть это не спасёт.</p>
 </section>
 
 <section>
-  <p class="eyebrow">Твоё слово</p>
-  <h2>Что решить</h2>
-
-  <div class="q">
-    <p class="ask">Название?</p>
-    <p class="why">Забой / Глубже / Стук / Порода — или своё.</p>
-  </div>
-  <div class="q">
-    <p class="ask">Насколько далеко заходим по жути?</p>
-    <p class="why">Тревожно и странно (ничего явного, всё на намёках) — или ближе к настоящему хоррору с тварями, кровью и погонями? Я расписал середину.</p>
-  </div>
-  <div class="q">
-    <p class="ask">Есть ли смерть?</p>
-    <p class="why">Пока в игре нельзя проиграть — худшее, что бывает, это потеря бригады. Добавить настоящий провал (шахта хоронит тебя, забег кончается) — станет напряжённее, но кликер станет злее.</p>
-  </div>
-  <div class="q">
-    <p class="ask">Свободное копание или только вниз?</p>
-    <p class="why">Свобода интереснее и даёт тактику, но требует от игрока решений каждую секунду. Строго вниз — проще и медитативнее.</p>
-  </div>
-  <div class="q">
-    <p class="ask">Телефон или комп?</p>
-    <p class="why">Приоритет по вёрстке и по тому, насколько важна точность попадания по трещинам.</p>
-  </div>
+  <p class="eyebrow">Решено</p>
+  <h2>Что уже зафиксировано</h2>
+  <ul>
+    <li>Название — <strong>ЗАБОЙ</strong>.</li>
+    <li>Градус — <strong>странно и тревожно</strong>. Никакого мяса, всё на намёках, глитчах и том, чего не видно.</li>
+    <li><strong>Проиграть нельзя.</strong> Только потери.</li>
+    <li>Копать можно <strong>во все восемь сторон</strong>, диагональ дороже.</li>
+    <li>Аномальные блоки и странные слои — <strong>чистый рандом без условий</strong>.</li>
+  </ul>
 </section>
 
 <hr class="end">
-<p class="colophon">Забой · дизайн-док v0.2 · документ живой, правится по ходу</p>
+<p class="colophon">Забой · дизайн-док v0.3 · документ живой, правится по ходу</p>
 
 </div>
 
 <script>
   const PALETTE = [
-    ["мрак",    "#0d0b11"],
-    ["порода",  "#2a2333"],
-    ["камень",  "#453b52"],
-    ["земля",   "#5c4433"],
-    ["пыль",    "#9a8fa8"],
-    ["лампа",   "#ffc14d"],
-    ["руда",    "#4fb3d9"],
-    ["кровь",   "#a3283a"],
-    ["нечто",   "#6b2f8f"]
+    ["мрак",   "#0d0b11"],
+    ["порода", "#2a2333"],
+    ["камень", "#453b52"],
+    ["земля",  "#5c4433"],
+    ["пыль",   "#9a8fa8"],
+    ["лампа",  "#ffc14d"],
+    ["руда",   "#4fb3d9"],
+    ["кровь",  "#a3283a"],
+    ["нечто",  "#6b2f8f"]
   ];
 
   const list = document.getElementById("palette");
@@ -853,7 +1236,7 @@
     list.append(li);
   }
 
-  // Спрайты хранятся так же, как будут храниться в игре: массив строк + палитра.
+  // Спрайты — массив строк + палитра. Ровно так же они будут храниться в игре.
   const LANTERN = [
     "................",
     ".......aa.......",
@@ -872,16 +1255,229 @@
     "................",
     "................"
   ];
-  const KEY = { a: "#2a2333", b: "#8a6520", l: "#ffc14d", w: "#fff6dd" };
+  const LKEY = { a: "#2a2333", b: "#8a6520", l: "#ffc14d", w: "#fff6dd" };
 
-  const cv = document.getElementById("sprite");
-  const ctx = cv.getContext("2d");
-  LANTERN.forEach((row, y) => {
-    [...row].forEach((ch, x) => {
-      if (KEY[ch]) {
-        ctx.fillStyle = KEY[ch];
-        ctx.fillRect(x, y, 1, 1);
-      }
+  function blit(ctx, rows, key, ox, oy, alpha) {
+    ctx.save();
+    if (alpha != null) ctx.globalAlpha = alpha;
+    rows.forEach((row, y) => {
+      [...row].forEach((ch, x) => {
+        if (key[ch]) {
+          ctx.fillStyle = key[ch];
+          ctx.fillRect(ox + x, oy + y, 1, 1);
+        }
+      });
     });
-  });
+    ctx.restore();
+  }
+
+  const lanternCanvas = document.getElementById("sprite");
+  blit(lanternCanvas.getContext("2d"), LANTERN, LKEY, 0, 0);
+
+  /* ---------- макеты шахты ---------- */
+
+  function rng(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const TS = 16, COLS = 9, ROWS = 14;
+
+  const ROCK = {
+    earth:   { base: "#5c4433", lo: "#4a3628", hi: "#6d5240" },
+    stone:   { base: "#453b52", lo: "#3a3145", hi: "#52465f" },
+    granite: { base: "#38304a", lo: "#2c2540", hi: "#463d5c" },
+    ore:     { base: "#453b52", lo: "#3a3145", hi: "#4fb3d9" },
+    weird:   { base: "#2f2040", lo: "#241831", hi: "#6b2f8f" },
+    flesh:   { base: "#5a2b30", lo: "#48232a", hi: "#a3283a" },
+    void:    { base: "#0d0b11", lo: "#0d0b11", hi: "#12101a" }
+  };
+
+  const MINER = [
+    "..ll..",
+    ".aaaa.",
+    ".aaaa.",
+    "..aa..",
+    ".aaaa.",
+    ".a..a.",
+    ".a..a.",
+    "......"
+  ];
+  const MKEY = { a: "#1a1622", l: "#ffc14d" };
+
+  const CREWMAN = [
+    "..aa..",
+    ".aaaa.",
+    "..aa..",
+    ".aaaa.",
+    ".a..a.",
+    "......"
+  ];
+  const CKEY = { a: "#241f30" };
+
+  const FACE = [
+    "................",
+    "................",
+    "...pp......pp...",
+    "...pp......pp...",
+    "...pp......pp...",
+    "...pp......pp...",
+    "................",
+    "................",
+    "................",
+    "................",
+    "..pppppppppppp..",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................"
+  ];
+  const FKEY = { p: "#9a8fa8" };
+
+  // Основной ствол виляет, от него уходит диагональная ветка к жиле,
+  // а прямо под шахтёром стоит гранит — видно, почему он свернул вбок.
+  const SHAFT  = [[4,0],[4,1],[4,2],[5,2],[5,3],[5,4],[4,4],[4,5],[4,6],[3,6],[4,7],[4,8],[4,9]];
+  const BRANCH = [[3,7],[2,7],[2,8],[1,8]];
+  const VEIN   = [[0,9],[1,9],[2,9],[0,10],[1,10],[1,11]];
+  const HARD   = [[3,10],[4,10],[5,10],[4,11]];
+
+  function build(mode, seed) {
+    const r = rng(seed);
+    const t = [];
+    for (let y = 0; y < ROWS; y++) {
+      t.push([]);
+      for (let x = 0; x < COLS; x++) {
+        let k;
+        if (mode === "pocket") k = "weird";
+        else if (y < 2) k = "earth";
+        else k = r() < 0.1 ? "granite" : "stone";
+        t[y].push(k);
+      }
+    }
+
+    if (mode === "pocket") {
+      for (let y = 0; y < 4; y++) t[y][4] = "void";          // ход, которым вошёл
+      for (let y = 4; y <= 11; y++)
+        for (let x = 2; x <= 6; x++) t[y][x] = "void";       // ровная комната
+      return { t, miner: [4, 6], door: [7, 8] };
+    }
+
+    for (const [x, y] of VEIN) t[y][x] = "ore";
+    for (const [x, y] of HARD) t[y][x] = "granite";
+    for (const [x, y] of SHAFT.concat(BRANCH)) t[y][x] = "void";
+    if (mode === "glitch") t[6][6] = "flesh";
+
+    return { t, miner: [4, 9] };
+  }
+
+  function drawMock(cv) {
+    const mode = cv.dataset.mock;
+    const seed = mode === "main" ? 7 : mode === "dark" ? 19 : mode === "pocket" ? 31 : 7;
+    const { t, miner, door } = build(mode, seed);
+    const ctx = cv.getContext("2d");
+    const r = rng(seed + 1000);
+
+    // порода
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const kind = t[y][x];
+        const k = ROCK[kind];
+        ctx.fillStyle = k.base;
+        ctx.fillRect(x * TS, y * TS, TS, TS);
+        if (kind !== "void") {
+          const speckles = kind === "ore" ? 40 : 22;
+          for (let i = 0; i < speckles; i++) {
+            ctx.fillStyle = kind === "ore"
+              ? (r() < 0.55 ? k.hi : k.lo)
+              : (r() < 0.5 ? k.lo : k.hi);
+            ctx.fillRect(x * TS + ((r() * TS) | 0), y * TS + ((r() * TS) | 0), 1, 1);
+          }
+          // грань блока
+          ctx.fillStyle = "rgba(0,0,0,.25)";
+          ctx.fillRect(x * TS, y * TS + TS - 1, TS, 1);
+          ctx.fillRect(x * TS + TS - 1, y * TS, 1, TS);
+        }
+      }
+    }
+
+    const mx = miner[0] * TS + TS / 2;
+    const my = miner[1] * TS + TS / 2;
+
+    // дверь, которая не открывается
+    if (door) {
+      const [dx, dy] = door;
+      ctx.fillStyle = "#0d0b11";
+      ctx.fillRect(dx * TS + 1, dy * TS, TS - 2, TS * 3 - 2);
+      ctx.fillStyle = "#6b2f8f";
+      ctx.fillRect(dx * TS, dy * TS - 1, TS, 1);
+      ctx.fillRect(dx * TS, dy * TS - 1, 1, TS * 3);
+      ctx.fillRect(dx * TS + TS - 1, dy * TS - 1, 1, TS * 3);
+      // стол в углу комнаты
+      ctx.fillStyle = "#241f30";
+      ctx.fillRect(3 * TS + 2, 10 * TS + 6, 13, 3);
+      ctx.fillRect(3 * TS + 3, 10 * TS + 9, 2, 5);
+      ctx.fillRect(3 * TS + 12, 10 * TS + 9, 2, 5);
+    }
+
+    // трещина на соседнем блоке
+    if (mode === "main" || mode === "glitch") {
+      const cxb = (miner[0] + 1) * TS, cyb = (miner[1] - 2) * TS;
+      ctx.fillStyle = "#ffc14d";
+      [[7,2],[8,3],[7,4],[8,5],[9,6],[8,7],[9,8]].forEach(([px, py]) => {
+        ctx.fillRect(cxb + px, cyb + py, 1, 1);
+      });
+    }
+
+    // бригада
+    if (mode !== "pocket") {
+      blit(ctx, CREWMAN, CKEY, (miner[0] - 1) * TS + 5, (miner[1] - 2) * TS + 8, 1);
+      blit(ctx, CREWMAN, CKEY, (miner[0] + 1) * TS + 4, (miner[1] - 5) * TS + 9, 1);
+    }
+
+    // шахтёр
+    blit(ctx, MINER, MKEY, miner[0] * TS + 5, miner[1] * TS + 7, 1);
+
+    // свет
+    const R = mode === "dark" ? 30 : mode === "pocket" ? 98 : 78;
+    const g = ctx.createRadialGradient(mx, my, 0, mx, my, R);
+    g.addColorStop(0, "rgba(13,11,17,0)");
+    g.addColorStop(0.5, "rgba(13,11,17,.18)");
+    g.addColorStop(0.82, "rgba(13,11,17,.72)");
+    g.addColorStop(1, "rgba(13,11,17,.95)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+
+    // тёплый отсвет лампы
+    const w = ctx.createRadialGradient(mx, my, 0, mx, my, R * 0.75);
+    w.addColorStop(0, "rgba(255,193,77,.20)");
+    w.addColorStop(1, "rgba(255,193,77,0)");
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = w;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.restore();
+
+    // сбой картинки. Рисуется поверх света — глитч не подчиняется правилам сцены.
+    if (mode === "glitch") {
+      blit(ctx, FACE, FKEY, 5 * TS + 2, 3 * TS + 4, 0.3);
+      const bands = [[38, 9, 4], [96, 5, -6], [150, 7, 3]];
+      for (const [by, bh, dx] of bands) {
+        const slice = ctx.getImageData(0, by, cv.width, bh);
+        ctx.fillStyle = "#0d0b11";
+        ctx.fillRect(0, by, cv.width, bh);
+        ctx.putImageData(slice, dx, by);
+      }
+      ctx.fillStyle = "rgba(107,47,143,.55)";
+      ctx.fillRect(0, 97, cv.width, 1);
+      ctx.fillRect(0, 39, cv.width, 1);
+    }
+  }
+
+  document.querySelectorAll("canvas[data-mock]").forEach(drawMock);
 </script>
