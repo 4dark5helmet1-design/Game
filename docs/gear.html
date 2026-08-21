@@ -28,6 +28,8 @@
   .g .mn{display:block;margin-top:5px;font-size:12.5px;color:#e0778c}
   .g.sec{border-color:rgba(176,124,224,.45);box-shadow:inset 0 0 28px rgba(176,124,224,.10)}
   .g.sec b{color:var(--sec)}
+  .g.home{border-color:rgba(255,150,190,.42);box-shadow:inset 0 0 28px rgba(255,150,190,.10)}
+  .g.home b{color:#ff96be}
   .note{border-left:2px solid var(--lamp);padding:4px 0 4px 16px;color:var(--ink2);font-size:15.5px;margin:20px 0}
   .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin:20px 0}
   .slot{border:1px solid var(--line2);border-radius:11px;padding:12px 14px;background:var(--panel)}
@@ -41,7 +43,7 @@
 <header class="top">
   <p class="kick">Забой · снаряжение</p>
   <h1>Пояс</h1>
-  <p>Двадцать два предмета трёх видов. Почти у каждого есть цена — иначе это не сборка, а список покупок.</p>
+  <p>Тридцать предметов четырёх видов. Почти у каждого есть цена — иначе это не сборка, а список покупок.</p>
 </header>
 
 <div class="wrap">
@@ -63,6 +65,11 @@
 
 <h2>Расходники <em>один раз за спуск</em></h2>
 <div class="grid" id="con"></div>
+
+<h2>Из дома <em>найдено наверху, принесено вниз</em></h2>
+<p>Это не шахтёрский инструмент. Это вещи из подвала, с чердака и из детской — поэтому в забое оказался плюшевый заяц. Они и есть главная нитка между уютным домом и тем, что внизу.</p>
+<div class="grid" id="home"></div>
+<p class="note">И вот что с ними происходит на глубине: <strong>они начинают вести себя не так.</strong> Заяц оказывается мокрым, хотя вокруг сухо. Кубик к утру собран. Печенька надкушена. Кукла возвращается в пояс сама, если её оставить. Игра ничего не поясняет — просто описание предмета в штреке однажды меняется на одну строчку, и обратно уже не меняется.</p>
 
 <h2>Три правила, по которым это собрано</h2>
 <ul>
@@ -249,7 +256,117 @@
       rr(g,S*.30,S*.28,S*.40,S*.52,S*.09);
       g.fillStyle="#2b2434";rr(g,S*.42,S*.18,S*.16,S*.12,S*.03);
       g.fillStyle="rgba(255,255,255,.22)";g.fillRect(S*.35,S*.32,S*.06,S*.42);
-      g.fillStyle="rgba(0,0,0,.35)";rr(g,S*.36,S*.44,S*.28,S*.22,S*.03); }
+      g.fillStyle="rgba(0,0,0,.35)";rr(g,S*.36,S*.44,S*.28,S*.22,S*.03); },
+    bunny(g,S){
+      g.fillStyle=grd(g,S,"#f6dfe6","#d3a9bb","#7d5a68");
+      g.beginPath();g.ellipse(S*.38,S*.24,S*.075,S*.20,-.22,0,6.283);g.fill();
+      g.beginPath();g.ellipse(S*.62,S*.24,S*.075,S*.20,.22,0,6.283);g.fill();
+      g.fillStyle="#e8a8c0";
+      g.beginPath();g.ellipse(S*.38,S*.25,S*.035,S*.13,-.22,0,6.283);g.fill();
+      g.beginPath();g.ellipse(S*.62,S*.25,S*.035,S*.13,.22,0,6.283);g.fill();
+      g.fillStyle=grd(g,S,"#fdeef2","#dcb6c6","#84606f");
+      g.beginPath();g.ellipse(S*.5,S*.58,S*.26,S*.23,0,0,6.283);g.fill();
+      g.fillStyle="#2a2030";
+      g.beginPath();g.arc(S*.41,S*.55,S*.032,0,6.283);g.fill();
+      g.beginPath();g.arc(S*.59,S*.55,S*.032,0,6.283);g.fill();
+      g.fillStyle="#d4708f";g.beginPath();g.arc(S*.5,S*.63,S*.028,0,6.283);g.fill();
+      g.strokeStyle="#b0849a";g.lineWidth=S*.016;
+      g.beginPath();g.moveTo(S*.5,S*.655);g.lineTo(S*.5,S*.70);g.stroke(); },
+    rubik(g,S){
+      const cols=["#e0473a","#f0b429","#4a9f4a","#3d7fd0","#e8e4ee","#ef8b3a"];
+      const w=S*.17;
+      for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+        g.fillStyle=cols[(r*3+c)%6];
+        g.fillRect(S*.22+c*w+S*.012,S*.22+r*w+S*.012,w-S*.024,w-S*.024);
+        g.fillStyle="rgba(255,255,255,.22)";
+        g.fillRect(S*.22+c*w+S*.012,S*.22+r*w+S*.012,w-S*.024,S*.03);}
+      g.strokeStyle="#141019";g.lineWidth=S*.03;
+      g.strokeRect(S*.22,S*.22,w*3,w*3); },
+    salute(g,S){
+      const gg=g.createRadialGradient(S*.5,S*.34,0,S*.5,S*.34,S*.42);
+      gg.addColorStop(0,"rgba(255,220,140,.45)");gg.addColorStop(1,"rgba(255,120,60,0)");
+      g.fillStyle=gg;g.fillRect(0,0,S,S);
+      for(let i=0;i<12;i++){const a=i/12*6.283;
+        g.strokeStyle=i%3?"#ffd47a":"#ff8a5c";g.lineWidth=S*.028;
+        g.beginPath();g.moveTo(S*.5+Math.cos(a)*S*.13,S*.34+Math.sin(a)*S*.13);
+        g.lineTo(S*.5+Math.cos(a)*S*.30,S*.34+Math.sin(a)*S*.30);g.stroke();}
+      g.fillStyle="#fff3d0";g.beginPath();g.arc(S*.5,S*.34,S*.07,0,6.283);g.fill();
+      g.fillStyle="#8d6a3e";g.fillRect(S*.475,S*.44,S*.05,S*.40); },
+    cookie(g,S){
+      g.fillStyle=grd(g,S,"#e8b872","#c08a44","#6d4a1e");
+      g.beginPath();g.arc(S*.5,S*.52,S*.30,0,6.283);g.fill();
+      g.fillStyle="rgba(255,236,196,.30)";
+      g.beginPath();g.arc(S*.44,S*.44,S*.16,0,6.283);g.fill();
+      g.fillStyle="#3a2414";
+      for(const [x,y,r] of [[.42,.42,.045],[.60,.46,.05],[.48,.62,.042],[.62,.62,.035],[.36,.58,.033]]){
+        g.beginPath();g.arc(S*x,S*y,S*r,0,6.283);g.fill();}
+      g.fillStyle="#141019";
+      g.beginPath();g.arc(S*.74,S*.36,S*.11,0,6.283);g.fill(); },
+    kitty(g,S){
+      g.fillStyle=grd(g,S,"#ffffff","#eee6ee","#b0a8b8");
+      g.beginPath();g.moveTo(S*.26,S*.36);g.lineTo(S*.34,S*.20);g.lineTo(S*.42,S*.34);g.closePath();g.fill();
+      g.beginPath();g.moveTo(S*.74,S*.36);g.lineTo(S*.66,S*.20);g.lineTo(S*.58,S*.34);g.closePath();g.fill();
+      g.beginPath();g.ellipse(S*.5,S*.54,S*.28,S*.23,0,0,6.283);g.fill();
+      g.fillStyle="#2a2030";
+      g.beginPath();g.ellipse(S*.40,S*.52,S*.030,S*.040,0,0,6.283);g.fill();
+      g.beginPath();g.ellipse(S*.60,S*.52,S*.030,S*.040,0,0,6.283);g.fill();
+      g.fillStyle="#f0c24a";
+      g.beginPath();g.ellipse(S*.5,S*.60,S*.032,S*.024,0,0,6.283);g.fill();
+      g.strokeStyle="#3a3040";g.lineWidth=S*.016;
+      for(const d of [-1,1])for(let i=0;i<3;i++){
+        g.beginPath();g.moveTo(S*(.5+d*.16),S*(.50+i*.045));
+        g.lineTo(S*(.5+d*.32),S*(.47+i*.055));g.stroke();}
+      g.fillStyle="#e0455f";
+      g.beginPath();g.ellipse(S*.70,S*.34,S*.075,S*.055,-.3,0,6.283);g.fill();
+      g.beginPath();g.ellipse(S*.80,S*.30,S*.055,S*.045,.4,0,6.283);g.fill();
+      g.fillStyle="#f08a9c";g.beginPath();g.arc(S*.74,S*.33,S*.022,0,6.283);g.fill(); },
+    pack(g,S){
+      g.fillStyle=grd(g,S,"#7a9e6e","#456040","#1e2c1c");
+      rr(g,S*.24,S*.26,S*.52,S*.56,S*.12);
+      g.fillStyle="rgba(0,0,0,.28)";rr(g,S*.28,S*.52,S*.44,S*.24,S*.07);
+      g.fillStyle="#2f3f2a";rr(g,S*.42,S*.16,S*.16,S*.14,S*.05);
+      g.fillStyle="#c9a06a";
+      for(const x of [.36,.64]){g.fillRect(S*(x-.03),S*.44,S*.06,S*.20);}
+      g.fillStyle="#e8dcc0";
+      for(const x of [.36,.64]){g.fillRect(S*(x-.045),S*.50,S*.09,S*.06);}
+      g.fillStyle="rgba(255,255,255,.18)";g.fillRect(S*.24,S*.28,S*.52,S*.04); },
+    r2(g,S){
+      g.fillStyle=grd(g,S,"#f0f2f6","#b8bcc6","#5c606a");
+      g.beginPath();g.arc(S*.5,S*.36,S*.20,Math.PI,0);g.fill();
+      rr(g,S*.30,S*.36,S*.40,S*.44,S*.05);
+      g.fillStyle="#2f7fc4";
+      g.fillRect(S*.34,S*.44,S*.32,S*.06);
+      g.fillRect(S*.34,S*.62,S*.10,S*.10);
+      g.fillStyle="#1f2530";
+      g.beginPath();g.arc(S*.44,S*.30,S*.045,0,6.283);g.fill();
+      g.fillStyle="#4fd0e8";
+      g.beginPath();g.arc(S*.44,S*.30,S*.024,0,6.283);g.fill();
+      g.fillStyle="#8d919c";
+      g.fillRect(S*.52,S*.54,S*.14,S*.06);g.fillRect(S*.52,S*.66,S*.14,S*.06);
+      g.fillStyle="rgba(255,255,255,.35)";g.fillRect(S*.34,S*.38,S*.05,S*.40);
+      g.fillStyle="#3a3f48";
+      g.fillRect(S*.26,S*.72,S*.08,S*.14);g.fillRect(S*.66,S*.72,S*.08,S*.14); },
+    dodo(g,S){
+      const gg=g.createRadialGradient(S*.5,S*.5,0,S*.5,S*.5,S*.44);
+      gg.addColorStop(0,"rgba(255,160,90,.30)");gg.addColorStop(1,"rgba(255,160,90,0)");
+      g.fillStyle=gg;g.fillRect(0,0,S,S);
+      g.fillStyle=grd(g,S,"#ffd0a0","#e8763c","#8a3410");
+      g.beginPath();g.ellipse(S*.5,S*.54,S*.26,S*.24,0,0,6.283);g.fill();
+      g.fillStyle="#ffe9d2";
+      g.beginPath();g.ellipse(S*.5,S*.60,S*.15,S*.13,0,0,6.283);g.fill();
+      g.fillStyle=grd(g,S,"#ffcf9a","#e8763c","#8a3410");
+      g.beginPath();g.ellipse(S*.24,S*.50,S*.10,S*.15,-.5,0,6.283);g.fill();
+      g.beginPath();g.ellipse(S*.76,S*.50,S*.10,S*.15,.5,0,6.283);g.fill();
+      g.fillStyle="#2a2030";
+      g.beginPath();g.ellipse(S*.42,S*.48,S*.038,S*.050,0,0,6.283);g.fill();
+      g.beginPath();g.ellipse(S*.58,S*.48,S*.038,S*.050,0,0,6.283);g.fill();
+      g.fillStyle="#ffffff";
+      g.beginPath();g.arc(S*.435,S*.465,S*.015,0,6.283);g.fill();
+      g.beginPath();g.arc(S*.595,S*.465,S*.015,0,6.283);g.fill();
+      g.fillStyle="#f0b429";
+      g.beginPath();g.moveTo(S*.5,S*.54);g.lineTo(S*.545,S*.585);g.lineTo(S*.455,S*.585);g.closePath();g.fill();
+      g.fillStyle="#ffd8a0";
+      g.beginPath();g.moveTo(S*.44,S*.30);g.lineTo(S*.5,S*.16);g.lineTo(S*.56,S*.30);g.closePath();g.fill(); }
   };
   function grd(g,S,a,b,c){const q=g.createLinearGradient(0,S*.15,0,S*.85);
     q.addColorStop(0,a);q.addColorStop(.5,b);q.addColorStop(1,c);return q}
@@ -301,15 +418,27 @@
     const box=document.createElement("div");
     box.innerHTML=`<b>${name}</b><div class="st">${st}</div><div class="tx">${tx}`+
       (mn&&mn!=="—"?`<span class="mn">${mn}</span>`:"")+`</div>`;
-    if(!sec) box.querySelector("b").style.color = host.id==="act"?A:host.id==="pas"?P:C;
+    if(host.id==="home") d.className="g home";
+    else if(!sec) box.querySelector("b").style.color = host.id==="act"?A:host.id==="pas"?P:C;
     d.append(cv,box);host.append(d);
     const g=cv.getContext("2d");
     g.fillStyle="#0e0b14";g.fillRect(0,0,200,200);
     const rg=g.createRadialGradient(100,92,0,100,92,110);
-    rg.addColorStop(0,hx(sec?"#b07ce0":host.id==="act"?A:host.id==="pas"?P:C,.16));
+    rg.addColorStop(0,hx(host.id==="home"?"#ff96be":sec?"#b07ce0":host.id==="act"?A:host.id==="pas"?P:C,.16));
     rg.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=rg;g.fillRect(0,0,200,200);
     ICON[ico](g,200,sec?"#b07ce0":A);
   }
+  const HOME=[
+    ["bunny","Плюшевый зайка","6 С · КД 200 С","Берёшь в руки — и погоня останавливается на шесть секунд. Просто стоит и не идёт дальше.","Следующая погоня начнётся раньше обычного."],
+    ["rubik","Кубик Рубика","МГНОВЕННО · КД 90 С","Крутишь грань — и порода перед тобой пересобирается на ступень мягче: гранит становится камнем, камень землёй, земля жилой.","Соседние 3×3 при этом становятся на ступень твёрже."],
+    ["salute","Салют","10 С · КД 150 С","Уходит вверх по твоему тоннелю и освещает его целиком, до самого верха. Единственный способ увидеть всё, что накопал, изнутри.","Очень громко. Полминуты после него странности случаются чаще."],
+    ["cookie","Печенька","МГНОВЕННО · КД 80 С","Разламывается — и вместе с ней разламывается область 5×5 прямо перед тобой.","Руды с крошева идёт половина. И десять секунд ритм не копится: ты жуёшь."],
+    ["kitty","Hello Kitty","15 С · КД 240 С","Пятнадцать секунд в игре не происходит ничего странного. Ни глитчей, ни звуков, ни теней на краю света. Тихо и нормально.","Как только отпустит — странность случится гарантированно."],
+    ["r2","R2D2","10 С · КД 120 С","Укатывается вперёд и просвечивает породу на восемь метров: видно жилы, полости и то, что не должно светиться.","Пока он снаружи, бригаду за спиной не слышно — он пищит."],
+    ["dodo","Додоко","20 С · КД 180 С","Бросаешь вперёд — и двадцать секунд всё, что должно было случиться с тобой, случается с ней. Погоня идёт к ней. Странности происходят вокруг неё.","Иногда возвращается в пояс сама, хотя ты её не подбирал."],
+    ["pack","Ранец","ПАССИВ · 5 УРОВНЕЙ","Вместимость вагонетки: +40% за уровень. Единственная пассивка, которую можно качать.","С третьего уровня −15% к скорости шага: тяжёлый."]
+  ];
+  HOME.forEach(x=>{ const h=document.getElementById("home"); card(h,x); });
   ACT.forEach(x=>card(document.getElementById("act"),x));
   PAS.forEach(x=>card(document.getElementById("pas"),x));
   CON.forEach(x=>card(document.getElementById("con"),x));
