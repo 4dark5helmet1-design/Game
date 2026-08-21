@@ -1,0 +1,698 @@
+<title>Забой: четыре взгляда</title>
+
+<style>
+  :root {
+    --bg:      #0a0810;
+    --panel:   #121019;
+    --line:    #262032;
+    --line-2:  #372f47;
+    --ink:     #ece7f4;
+    --ink-2:   #a79ec0;
+    --ink-3:   #6f6788;
+    --lamp:    #ffc14d;
+    --f-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --f-body: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap { max-width: 74ch; margin: 0 auto; padding: 0 20px 110px; }
+
+  header.top {
+    padding: 56px 20px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+    background:
+      radial-gradient(ellipse 60% 70% at 50% 0%, rgba(255,193,77,.10), transparent 70%),
+      var(--bg);
+  }
+  header.top .kick {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--lamp);
+    margin: 0 0 14px;
+  }
+  header.top h1 {
+    font-family: var(--f-mono);
+    font-size: clamp(26px, 7vw, 40px);
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  header.top p {
+    max-width: 54ch;
+    margin: 0 auto;
+    color: var(--ink-2);
+    font-size: 16px;
+  }
+
+  .lede { margin: 40px 0 8px; color: var(--ink-2); }
+  .lede b { color: var(--ink); font-weight: 700; }
+
+  /* ---- вариант ---- */
+
+  .dir { padding: 52px 0 8px; border-top: 1px solid var(--line); }
+  .dir:first-of-type { border-top: 0; }
+
+  .dir-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .dir-num {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    letter-spacing: .2em;
+    color: var(--ink-3);
+  }
+  .dir h2 {
+    font-family: var(--f-mono);
+    font-size: clamp(19px, 5vw, 25px);
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .dir .ref {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    color: var(--ink-3);
+    border: 1px solid var(--line-2);
+    padding: 3px 8px;
+  }
+  .dir > p { color: var(--ink-2); margin: 12px 0; }
+  .dir > p strong { color: var(--ink); }
+
+  .verdict {
+    border-left: 2px solid var(--lamp);
+    padding: 4px 0 4px 16px;
+    margin: 18px 0 0;
+    font-size: 15.5px;
+    color: var(--ink-2);
+  }
+  .verdict b { color: var(--lamp); font-weight: 700; letter-spacing: .04em; font-family: var(--f-mono); font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 3px; }
+
+  /* ---- телефон ---- */
+
+  .shot {
+    margin: 26px auto 22px;
+    width: 100%;
+    max-width: 320px;
+    background: #000;
+    border: 1px solid var(--line-2);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 0 6px #16131e;
+    position: relative;
+    user-select: none;
+    font-family: var(--f-mono);
+  }
+  .scene { position: relative; line-height: 0; }
+  .scene canvas { width: 100%; display: block; }
+  .scene canvas.px { image-rendering: pixelated; }
+
+  .hud {
+    position: absolute;
+    inset: 0 0 auto 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 16px 14px;
+    line-height: 1.15;
+    pointer-events: none;
+  }
+  .hud .m {
+    font-size: 26px;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .01em;
+    text-shadow: 0 2px 10px rgba(0,0,0,.9);
+  }
+  .hud .m i { font-style: normal; font-size: 11px; color: #b9b0cc; margin-left: 3px; }
+  .hud .o { text-align: right; text-shadow: 0 2px 10px rgba(0,0,0,.9); }
+  .hud .o span { display: block; font-size: 13px; color: #d8d1e6; font-variant-numeric: tabular-nums; }
+  .hud .o i { font-style: normal; font-size: 8px; letter-spacing: .2em; color: #7d7492; }
+
+  .cart {
+    position: absolute;
+    left: 14px; top: 52px;
+    width: 74px; height: 4px;
+    background: rgba(255,255,255,.12);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .cart i { display: block; height: 100%; width: 62%; background: #7fc9e8; }
+
+  .belt {
+    position: absolute;
+    right: 12px; bottom: 16px;
+    display: flex; flex-direction: column; gap: 9px;
+  }
+  .belt b {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; letter-spacing: .04em;
+    background: rgba(14,11,20,.6);
+    border: 1px solid rgba(255,255,255,.14);
+    color: #857c9b;
+    backdrop-filter: blur(3px);
+  }
+  .belt b.on {
+    border-color: rgba(255,193,77,.75);
+    color: var(--lamp);
+    box-shadow: 0 0 16px rgba(255,193,77,.28);
+  }
+
+  .glow { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 26px rgba(255,193,77,.22); }
+
+  .bar {
+    display: grid;
+    grid-template-columns: 52px 1fr 52px;
+    gap: 1px;
+    background: var(--line);
+    border-top: 1px solid var(--line);
+  }
+  .bar span {
+    background: #100d17;
+    display: flex; align-items: center; justify-content: center;
+    padding: 17px 0;
+    font-size: 15px;
+    color: #6f6788;
+  }
+  .bar .cta {
+    font-size: 11.5px; letter-spacing: .1em; color: var(--lamp);
+    background: linear-gradient(180deg, #2a1e10, #1b1410);
+    box-shadow: inset 0 0 0 1px rgba(255,193,77,.5);
+  }
+
+  .cap {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .05em;
+    color: var(--ink-3);
+    text-align: center;
+    max-width: 42ch;
+    margin: 0 auto 6px;
+    line-height: 1.55;
+  }
+
+  .pal { display: flex; gap: 0; margin: 16px 0 4px; border: 1px solid var(--line); }
+  .pal i { flex: 1; height: 26px; display: block; }
+
+  .cmp {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    margin: 26px 0 0;
+  }
+  .cmp th, .cmp td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  .cmp th { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  .cmp td:first-child { color: var(--ink); }
+  .cmp .yes { color: #63d3a4; }
+  .cmp .no { color: #d0637a; }
+  .wrapscroll { overflow-x: auto; }
+
+  footer.end {
+    border-top: 1px solid var(--line);
+    margin-top: 54px;
+    padding-top: 20px;
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+</style>
+
+<header class="top">
+  <p class="kick">Забой · арт-дирекшн</p>
+  <h1>Четыре взгляда</h1>
+  <p>Один и тот же кадр — забой на 247 метрах, жила слева, трещина в центре — отрисован четырьмя разными способами. Всё нарисовано кодом прямо на этой странице: рельеф породы, свет фонаря, туман и пыль считаются по-настоящему.</p>
+</header>
+
+<div class="wrap">
+
+<p class="lede">Прежде чем выбирать: <b>«лоу-поли» у Deep Rock — это не про мало полигонов.</b> Там достаточно геометрии, но формы простые, грани чёткие, а вся красота держится на свете и цвете. Это ровно то, что нам нужно: дёшево рисовать, дорого выглядит.</p>
+
+<!-- 1 -->
+<section class="dir">
+  <div class="dir-head">
+    <span class="dir-num">01</span>
+    <h2>Тёмный реализм</h2>
+    <span class="ref">Amnesia · Deep Rock</span>
+  </div>
+  <p>Настоящий рельеф: у каждого камня свои выступы и впадины, свет фонаря считает их по-честному, поэтому порода выглядит шершавой. Тёплый конус лампы против холодных теней, взвесь пыли в воздухе, зерно поверх кадра.</p>
+
+  <figure class="shot">
+    <div class="scene">
+      <canvas data-art="real" width="360" height="620"></canvas>
+      <div class="glow"></div>
+      <div class="hud">
+        <span class="m">247<i>М</i></span>
+        <span class="o"><span>1.24M</span><i>РУДА</i></span>
+      </div>
+      <div class="cart"><i></i></div>
+      <div class="belt"><b class="on">КУР</b><b class="on">ДИН</b><b>17</b></div>
+    </div>
+    <div class="bar"><span>&#8635;</span><span class="cta">КИРКА +1 · 340</span><span>&#9650;</span></div>
+  </figure>
+  <p class="cap">Больше всего похоже на «настоящую игру». Дороже всего в производстве и тяжелее всего для телефона.</p>
+  <div class="pal"><i style="background:#0b0910"></i><i style="background:#241d29"></i><i style="background:#4a3f4b"></i><i style="background:#7a6a68"></i><i style="background:#b09a86"></i><i style="background:#ffc14d"></i><i style="background:#5fb8dd"></i></div>
+  <p class="verdict"><b>Плюсы и минусы</b>Атмосфера максимальная, страх работает сам собой. Но: на маленьком экране шершавая порода превращается в кашу, а мелкие детали — трещины, жилы, аномальный блок — тонут в шуме. Придётся отдельно подсвечивать всё важное, и это уже борьба с собственной картинкой.</p>
+</section>
+
+<!-- 2 -->
+<section class="dir">
+  <div class="dir-head">
+    <span class="dir-num">02</span>
+    <h2>Гранёный</h2>
+    <span class="ref">Deep Rock Galactic</span>
+  </div>
+  <p>Тот же рельеф, но свет разложен на <strong>пять ступеней вместо плавного градиента</strong>. Порода распадается на плоские грани с чёткими рёбрами — как гранёный камень. Формы читаются мгновенно, шума нет вообще.</p>
+
+  <figure class="shot">
+    <div class="scene">
+      <canvas data-art="facet" width="360" height="620"></canvas>
+      <div class="glow"></div>
+      <div class="hud">
+        <span class="m">247<i>М</i></span>
+        <span class="o"><span>1.24M</span><i>РУДА</i></span>
+      </div>
+      <div class="cart"><i></i></div>
+      <div class="belt"><b class="on">КУР</b><b class="on">ДИН</b><b>17</b></div>
+    </div>
+    <div class="bar"><span>&#8635;</span><span class="cta">КИРКА +1 · 340</span><span>&#9650;</span></div>
+  </figure>
+  <p class="cap">Жила и трещина видны с полуметра от экрана. Стиль не стареет и прощает слабое железо.</p>
+  <div class="pal"><i style="background:#0d0a13"></i><i style="background:#2b2338"></i><i style="background:#514465"></i><i style="background:#8a7794"></i><i style="background:#c9b6b0"></i><i style="background:#ffc14d"></i><i style="background:#5fb8dd"></i></div>
+  <p class="verdict"><b>Мой голос</b>Читаемость на телефоне лучшая из четырёх, и при этом выглядит как настоящая 3D-игра. Ступенчатый свет — это буквально одна строка в шейдере, то есть «дорогой» вид достаётся почти бесплатно. Именно так решают эту задачу те, кто делает игру маленькой командой.</p>
+</section>
+
+<!-- 3 -->
+<section class="dir">
+  <div class="dir-head">
+    <span class="dir-num">03</span>
+    <h2>Плотный пиксель</h2>
+    <span class="ref">Blasphemous · Nuclear Throne</span>
+  </div>
+  <p>Тот же самый кадр, посчитанный в шесть раз меньшем разрешении и увеличенный без сглаживания. Не «пиксель-арт из восьми цветов», а <strong>крупный пиксель поверх настоящего света</strong> — рельеф и туман остаются, просто становятся зернистыми.</p>
+
+  <figure class="shot">
+    <div class="scene">
+      <canvas class="px" data-art="pixel" width="120" height="207"></canvas>
+      <div class="glow"></div>
+      <div class="hud">
+        <span class="m">247<i>М</i></span>
+        <span class="o"><span>1.24M</span><i>РУДА</i></span>
+      </div>
+      <div class="cart"><i></i></div>
+      <div class="belt"><b class="on">КУР</b><b class="on">ДИН</b><b>17</b></div>
+    </div>
+    <div class="bar"><span>&#8635;</span><span class="cta">КИРКА +1 · 340</span><span>&#9650;</span></div>
+  </figure>
+  <p class="cap">Самый дешёвый в производстве и самый быстрый на телефоне. И самый узнаваемый на скриншоте.</p>
+  <div class="pal"><i style="background:#0d0b11"></i><i style="background:#2a2333"></i><i style="background:#453b52"></i><i style="background:#8a7f9e"></i><i style="background:#e8e0ee"></i><i style="background:#ffc14d"></i><i style="background:#4fb3d9"></i></div>
+  <p class="verdict"><b>Плюсы и минусы</b>Пиксель отлично прячет то, что у нас нет художника: любая грубость читается как стиль. Зато глитчи и «лицо в стене» работают вдвое сильнее — испорченный пиксель выглядит как испорченный сигнал. Минус один: таких игр очень много, и на витрине она не выделится.</p>
+</section>
+
+<!-- 4 -->
+<section class="dir">
+  <div class="dir-head">
+    <span class="dir-num">04</span>
+    <h2>Уголь</h2>
+    <span class="ref">Limbo · Inside</span>
+  </div>
+  <p>Почти чёрный экран. Никакого цвета в породе — только силуэты, контровой свет по рёбрам и туман. Единственные цветные пятна во всей игре — <strong>лампа, руда и кровь</strong>.</p>
+
+  <figure class="shot">
+    <div class="scene">
+      <canvas data-art="ink" width="360" height="620"></canvas>
+      <div class="glow"></div>
+      <div class="hud">
+        <span class="m">247<i>М</i></span>
+        <span class="o"><span>1.24M</span><i>РУДА</i></span>
+      </div>
+      <div class="cart"><i></i></div>
+      <div class="belt"><b class="on">КУР</b><b class="on">ДИН</b><b>17</b></div>
+    </div>
+    <div class="bar"><span>&#8635;</span><span class="cta">КИРКА +1 · 340</span><span>&#9650;</span></div>
+  </figure>
+  <p class="cap">Самый красивый скриншот. И самый рискованный выбор для игры, в которую сидят по часу.</p>
+  <div class="pal"><i style="background:#000"></i><i style="background:#0c0c10"></i><i style="background:#1b1b22"></i><i style="background:#33333e"></i><i style="background:#5a5a68"></i><i style="background:#ffc14d"></i><i style="background:#a3283a"></i></div>
+  <p class="verdict"><b>Плюсы и минусы</b>Страшнее всех четырёх с большим отрывом: тут темнота не эффект, а материал. Но кликер играют часами, а этот кадр выжимает глаза минут через сорок. И жилу от гранита в темноте не отличить — придётся костылять подсветку и ломать стиль.</p>
+</section>
+
+<div class="wrapscroll">
+<table class="cmp">
+  <thead>
+    <tr><th>Направление</th><th>Читаемость</th><th>Атмосфера</th><th>Цена</th><th>Телефон</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Тёмный реализм</td><td class="no">слабая</td><td class="yes">высокая</td><td class="no">дорого</td><td class="no">тяжело</td></tr>
+    <tr><td>Гранёный</td><td class="yes">лучшая</td><td class="yes">высокая</td><td class="yes">дёшево</td><td class="yes">легко</td></tr>
+    <tr><td>Плотный пиксель</td><td class="yes">хорошая</td><td>средняя</td><td class="yes">дёшево</td><td class="yes">легко</td></tr>
+    <tr><td>Уголь</td><td class="no">слабая</td><td class="yes">лучшая</td><td>средне</td><td class="yes">легко</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="lede" style="margin-top:34px"><b>Их можно смешивать.</b> Например: гранёный как основа, а «уголь» включается на глубине — с 3000 метров цвет постепенно уходит из породы, и последние две тысячи метров ты копаешь почти в чёрном. Стиль тогда сам становится частью ужаса, а не просто оболочкой.</p>
+
+<footer class="end">Забой · арт-дирекшн · всё на странице отрисовано кодом</footer>
+
+</div>
+
+<script>
+(function () {
+  // ---------- шум ----------
+  function h2(ix, iy, s) {
+    let n = Math.imul(ix | 0, 374761393) + Math.imul(iy | 0, 668265263) + Math.imul(s | 0, 1442695041);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  }
+  function vnoise(x, y, s) {
+    const ix = Math.floor(x), iy = Math.floor(y);
+    const fx = x - ix, fy = y - iy;
+    const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+    const a = h2(ix, iy, s), b = h2(ix + 1, iy, s), c = h2(ix, iy + 1, s), d = h2(ix + 1, iy + 1, s);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  function fbm(x, y, s, oct) {
+    let f = 0, amp = 0.5, fr = 1, norm = 0;
+    for (let i = 0; i < oct; i++) {
+      f += amp * vnoise(x * fr, y * fr, s + i * 37);
+      norm += amp; amp *= 0.5; fr *= 2;
+    }
+    return f / norm;
+  }
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+
+  // ---------- геометрия коридора ----------
+  // Экран делится диагоналями на четыре стены и забой в центре.
+  function surfaceAt(x, y, G) {
+    const tL = x / G.FX;
+    const tR = (G.VW - x) / (G.VW - G.FX - G.FW);
+    const tT = y / G.FY;
+    const tB = (G.VH - y) / (G.VH - G.FY - G.FH);
+    let t = tL, s = 0;
+    if (tR < t) { t = tR; s = 1; }
+    if (tT < t) { t = tT; s = 2; }
+    if (tB < t) { t = tB; s = 3; }
+    if (t >= 1) return { s: 4, t: 1 };
+    return { s: s, t: t };
+  }
+
+  // ---------- карта высот породы ----------
+  // face: сетка блоков с глубокими швами. walls: тянущаяся вдоль тоннеля порода.
+  function heightFace(u, v, seed) {
+    const B = 60; // размер блока в текстурных единицах
+    const bu = u / B, bv = v / B;
+    const cu = Math.floor(bu), cv = Math.floor(bv);
+    const fu = bu - cu, fv = bv - cv;
+    // шов между блоками
+    const eu = Math.min(fu, 1 - fu), ev = Math.min(fv, 1 - fv);
+    const edge = Math.min(eu, ev);
+    const seam = clamp(edge / 0.07, 0, 1);
+    // каждый блок чуть иначе выпирает
+    const lift = 0.72 + h2(cu, cv, seed + 3) * 0.5;
+    const rough = fbm(u / 26, v / 26, seed, 4) * 0.62 + fbm(u / 6, v / 6, seed + 11, 3) * 0.38;
+    return (0.35 + rough * 0.65) * lift * (0.42 + 0.58 * seam);
+  }
+  function heightWall(u, v, seed) {
+    return fbm(u / 30, v / 22, seed + 71, 4) * 0.7 + fbm(u / 8, v / 7, seed + 91, 3) * 0.3;
+  }
+
+  // ---------- жила и трещина на забое ----------
+  function veinAt(u, v, seed) {
+    const n = fbm(u / 34, v / 30, seed + 401, 3);
+    const d = Math.hypot(u - 96, v - 268) / 118;
+    return clamp((n - 0.44) * 3.4 - d, 0, 1);
+  }
+
+  function render(cv, style) {
+    const VW = cv.width, VH = cv.height;
+    const ctx = cv.getContext("2d");
+    const img = ctx.createImageData(VW, VH);
+    const D = img.data;
+
+    // забой примерно в золотом сечении по вертикали
+    const FW = Math.round(VW * 0.62), FH = Math.round(FW);
+    const FX = Math.round((VW - FW) / 2), FY = Math.round(VH * 0.40 - FH / 2);
+    const G = { VW, VH, FX, FY, FW, FH };
+    const seed = 1337;
+
+    const lampX = FX + FW * 0.5, lampY = FY + FH * 0.5;
+    const lampR = Math.max(VW, VH) * 0.52;
+
+    // базовые цвета по стилю
+    const styles = {
+      real:  { r: 132, g: 116, b: 112, amb: 0.10, steps: 0, grain: 20, warm: 1.00, sat: 1.0 },
+      facet: { r: 150, g: 128, b: 148, amb: 0.13, steps: 5, grain: 4,  warm: 1.00, sat: 1.0 },
+      pixel: { r: 138, g: 120, b: 140, amb: 0.12, steps: 7, grain: 8,  warm: 1.00, sat: 1.0 },
+      ink:   { r: 108, g: 108, b: 122, amb: 0.02, steps: 0, grain: 10, warm: 0.55, sat: 0.15 }
+    };
+    const S = styles[style];
+
+    const EPS = 1.2;
+
+    for (let y = 0; y < VH; y++) {
+      for (let x = 0; x < VW; x++) {
+        const hit = surfaceAt(x, y, G);
+        let u, v, depth, H, Hx, Hy, isFace = false;
+
+        if (hit.s === 4) {
+          isFace = true;
+          u = (x - FX) * (360 / FW);
+          v = (y - FY) * (360 / FW);
+          depth = 1;
+          H = heightFace(u, v, seed);
+          Hx = heightFace(u + EPS, v, seed);
+          Hy = heightFace(u, v + EPS, seed);
+        } else {
+          const t = hit.t;
+          // перспективная координата вдоль тоннеля
+          const z = t / (1.06 - t);
+          let along;
+          if (hit.s === 0 || hit.s === 1) {
+            const yt = (0 + (FY - 0) * t), yb = (VH + (FY + FH - VH) * t);
+            along = (y - yt) / Math.max(1, yb - yt);
+          } else {
+            const xl = (0 + (FX - 0) * t), xr = (VW + (FX + FW - VW) * t);
+            along = (x - xl) / Math.max(1, xr - xl);
+          }
+          u = z * 46 + hit.s * 200;
+          v = along * 150;
+          depth = t;
+          H = heightWall(u, v, seed);
+          Hx = heightWall(u + 0.5, v, seed);
+          Hy = heightWall(u, v + 0.6, seed);
+        }
+
+        // наклон поверхности -> освещённость
+        const dx = (Hx - H), dy = (Hy - H);
+        const nx = -dx * 26, ny = -dy * 26, nz = 1;
+        const nl = Math.sqrt(nx * nx + ny * ny + nz * nz);
+
+        // свет идёт от камеры (фонарь на каске), чуть сверху
+        const lx = (lampX - x) * 0.006, ly = (lampY - y) * 0.006 - 0.35, lz = 1.15;
+        const ll = Math.sqrt(lx * lx + ly * ly + lz * lz);
+        let diff = (nx * lx + ny * ly + nz * lz) / (nl * ll);
+        diff = clamp(diff, 0, 1);
+
+        // затухание фонаря
+        const dist = Math.hypot(x - lampX, y - lampY) / lampR;
+        let fall = 1 / (1 + 2.6 * dist * dist);
+        // стены ближе к камере — под скользящим углом, темнее
+        if (!isFace) fall *= 0.35 + 0.55 * depth;
+
+        let lum = S.amb + diff * fall * 1.22;
+        lum *= 0.55 + 0.45 * H;              // самозатенение впадин
+        lum = clamp(lum, 0, 1.25);
+
+        if (S.steps) lum = Math.round(lum * S.steps) / S.steps;
+
+        // цвет
+        let cr = S.r, cg = S.g, cb = S.b;
+
+        // в «угле» цвет уходит из породы — но не из руды
+        if (S.sat < 1) {
+          const gray = cr * 0.3 + cg * 0.59 + cb * 0.11;
+          cr = gray + (cr - gray) * S.sat;
+          cg = gray + (cg - gray) * S.sat;
+          cb = gray + (cb - gray) * S.sat;
+        }
+
+        // жила руды — только на забое
+        if (isFace) {
+          const ore = veinAt(u, v, seed);
+          if (ore > 0) {
+            cr = cr * (1 - ore) + 58 * ore;
+            cg = cg * (1 - ore) + 172 * ore;
+            cb = cb * (1 - ore) + 216 * ore;
+            lum = Math.min(1.25, lum + ore * 0.34);
+          }
+        }
+
+        // тёплый свет лампы к центру, холод по краям
+        const warm = clamp(1 - dist * 0.92, 0, 1) * S.warm;
+        let R = cr * lum * (1 + warm * 0.30);
+        let Gc = cg * lum * (1 + warm * 0.12);
+        let B = cb * lum * (1 - warm * 0.16) + (1 - warm) * 16 * lum;
+
+        // туман в глубине кадра
+        const fog = clamp((dist - 0.55) * 1.25, 0, 1) * (style === "ink" ? 0.5 : 0.72);
+        R = R * (1 - fog) + 12 * fog;
+        Gc = Gc * (1 - fog) + 10 * fog;
+        B = B * (1 - fog) + 18 * fog;
+
+        // зерно
+        if (S.grain) {
+          const gr = (h2(x, y, 77) - 0.5) * S.grain;
+          R += gr; Gc += gr; B += gr;
+        }
+
+        const i = (y * VW + x) * 4;
+        D[i] = clamp(R, 0, 255);
+        D[i + 1] = clamp(Gc, 0, 255);
+        D[i + 2] = clamp(B, 0, 255);
+        D[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    // ---------- поверх пикселей: свет, пыль, крепь, кирка ----------
+    const px = (n) => n * (VW / 360);
+
+    // крепь
+    function timber(t, a) {
+      const x0 = Math.round(0 + (FX - 0) * t), x1 = Math.round(VW + (FX + FW - VW) * t);
+      const y0 = Math.round(0 + (FY - 0) * t), y1 = Math.round(VH + (FY + FH - VH) * t);
+      const th = Math.max(2, Math.round(px(13) * (1 - t)));
+      const grd = ctx.createLinearGradient(0, y0, 0, y0 + th);
+      grd.addColorStop(0, "rgba(122,88,54," + a + ")");
+      grd.addColorStop(1, "rgba(52,36,22," + a + ")");
+      ctx.fillStyle = grd;
+      ctx.fillRect(x0, y0, x1 - x0, th);
+      ctx.fillRect(x0, y1 - th, x1 - x0, th);
+      ctx.fillStyle = "rgba(74,52,32," + a + ")";
+      ctx.fillRect(x0, y0, th, y1 - y0);
+      ctx.fillRect(x1 - th, y0, th, y1 - y0);
+      ctx.fillStyle = "rgba(0,0,0," + (a * 0.55) + ")";
+      ctx.fillRect(x0, y0 + th, x1 - x0, Math.max(1, th * 0.22));
+    }
+    if (style !== "ink") { timber(0.30, 0.95); timber(0.62, 0.8); }
+    else { timber(0.30, 0.35); timber(0.62, 0.28); }
+
+    // светящаяся трещина на забое
+    const crX = FX + FW * 0.56, crY = FY + FH * 0.30;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const cg2 = ctx.createRadialGradient(crX, crY + px(16), 0, crX, crY + px(16), px(26));
+    cg2.addColorStop(0, "rgba(255,178,58,.32)");
+    cg2.addColorStop(1, "rgba(255,178,58,0)");
+    ctx.fillStyle = cg2;
+    ctx.fillRect(crX - px(40), crY - px(24), px(80), px(80));
+    ctx.strokeStyle = "rgba(255,206,128,.9)";
+    ctx.lineWidth = Math.max(1, px(1.6));
+    ctx.beginPath();
+    ctx.moveTo(crX, crY);
+    let ax = crX, ay = crY;
+    for (let i = 0; i < 7; i++) {
+      ax += (h2(i, 3, 12) - 0.5) * px(11);
+      ay += px(6);
+      ctx.lineTo(ax, ay);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // уголки зоны 2x2
+    const zx = FX + FW * 0.30, zy = FY + FH * 0.30, zs = FW * 0.34;
+    ctx.strokeStyle = "rgba(255,193,77,.95)";
+    ctx.lineWidth = Math.max(1, px(1.6));
+    const cl = px(13);
+    [[zx, zy, 1, 1], [zx + zs, zy, -1, 1], [zx, zy + zs, 1, -1], [zx + zs, zy + zs, -1, -1]].forEach(([cx2, cy2, sx, sy]) => {
+      ctx.beginPath();
+      ctx.moveTo(cx2 + sx * cl, cy2);
+      ctx.lineTo(cx2, cy2);
+      ctx.lineTo(cx2, cy2 + sy * cl);
+      ctx.stroke();
+    });
+
+    // пыль в конусе света
+    for (let i = 0; i < 150; i++) {
+      const a = h2(i, 1, 5) * Math.PI * 2, d = Math.sqrt(h2(i, 2, 5)) * lampR * 0.85;
+      const dxp = lampX + Math.cos(a) * d, dyp = lampY + Math.sin(a) * d * 0.92;
+      if (dxp < 0 || dxp > VW || dyp < 0 || dyp > VH) continue;
+      const s2 = px(0.8 + h2(i, 4, 5) * 1.6);
+      ctx.fillStyle = "rgba(255,228,182," + (0.05 + h2(i, 6, 5) * 0.20).toFixed(3) + ")";
+      ctx.beginPath();
+      ctx.arc(dxp, dyp, s2, 0, 6.283);
+      ctx.fill();
+    }
+
+    // кирка в кадре
+    const hx = VW + px(10), hy = VH + px(10), tx = VW - px(96), ty = VH - px(118);
+    const ang = Math.atan2(ty - hy, tx - hx);
+    ctx.save();
+    ctx.translate(tx, ty);
+    ctx.rotate(ang);
+    const hl = Math.hypot(tx - hx, ty - hy);
+    const wg = ctx.createLinearGradient(0, -px(6), 0, px(6));
+    wg.addColorStop(0, "#8a6540"); wg.addColorStop(0.5, "#5b4028"); wg.addColorStop(1, "#2c1e12");
+    ctx.fillStyle = wg;
+    ctx.fillRect(0, -px(5.5), hl, px(11));
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(tx, ty);
+    ctx.rotate(ang - Math.PI / 2);
+    const mg = ctx.createLinearGradient(0, -px(9), 0, px(9));
+    mg.addColorStop(0, "#b6b0c6"); mg.addColorStop(0.45, "#6d6580"); mg.addColorStop(1, "#332d40");
+    ctx.fillStyle = mg;
+    ctx.beginPath();
+    ctx.moveTo(-px(62), -px(5));
+    ctx.lineTo(px(58), -px(4));
+    ctx.lineTo(px(66), px(3));
+    ctx.lineTo(-px(58), px(7));
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,235,200,.5)";
+    ctx.fillRect(-px(62), -px(5), px(124), px(1.6));
+    ctx.restore();
+
+    ctx.fillStyle = "#241a11";
+    ctx.beginPath();
+    ctx.arc(tx, ty, px(11), 0, 6.283);
+    ctx.fill();
+
+    // виньетка
+    const vg = ctx.createRadialGradient(VW / 2, VH * 0.46, VW * 0.28, VW / 2, VH * 0.46, VH * 0.78);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, style === "ink" ? "rgba(0,0,0,.95)" : "rgba(6,5,9,.86)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, VW, VH);
+  }
+
+  document.querySelectorAll("canvas[data-art]").forEach((cv) => render(cv, cv.dataset.art));
+})();
+</script>
