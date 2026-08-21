@@ -23,19 +23,30 @@
   #gl,#fx{position:absolute;inset:0;width:100%;height:100%;display:block}
   #fx{pointer-events:none}
 
-  .hud{position:absolute;inset:14px 12px auto 12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
-  .pill{background:rgba(10,8,14,.5);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:7px 11px;backdrop-filter:blur(6px);line-height:1.15}
-  .pill .big{font-size:21px;color:#fff;font-variant-numeric:tabular-nums}
-  .pill .big i{font-style:normal;font-size:10px;color:#c3bcd2;margin-left:2px}
-  .pill .sm{font-size:13px;color:#e6e0f0;font-variant-numeric:tabular-nums}
-  .pill .lbl{display:block;font-size:7.5px;letter-spacing:.2em;color:#8f86a4;margin-top:2px}
-  .cartbar{margin-top:7px;width:78px;height:4px;border-radius:3px;background:rgba(255,255,255,.16);overflow:hidden}
-  .cartbar i{display:block;height:100%;width:0%;background:#7fc9e8;transition:width .2s}
+  /* Правило: на экране постоянно живёт только глубина. Всё остальное
+     появляется, когда меняется, и уходит. */
+  .hud{position:absolute;left:16px;top:14px;pointer-events:none;line-height:1.05}
+  .hud .dep{font-size:30px;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:.01em;
+    text-shadow:0 2px 14px rgba(0,0,0,.95)}
+  .hud .dep i{font-style:normal;font-size:12px;color:#b9b0cc;margin-left:3px}
+  .hud .ore{font-size:13px;color:#cfc7dd;font-variant-numeric:tabular-nums;margin-top:3px;
+    text-shadow:0 2px 10px rgba(0,0,0,.95);opacity:.30;transition:opacity .35s}
+  .hud .ore.hot{opacity:1;color:#ffe1a4}
+
+  /* вагонетка показывается, только когда почти полна */
+  .cart{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:150px;
+    opacity:0;transition:opacity .4s;pointer-events:none;text-align:center}
+  .cart.show{opacity:1}
+  .cart u{display:block;font-size:8.5px;letter-spacing:.2em;color:#9fd6ee;text-decoration:none;margin-bottom:5px;
+    text-shadow:0 1px 6px #000}
+  .cart b{display:block;height:4px;border-radius:3px;background:rgba(255,255,255,.16);overflow:hidden}
+  .cart b i{display:block;height:100%;background:#7fc9e8;width:0}
 
   .cross{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;
     background:rgba(255,255,255,.92);box-shadow:0 0 5px rgba(0,0,0,.95),0 0 12px rgba(255,200,130,.5);pointer-events:none}
-  .toolname{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);font-size:11px;letter-spacing:.22em;
-    color:rgba(255,193,77,.9);text-shadow:0 1px 8px #000;pointer-events:none}
+  .toolname{position:absolute;left:50%;bottom:74px;transform:translateX(-50%);font-size:11px;letter-spacing:.22em;
+    color:rgba(255,193,77,.92);text-shadow:0 1px 8px #000;pointer-events:none;opacity:0;transition:opacity .35s}
+  .toolname.show{opacity:1}
   @media (max-width:759px){ .toolname{bottom:150px} .hotbar{left:14px;bottom:74px} .stat{bottom:74px} .clock{bottom:78px} }
   .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;font-size:11px;letter-spacing:.14em;
     color:rgba(255,255,255,.66);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .8s}
@@ -50,9 +61,10 @@
   .dig.on{background:rgba(255,193,77,.3)}
   @media (min-width:760px){ .stick,.dig{display:none} }
   /* --- хотбар и полосы, как в референсе --- */
-  .stat{position:absolute;left:14px;bottom:14px;display:flex;gap:5px;align-items:flex-end}
-  .stat i{width:9px;border-radius:2px;display:block}
-  .hotbar{position:absolute;left:60px;bottom:14px;display:flex;gap:5px}
+  /* пояс всплывает на полторы секунды при смене и уходит */
+  .hotbar{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:6px;
+    opacity:0;transition:opacity .35s;pointer-events:none}
+  .hotbar.show{opacity:1;pointer-events:auto}
   .slot{position:relative;width:44px;height:44px;border-radius:8px;background:rgba(12,9,17,.62);
     border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;
     backdrop-filter:blur(5px);cursor:pointer}
@@ -61,8 +73,7 @@
   .slot u{position:absolute;right:3px;bottom:1px;font-size:8px;color:#8f86a4;text-decoration:none}
   .slot em{position:absolute;left:0;right:0;top:0;bottom:0;border-radius:8px;display:flex;
     align-items:center;justify-content:center;background:rgba(8,6,12,.7);color:#c9c1da;font-size:13px;font-style:normal}
-  .clock{position:absolute;right:14px;bottom:16px;font-size:19px;color:#fff;
-    font-variant-numeric:tabular-nums;text-shadow:0 2px 8px #000}
+
 
   /* --- меню --- */
   .menu{position:absolute;inset:0;background:rgba(6,5,10,.9);backdrop-filter:blur(7px);
@@ -97,9 +108,11 @@
   .mbtns b{flex:1;text-align:center;font-size:11px;letter-spacing:.14em;padding:12px;border-radius:9px;
     border:1px solid var(--line2);color:#a79ec0;cursor:pointer}
   .mbtns b.pri{border-color:rgba(255,193,77,.6);color:var(--lamp);background:#1c1510}
-  .gear{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:9px;
-    background:rgba(12,9,17,.55);border:1px solid rgba(255,255,255,.14);color:#a79ec0;
-    display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;backdrop-filter:blur(5px)}
+  .gear{position:absolute;right:12px;top:12px;width:30px;height:30px;border-radius:8px;
+    color:#6f6788;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;
+    opacity:.28;transition:opacity .25s}
+  .gear:hover{opacity:1;color:#ffc14d}
+  @media (hover:none){ .gear{opacity:.6;background:rgba(12,9,17,.5);border:1px solid rgba(255,255,255,.12)} }
   .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;text-align:center;font-size:13px;color:var(--ink2);background:#0b0910}
 
   .keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 4px}
@@ -126,14 +139,12 @@
   <canvas id="gl"></canvas>
   <canvas id="fx"></canvas>
   <div class="hud">
-    <span class="pill"><span class="sm" id="ore">0</span><span class="lbl">РУДА</span>
-      <span class="big" id="depth" style="font-size:16px">0<i>М</i></span>
-      <span class="cartbar"><i id="cart"></i></span></span>
+    <div class="dep" id="depth">0<i>М</i></div>
+    <div class="ore" id="ore">0</div>
   </div>
+  <div class="cart" id="cartbox"><u>ВАГОНЕТКА ПОЛНА</u><b><i id="cart"></i></b></div>
   <div class="gear" id="gearbtn">&#9881;</div>
-  <div class="stat" id="stat"></div>
   <div class="hotbar" id="hotbar"></div>
-  <div class="clock" id="clock">00:00</div>
   <div class="menu" id="menu">
     <div class="tabs">
       <b data-p="ctl" class="on">УПРАВЛЕНИЕ</b><b data-p="game">ИГРА</b>
@@ -171,7 +182,7 @@
   <li><strong>Пыль в луче.</strong> Свет из окошка и от лампочки виден в воздухе — это то, что делает подвал обжитым, а не пустым.</li>
   <li><strong>Мокрая глина.</strong> Влажные пятна темнее и отражают свет, сухая порода — нет.</li>
   <li><strong>Осколки, тряска и звук.</strong> Каждый удар выбивает крошку, дёргает камеру и звучит по-разному в зависимости от породы.</li>
-  <li><strong>Пояс на восемь ячеек.</strong> Клавиши 1–8 или мышью. Слева три полосы: руки, свет, вагонетка. Справа время в смене.</li>
+  <li><strong>На экране постоянно живёт одно число — глубина.</strong> Пояс всплывает на полторы секунды при смене предмета и уходит. Руда подсвечивается, когда меняется, и гаснет. Вагонетка появляется, только когда почти полна. Что у тебя в руках, видно по рукам.</li>
   <li><strong>Настройки, которые не сбрасываются.</strong> Esc — меню: переназначение любой клавиши, чувствительность мыши и инверсия, поле зрения, покачивание, тряска, качество и дальность видимости, яркость, зерно, громкость. Всё пишется в браузер и переживает перезаход.</li>
   <li><strong>Инвентарь</strong> — Tab. Нажал на предмет, и он лёг в выбранную ячейку пояса.</li>
 <li><strong>Уют — это приём, а не украшение.</strong> Тёплая лампочка, закатное окошко, мох по углам, кирпичная кладка: подвал должен выглядеть обжитым и почти милым. Игра честно притворяется доброй, и именно поэтому темнота потом сработает.</li>
@@ -885,8 +896,8 @@
   }
 
   // ---------- хотбар ----------
-  const hotEl = document.getElementById("hotbar"), statEl = document.getElementById("stat");
-  const clockEl = document.getElementById("clock");
+  const hotEl = document.getElementById("hotbar");
+  const cartBox = document.getElementById("cartbox");
   function buildHot() {
     hotEl.innerHTML = "";
     SET.hot.forEach((it, i) => {
@@ -906,12 +917,15 @@
     if (it.tool !== undefined) { tool = it.tool; toolEl.textContent = it.name; }
     else toolEl.textContent = it.name;
     [...hotEl.children].forEach((c, k) => c.classList.toggle("on", k === i));
+    flashBelt();
   }
-  // полосы слева: руки, свет, вагонетка
-  ["#e0778c", "#ffc14d", "#7fc9e8"].forEach((c, i) => {
-    const b = document.createElement("i"); b.style.background = c;
-    b.style.height = [34, 44, 26][i] + "px"; b.dataset.k = i; statEl.append(b);
-  });
+  // Пояс и подпись инструмента живут по 1.6 секунды после смены.
+  let peek = 0;
+  function flashBelt() { peek = 1.6; hotEl.classList.add("show"); toolEl.classList.add("show"); }
+  addEventListener("wheel", e => {
+    if (menu.classList.contains("open")) return;
+    pickSlot((SET.slot + (e.deltaY > 0 ? 1 : 7)) % 8);
+  }, { passive: true });
 
   // ---------- меню ----------
   const menu = document.getElementById("menu");
@@ -1021,15 +1035,10 @@
   });
 
   buildUI(); buildHot(); applySet(); pickSlot(SET.slot);
-  const t0 = Date.now();
-  setInterval(() => {
-    const s2 = ((Date.now() - t0) / 1000) | 0;
-    clockEl.textContent = String((s2 / 60) | 0).padStart(2, "0") + ":" + String(s2 % 60).padStart(2, "0");
-  }, 500);
 
 
   // ---------- добыча ----------
-  let ore = 0, cart = 0, digCd = 0;
+  let ore = 0, cart = 0, digCd = 0, oreHot = 0;
   const oreEl = document.getElementById("ore"), depthEl = document.getElementById("depth"), cartEl = document.getElementById("cart");
   function aim() {
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
@@ -1089,10 +1098,14 @@
         cart = Math.min(1, cart + .012);
         ore += t[1] > 0 ? TOOLS[tool].pow + Math.floor(Math.random() * 4) : 0;
         oreEl.textContent = ore >= 1000 ? (ore / 1000).toFixed(1) + "K" : ore;
+        oreEl.classList.add("hot"); oreHot = 1.4;
         cartEl.style.width = (cart * 100) + "%";
+        cartBox.classList.toggle("show", cart > .65);
       }
     }
     shake = Math.max(0, shake - dt * 34);
+    if (oreHot > 0 && (oreHot -= dt) <= 0) oreEl.classList.remove("hot");
+    if (peek > 0 && (peek -= dt) <= 0) { hotEl.classList.remove("show"); toolEl.classList.remove("show"); }
 
     const depth = Math.max(0, Math.round(P.y));
     depthEl.innerHTML = depth + "<i>М</i>";
