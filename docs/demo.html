@@ -366,6 +366,7 @@
   uniform vec3 uWin;
   uniform float uFov, uFar, uGrain, uBright, uLampR, uDrain, uXray;
   uniform vec4 uNode;
+  uniform vec4 uPoint;
 
   vec3 toTex(vec3 w){
     return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
@@ -462,20 +463,34 @@
     vec3 rd = normalize(uRot*vec3(uv,uFov));
     vec3 ro = uCam;
 
-    float t = 0.05, hit = -1.0;
+    // луч шагает позицией, а не по параметру — его можно гнуть на ходу
+    float t = 0.05, hit = -1.0, stp = 0.0;
+    vec3 p = ro + rd*t, pp = p;
+    bool cap = false;
     for(int i=0;i<190;i++){
-      vec3 p = ro + rd*t;
       if(dens(p) > 0.47){ hit = t; break; }
-      t += mix(0.10, 0.42, clamp(t/14.0,0.0,1.0));
+      pp = p;
+      stp = mix(0.10, 0.42, clamp(t/14.0,0.0,1.0));
+      if(uPoint.w > 0.0){
+        vec3 dv = uPoint.xyz - p;
+        float r2 = dot(dv,dv), r = sqrt(r2);
+        if(r < uPoint.w){ cap = true; break; }             // за горизонт свет не возвращается
+        if(r < 18.0){
+          stp = min(stp, 0.05 + 0.085*(r - uPoint.w));      // у точки шагаем мелко
+          rd = normalize(rd + dv*(uPoint.w*0.7*stp/(r2*r + 0.02)));
+        }
+      }
+      p += rd*stp; t += stp;
       if(t>uFar) break;
     }
+    if(cap){ outColor = vec4(0.0,0.0,0.0,1.0); return; }
     if(hit<0.0){ outColor = vec4(0.012,0.010,0.016,1.0); return; }
 
-    // уточняем поверхность
-    float a = max(hit-0.42,0.0), b = hit;
-    for(int i=0;i<7;i++){ float m=(a+b)*0.5; if(dens(ro+rd*m)>0.47) b=m; else a=m; }
-    float d = b;
-    vec3 w = ro + rd*d;
+    // уточняем поверхность на последнем отрезке
+    vec3 A = pp, B = p;
+    for(int i=0;i<7;i++){ vec3 m=(A+B)*0.5; if(dens(m)>0.47) B=m; else A=m; }
+    vec3 w = B;
+    float d = distance(ro, w);
 
     // нормаль из градиента плотности + микрорельеф
     float e = 0.09;
@@ -1397,6 +1412,21 @@
     return bd < 16 ? best : null;
   }
 
+  // ---------- точка ----------
+  // Свет к ней сворачивает, шаг к ней укорачивается, время рядом с ней тянется.
+  let PT = null, depthLag = 0;
+  function spawnPoint() {
+    const a = Math.random() * Math.PI * 2;
+    PT = { x: P.x + Math.cos(a) * 9, y: P.y - EYE + 0.4, z: P.z + Math.sin(a) * 9, r: 0.55 };
+  }
+  function ptDist() { return PT ? Math.hypot(PT.x - P.x, PT.y - (P.y - EYE), PT.z - P.z) : 1e9; }
+  // 1 вплотную, 0 за двадцать метров
+  function ptGrip() {
+    if (!PT) return 0;
+    const d = ptDist();
+    return d > 20 ? 0 : Math.pow(1 - d / 20, 2.2);
+  }
+
   function startFall() {
     fallSave = { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, cart: cart - blackOre };
     fallEnd = performance.now() + 15000;
@@ -1472,7 +1502,8 @@
     { id:"liar",   at: 30, go(){ liar = 2; } },
     { id:"face",   at: 34, go(){ faceT = 2; } },
     { id:"count",  at: 38, go(){ cnt = 9; cntAt = P.y; } },
-    { id:"lights", at: 44, go(){ lights = 3.2; } }
+    { id:"lights", at: 44, go(){ lights = 3.2; } },
+    { id:"point",  at: 36, go(){ spawnPoint(); } }
   ];
 
   function dreadTick(dt) {
@@ -1653,7 +1684,9 @@
 
   let last = performance.now();
   function frame(now) {
-    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    const raw = Math.min(.05, (now - last) / 1000); last = now;
+    if (PT && ptDist() > 34) PT = null;                  // ушёл достаточно далеко — и её нет
+    const dt = raw * (1 - ptGrip() * 0.74);              // рядом с ней всё делается дольше
     resize();
     if (mode !== "dig") {
       if (mode === "lift") liftTick();
@@ -1674,8 +1707,19 @@
     const sn = Math.sin(P.yaw), cs = Math.cos(P.yaw);
     const dx = (sn * fw / L + cs * st / L) * spd, dz = (cs * fw / L - sn * st / L) * spd;
     if (fw || st) {
-      if (!blocked(P.x + dx, P.y, P.z)) P.x += dx;
-      if (!blocked(P.x, P.y, P.z + dz)) P.z += dz;
+      let mx = dx, mz = dz;
+      if (PT) {
+        // расстояние до неё сокращается, но никогда не кончается
+        const vx = PT.x - P.x, vz = PT.z - P.z, vl = Math.hypot(vx, vz) || 1;
+        const toward = (mx * vx + mz * vz) / vl;
+        if (toward > 0) {
+          const k = Math.min(1, Math.max(0, (vl - 5.0) / 8));
+          const cut = toward * (1 - k * k);
+          mx -= cut * vx / vl; mz -= cut * vz / vl;
+        }
+      }
+      if (!blocked(P.x + mx, P.y, P.z)) P.x += mx;
+      if (!blocked(P.x, P.y, P.z + mz)) P.z += mz;
       if (P.ground && SET.headbob) bob += dt * 11;
     }
 
@@ -1724,9 +1768,12 @@
     if (peek > 0 && (peek -= dt) <= 0) { hotEl.classList.remove("show"); toolEl.classList.remove("show"); }
 
     const depth = Math.max(0, Math.round(P.y));
+    // рядом с точкой счётчик отстаёт от реальности — догоняет тем медленнее, чем ближе
+    const lagK = PT ? Math.max(0.005, Math.pow(Math.min(1, Math.max(0, (ptDist() - 4) / 16)), 3)) : 1;
+    depthLag += (depth - depthLag) * Math.min(1, dt * 24 * lagK);
     if (liar > 0) { liar -= 1;
       depthEl.innerHTML = (depth + 7 + ((Math.random() * 40) | 0)) + "<i>М</i>"; }
-    else depthEl.innerHTML = depth + "<i>М</i>";
+    else depthEl.innerHTML = Math.round(depthLag) + "<i>М</i>";
 
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch), cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
     const R = [cy, 0, -sy], F = [sy * cp, -sp, cy * cp], Uv = [-sy * sp, -cp, -cy * sp];
@@ -1738,6 +1785,8 @@
     const an = activeNode();
     if (an) gl.uniform4f(U("uNode"), an.x, an.y, an.z, an.r);
     else gl.uniform4f(U("uNode"), 0, 0, 0, 0);
+    if (PT && ptDist() < 26) gl.uniform4f(U("uPoint"), PT.x, PT.y, PT.z, PT.r);
+    else gl.uniform4f(U("uPoint"), 0, 0, 0, 0);
     gl.uniform1f(U("uDrain"), buff.warm > 0 ? 0 : Math.max(0, Math.min(.92, (P.y - 10) / 46)));
     gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 7) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
