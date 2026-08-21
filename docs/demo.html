@@ -919,13 +919,13 @@
 
     // две позы: занос (f=1) и точка удара (f=0)
     const bx = Math.sin(bob) * px(10), by = Math.abs(Math.cos(bob)) * px(13);
-    const hxA = W * 0.472, hyA = H * 0.680;            // головка в ударе — у прицела, чуть ниже
-    const hxB = W * 0.715, hyB = H * 0.225;            // головка в заносе — поднята и отведена
-    const gxA = W + px(70),  gyA = H * 0.355;          // хват в ударе — поднят, рукоять идёт вниз
-    const gxB = W + px(120), gyB = H + px(95);         // хват в заносе — уведён вниз и назад
+    const hxA = W * 0.455, hyA = H * 0.700;            // головка в ударе — у прицела, чуть ниже
+    const hxB = W * 0.520, hyB = H * 0.120;            // в покое кирка стоит почти отвесно
+    const gxA = W * 0.905, gyA = H * 0.285;            // хват в ударе — уходит вверх и вправо
+    const gxB = W * 0.605, gyB = H + px(55);           // хват в покое — снизу, перед собой
 
     // траектория головки — дуга, а не отрезок: на полпути её выносит вправо
-    const arc = Math.sin(f * Math.PI) * px(110);
+    const arc = Math.sin(f * Math.PI) * px(78);
     const hx = hxA + (hxB - hxA) * f + arc + bx * .5 + (Math.random() - .5) * px(7) * kick;
     const hy = hyA + (hyB - hyA) * f - Math.sin(f * Math.PI) * px(46) + by * .5
              + (Math.random() - .5) * px(7) * kick;
