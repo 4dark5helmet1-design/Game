@@ -1,0 +1,317 @@
+<title>Забой: снаряжение</title>
+<style>
+  :root{--bg:#0a0810;--panel:#141019;--line:#241d2f;--line2:#372c47;
+    --ink:#ece7f4;--ink2:#a79ec0;--ink3:#6f6788;--lamp:#ffc14d;
+    --act:#ffb14d;--pas:#6fc3e8;--con:#8ede9c;--sec:#b07ce0;
+    --mono:ui-monospace,"SFMono-Regular","Cascadia Mono",Menlo,Consolas,monospace;
+    --body:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+  .wrap{max-width:80ch;margin:0 auto;padding:0 18px 100px}
+  header.top{padding:52px 20px 34px;text-align:center;border-bottom:1px solid var(--line);
+    background:radial-gradient(ellipse 70% 80% at 50% 0%,rgba(255,177,77,.12),transparent 70%),var(--bg)}
+  header.top .kick{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--lamp);margin:0 0 12px}
+  header.top h1{font-family:var(--mono);font-size:clamp(25px,7vw,40px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 14px}
+  header.top p{max-width:56ch;margin:0 auto;color:var(--ink2);font-size:16px}
+  .lede{margin:34px 0 8px;color:var(--ink2)}
+  .lede b{color:var(--ink)}
+  h2{font-family:var(--mono);font-size:17px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    margin:44px 0 6px;padding-bottom:11px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:baseline}
+  h2 em{font-family:var(--body);font-style:normal;font-size:14px;color:var(--ink3);letter-spacing:0;text-transform:none}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:10px;margin:18px 0 6px}
+  .g{background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:12px;display:grid;
+    grid-template-columns:66px 1fr;gap:11px;align-items:start}
+  .g canvas{width:66px;height:66px;display:block;border-radius:9px;background:#0e0b14}
+  .g b{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.06em;margin-bottom:3px}
+  .g .st{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink3);margin-bottom:5px}
+  .g .tx{font-size:13.5px;line-height:1.45;color:var(--ink2)}
+  .g .mn{display:block;margin-top:5px;font-size:12.5px;color:#e0778c}
+  .g.sec{border-color:rgba(176,124,224,.45);box-shadow:inset 0 0 28px rgba(176,124,224,.10)}
+  .g.sec b{color:var(--sec)}
+  .note{border-left:2px solid var(--lamp);padding:4px 0 4px 16px;color:var(--ink2);font-size:15.5px;margin:20px 0}
+  .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin:20px 0}
+  .slot{border:1px solid var(--line2);border-radius:11px;padding:12px 14px;background:var(--panel)}
+  .slot b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;margin-bottom:5px}
+  .slot span{font-size:13.5px;color:var(--ink2)}
+  ul{padding-left:1.25em;color:var(--ink2)}li{margin-bottom:7px}li strong{color:var(--ink)}
+  footer.end{border-top:1px solid var(--line);margin-top:50px;padding-top:18px;font-family:var(--mono);
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+</style>
+
+<header class="top">
+  <p class="kick">Забой · снаряжение</p>
+  <h1>Пояс</h1>
+  <p>Двадцать два предмета трёх видов. Почти у каждого есть цена — иначе это не сборка, а список покупок.</p>
+</header>
+
+<div class="wrap">
+
+<p class="lede"><b>Что не так сейчас.</b> Всё снаряжение — шесть кнопок с кулдаунами. Один тип, одно решение: какие три взять. Ниже я разложил его на <b>активные, пассивные и расходники</b> и почти каждому дал минус. Минус — это и есть игра: без него сильный предмет просто вытесняет слабый, и выбора нет.</p>
+
+<div class="slots">
+  <div class="slot"><b>2 АКТИВНЫХ</b><span>Кнопки с кулдаунами. Их видно на экране.</span></div>
+  <div class="slot"><b>2 ПАССИВНЫХ</b><span>Работают всегда, кнопок нет. Их не видно вообще.</span></div>
+  <div class="slot"><b>1 РАСХОДНИК</b><span>Одноразовый. Потратил — слот пуст до штрека.</span></div>
+</div>
+<p class="note">Слоты <strong>раздельные</strong>, а не общий пул на пять. Иначе все возьмут пять активных: кнопка всегда ощущается сильнее, чем цифра, которая просто есть. Разделение заставляет носить хотя бы две пассивки, а именно они и делают сборки разными.</p>
+
+<h2>Активные <em>кнопка и кулдаун</em></h2>
+<div class="grid" id="act"></div>
+
+<h2>Пассивные <em>работают сами</em></h2>
+<div class="grid" id="pas"></div>
+
+<h2>Расходники <em>один раз за спуск</em></h2>
+<div class="grid" id="con"></div>
+
+<h2>Три правила, по которым это собрано</h2>
+<ul>
+  <li><strong>У сильного всегда есть цена.</strong> Двойная лампа даёт свет и чаще гаснет. Тяжёлые рукавицы бьют больнее и медленнее. Оберег спасает человека и берёт за это рудой.</li>
+  <li><strong>Пассивки не показываются на экране.</strong> Ни иконок, ни таймеров. Игрок должен чувствовать их по игре, а не считывать с интерфейса — это единственный способ не захламить кадр обратно.</li>
+  <li><strong>Секретное нельзя купить.</strong> Ни за руду, ни за осколки, никогда. Только найти в полости — и тогда оно твоё навсегда.</li>
+</ul>
+
+<p class="note">И то, что мне тут нравится больше всего: <strong>Счётчик</strong> — пассивка, которая показывает прочность блока цифрой. Полезная и скучная… ровно до глубины, где он начнёт показывать не то. А поскольку пассивок на экране не видно, поймать его на вранье нельзя — можно только заметить, что порода ломается не с того удара.</p>
+
+<footer class="end">Забой · лист снаряжения · отрисовано кодом</footer>
+</div>
+
+<script>
+(function(){
+  const A="#ffb14d", P="#6fc3e8", C="#8ede9c";
+  function hx(h,a){const n=parseInt(h.slice(1),16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`}
+
+  // ---------- иконки ----------
+  const ICON = {
+    fist(g,S,c){ // кураж
+      g.fillStyle=grd(g,S,"#f7c98c","#c07a2e","#5c3410");
+      rr(g,S*.22,S*.30,S*.56,S*.42,S*.10);
+      for(let i=0;i<4;i++){rr(g,S*.24+i*S*.13,S*.24,S*.11,S*.16,S*.05);}
+      g.fillStyle="rgba(255,255,255,.28)";rr(g,S*.22,S*.30,S*.56,S*.07,S*.03);
+      burst(g,S,c,.62);
+    },
+    dyn(g,S){ // динамит
+      g.fillStyle=grd(g,S,"#e8695a","#b02f26","#4d100c");
+      rr(g,S*.30,S*.28,S*.40,S*.52,S*.07);
+      g.fillStyle="rgba(0,0,0,.30)";g.fillRect(S*.30,S*.44,S*.40,S*.06);
+      g.fillStyle="rgba(255,255,255,.25)";g.fillRect(S*.34,S*.28,S*.06,S*.52);
+      g.strokeStyle="#c9a06a";g.lineWidth=S*.045;g.beginPath();
+      g.moveTo(S*.5,S*.28);g.quadraticCurveTo(S*.66,S*.14,S*.78,S*.20);g.stroke();
+      spark(g,S*.78,S*.20,S*.10,"#ffd27a");
+    },
+    flare(g,S){ burst(g,S,"#ffe6a8",1.0);
+      g.fillStyle=grd(g,S,"#e9e4ee","#8e8898","#2f2a38");
+      rr(g,S*.42,S*.40,S*.16,S*.42,S*.05);
+      g.fillStyle="#fff6dc";g.beginPath();g.arc(S*.5,S*.34,S*.13,0,6.283);g.fill(); },
+    eye(g,S){
+      g.fillStyle="#efe9f6";g.beginPath();
+      g.ellipse(S*.5,S*.5,S*.34,S*.21,0,0,6.283);g.fill();
+      g.fillStyle=grd(g,S,"#ffe08c","#d5a026","#6d4a10");
+      g.beginPath();g.arc(S*.5,S*.5,S*.15,0,6.283);g.fill();
+      g.fillStyle="#1a1522";g.beginPath();g.arc(S*.5,S*.5,S*.07,0,6.283);g.fill();
+      g.strokeStyle="#3a3348";g.lineWidth=S*.035;g.beginPath();
+      g.ellipse(S*.5,S*.5,S*.34,S*.21,0,0,6.283);g.stroke(); },
+    bell(g,S){
+      g.fillStyle=grd(g,S,"#ffdf95","#c08a28","#5e3f0c");
+      g.beginPath();g.moveTo(S*.26,S*.66);
+      g.quadraticCurveTo(S*.28,S*.24,S*.5,S*.22);
+      g.quadraticCurveTo(S*.72,S*.24,S*.74,S*.66);g.closePath();g.fill();
+      g.fillStyle="#3a2a10";g.fillRect(S*.22,S*.66,S*.56,S*.07);
+      g.fillStyle="#e8c47a";g.beginPath();g.arc(S*.5,S*.78,S*.06,0,6.283);g.fill();
+      g.fillStyle="rgba(255,255,255,.3)";g.fillRect(S*.34,S*.30,S*.06,S*.32); },
+    frame(g,S){
+      g.fillStyle=grd(g,S,"#b98a4e","#6d4626","#2f1d0e");
+      g.fillRect(S*.20,S*.24,S*.60,S*.10);
+      g.fillRect(S*.22,S*.24,S*.10,S*.54);
+      g.fillRect(S*.68,S*.24,S*.10,S*.54);
+      g.fillStyle="rgba(255,224,170,.22)";g.fillRect(S*.20,S*.24,S*.60,S*.03);
+      g.fillStyle="#2b2434";for(const x of [.26,.72]){g.beginPath();g.arc(S*x,S*.30,S*.03,0,6.283);g.fill()} },
+    whistle(g,S){
+      g.fillStyle=grd(g,S,"#e6e2ee","#8e8898","#2e2a38");
+      rr(g,S*.22,S*.40,S*.44,S*.22,S*.08);
+      g.beginPath();g.moveTo(S*.64,S*.42);g.lineTo(S*.82,S*.46);g.lineTo(S*.82,S*.56);g.lineTo(S*.64,S*.60);g.fill();
+      g.fillStyle="#1c1826";g.beginPath();g.arc(S*.36,S*.51,S*.055,0,6.283);g.fill();
+      g.fillStyle="rgba(255,255,255,.35)";g.fillRect(S*.24,S*.41,S*.40,S*.04); },
+    rope(g,S){
+      g.strokeStyle="#b98a4e";g.lineWidth=S*.10;
+      for(let i=0;i<3;i++){g.beginPath();g.arc(S*.5,S*.5,S*(.14+i*.10),0,6.283);g.stroke()}
+      g.strokeStyle="rgba(0,0,0,.3)";g.lineWidth=S*.03;
+      for(let i=0;i<14;i++){const a=i/14*6.283;g.beginPath();
+        g.moveTo(S*.5+Math.cos(a)*S*.10,S*.5+Math.sin(a)*S*.10);
+        g.lineTo(S*.5+Math.cos(a)*S*.38,S*.5+Math.sin(a)*S*.38);g.stroke()} },
+    knee(g,S){
+      g.fillStyle=grd(g,S,"#6f6a7c","#3d3948","#191622");
+      g.beginPath();g.ellipse(S*.5,S*.48,S*.30,S*.28,0,0,6.283);g.fill();
+      g.fillStyle="rgba(255,255,255,.16)";
+      for(let i=0;i<3;i++){g.beginPath();g.ellipse(S*.5,S*.40+i*S*.09,S*.24-i*S*.02,S*.045,0,0,6.283);g.fill()}
+      g.fillStyle="#241f2e";g.fillRect(S*.16,S*.60,S*.68,S*.09); },
+    mask(g,S){
+      g.fillStyle=grd(g,S,"#8f8a9c","#4f4a5c","#221e2c");
+      g.beginPath();g.moveTo(S*.26,S*.34);g.lineTo(S*.74,S*.34);
+      g.quadraticCurveTo(S*.72,S*.72,S*.5,S*.78);
+      g.quadraticCurveTo(S*.28,S*.72,S*.26,S*.34);g.closePath();g.fill();
+      g.fillStyle="#17131f";
+      for(const x of [.36,.64]){g.beginPath();g.arc(S*x,S*.52,S*.11,0,6.283);g.fill()}
+      g.fillStyle="rgba(255,255,255,.22)";
+      for(const x of [.36,.64]){g.beginPath();g.arc(S*x-S*.03,S*.49,S*.04,0,6.283);g.fill()}
+      g.fillStyle="#3c3648";g.fillRect(S*.22,S*.30,S*.56,S*.06); },
+    charm(g,S){
+      g.strokeStyle="#6b5a3a";g.lineWidth=S*.035;
+      g.beginPath();g.moveTo(S*.5,S*.16);g.lineTo(S*.5,S*.34);g.stroke();
+      g.fillStyle=grd(g,S,"#e8dcc0","#a8946c","#4e4330");
+      g.beginPath();
+      for(let i=0;i<6;i++){const a=i/6*6.283-1.57;
+        const fn=i?"lineTo":"moveTo";g[fn](S*.5+Math.cos(a)*S*.26,S*.54+Math.sin(a)*S*.26)}
+      g.closePath();g.fill();
+      g.fillStyle="#3a2f52";g.beginPath();g.arc(S*.5,S*.54,S*.09,0,6.283);g.fill();
+      g.fillStyle="rgba(255,255,255,.3)";g.beginPath();g.arc(S*.44,S*.46,S*.05,0,6.283);g.fill(); },
+    compass(g,S){
+      g.fillStyle=grd(g,S,"#c9a06a","#7d5c2e","#33240e");
+      g.beginPath();g.arc(S*.5,S*.5,S*.34,0,6.283);g.fill();
+      g.fillStyle="#12101a";g.beginPath();g.arc(S*.5,S*.5,S*.26,0,6.283);g.fill();
+      g.fillStyle="#e0556a";g.beginPath();g.moveTo(S*.5,S*.28);g.lineTo(S*.57,S*.52);g.lineTo(S*.43,S*.52);g.fill();
+      g.fillStyle="#d8d2e4";g.beginPath();g.moveTo(S*.5,S*.72);g.lineTo(S*.57,S*.52);g.lineTo(S*.43,S*.52);g.fill();
+      g.fillStyle="rgba(255,255,255,.28)";g.beginPath();g.arc(S*.40,S*.38,S*.06,0,6.283);g.fill(); },
+    plumb(g,S){
+      g.strokeStyle="#8d7c5c";g.lineWidth=S*.028;
+      g.beginPath();g.moveTo(S*.5,S*.14);g.lineTo(S*.5,S*.46);g.stroke();
+      g.fillStyle=grd(g,S,"#d8d2e4","#8a8496","#2c2836");
+      g.beginPath();g.moveTo(S*.5,S*.42);g.lineTo(S*.64,S*.56);
+      g.lineTo(S*.5,S*.86);g.lineTo(S*.36,S*.56);g.closePath();g.fill();
+      g.fillStyle="rgba(255,255,255,.32)";g.beginPath();
+      g.moveTo(S*.5,S*.44);g.lineTo(S*.44,S*.56);g.lineTo(S*.5,S*.80);g.closePath();g.fill(); },
+    gauge(g,S){
+      g.fillStyle=grd(g,S,"#7c7688","#433e51","#1c1926");
+      rr(g,S*.18,S*.28,S*.64,S*.44,S*.08);
+      g.fillStyle="#0d1a14";rr(g,S*.24,S*.34,S*.52,S*.32,S*.05);
+      g.fillStyle="#8ede9c";g.font=`700 ${S*.20}px ui-monospace,monospace`;
+      g.textAlign="center";g.textBaseline="middle";g.fillText("847",S*.5,S*.50);
+      g.fillStyle="rgba(255,255,255,.18)";g.fillRect(S*.18,S*.28,S*.64,S*.04); },
+    glove(g,S){
+      g.fillStyle=grd(g,S,"#b2895a","#6d4a28","#2f1e0f");
+      rr(g,S*.26,S*.36,S*.44,S*.42,S*.10);
+      for(let i=0;i<4;i++) rr(g,S*.28+i*S*.11,S*.22,S*.09,S*.20,S*.045);
+      rr(g,S*.66,S*.42,S*.14,S*.18,S*.06);
+      g.fillStyle="rgba(255,255,255,.20)";g.fillRect(S*.26,S*.36,S*.44,S*.05);
+      g.fillStyle="#241708";g.fillRect(S*.26,S*.70,S*.44,S*.07); },
+    helmet(g,S){
+      g.fillStyle=grd(g,S,"#ffd27a","#c88a1e","#5e3d08");
+      g.beginPath();g.arc(S*.5,S*.58,S*.30,Math.PI,0);g.fill();
+      g.fillRect(S*.14,S*.56,S*.72,S*.09);
+      g.fillStyle="rgba(255,255,255,.26)";g.beginPath();g.arc(S*.44,S*.52,S*.09,Math.PI,0);g.fill();
+      for(const x of [.36,.64]){
+        g.fillStyle="#2b2434";g.beginPath();g.arc(S*x,S*.40,S*.075,0,6.283);g.fill();
+        g.fillStyle="#fff2c8";g.beginPath();g.arc(S*x,S*.40,S*.042,0,6.283);g.fill();
+        const gg=g.createRadialGradient(S*x,S*.40,0,S*x,S*.40,S*.20);
+        gg.addColorStop(0,"rgba(255,220,140,.55)");gg.addColorStop(1,"rgba(255,220,140,0)");
+        g.fillStyle=gg;g.fillRect(S*x-S*.2,S*.20,S*.4,S*.4);} },
+    thermos(g,S){
+      g.fillStyle=grd(g,S,"#8fd0ea","#3c7f9e","#153543");
+      rr(g,S*.34,S*.24,S*.32,S*.56,S*.07);
+      g.fillStyle="#2b2434";rr(g,S*.32,S*.18,S*.36,S*.11,S*.04);
+      g.fillStyle="rgba(255,255,255,.30)";g.fillRect(S*.38,S*.26,S*.06,S*.50);
+      g.fillStyle="#d8d2e4";g.fillRect(S*.34,S*.48,S*.32,S*.05);
+      steam(g,S); },
+    bulb(g,S){
+      const gg=g.createRadialGradient(S*.5,S*.44,0,S*.5,S*.44,S*.4);
+      gg.addColorStop(0,"rgba(255,214,130,.5)");gg.addColorStop(1,"rgba(255,214,130,0)");
+      g.fillStyle=gg;g.fillRect(0,0,S,S);
+      g.fillStyle=grd(g,S,"#fff3d0","#e6bf6c","#8a6420");
+      g.beginPath();g.arc(S*.5,S*.44,S*.22,0,6.283);g.fill();
+      g.fillStyle="#7d7688";rr(g,S*.40,S*.62,S*.20,S*.20,S*.04);
+      for(let i=0;i<3;i++){g.fillStyle="rgba(0,0,0,.3)";g.fillRect(S*.40,S*.65+i*S*.06,S*.20,S*.03)}
+      g.fillStyle="rgba(255,255,255,.5)";g.beginPath();g.arc(S*.43,S*.38,S*.06,0,6.283);g.fill(); },
+    wedge(g,S){
+      g.fillStyle=grd(g,S,"#e6e0ee","#8a8496","#2a2634");
+      g.beginPath();g.moveTo(S*.36,S*.18);g.lineTo(S*.64,S*.18);
+      g.lineTo(S*.54,S*.82);g.lineTo(S*.46,S*.82);g.closePath();g.fill();
+      g.fillStyle="rgba(255,255,255,.35)";g.beginPath();
+      g.moveTo(S*.40,S*.18);g.lineTo(S*.47,S*.18);g.lineTo(S*.48,S*.78);g.closePath();g.fill();
+      g.fillStyle="#3a3348";g.fillRect(S*.34,S*.16,S*.32,S*.07); },
+    chalk(g,S){
+      g.save();g.translate(S*.5,S*.5);g.rotate(-.5);
+      g.fillStyle=grd(g,S,"#ffffff","#cfc9d8","#8a8496");
+      rr(g,-S*.09,-S*.30,S*.18,S*.60,S*.03);
+      g.fillStyle="rgba(0,0,0,.20)";g.fillRect(-S*.09,S*.20,S*.18,S*.10);
+      g.restore();
+      g.fillStyle="rgba(255,255,255,.35)";
+      for(let i=0;i<12;i++)g.fillRect(S*(.2+Math.random()*.6),S*(.66+Math.random()*.2),S*.03,S*.02); },
+    nail(g,S){
+      g.save();g.translate(S*.5,S*.5);g.rotate(.35);
+      g.fillStyle=grd(g,S,"#c9c3d6","#6e687e","#241f2e");
+      g.beginPath();g.moveTo(-S*.05,-S*.28);g.lineTo(S*.05,-S*.28);
+      g.lineTo(S*.012,S*.34);g.lineTo(-S*.012,S*.34);g.closePath();g.fill();
+      g.fillStyle="#8a8496";g.beginPath();g.ellipse(0,-S*.30,S*.13,S*.05,0,0,6.283);g.fill();
+      g.fillStyle="rgba(255,255,255,.4)";g.fillRect(-S*.04,-S*.26,S*.02,S*.5);
+      g.restore(); },
+    flask(g,S){
+      g.fillStyle=grd(g,S,"#9aa2ac","#565d67","#22262c");
+      rr(g,S*.30,S*.28,S*.40,S*.52,S*.09);
+      g.fillStyle="#2b2434";rr(g,S*.42,S*.18,S*.16,S*.12,S*.03);
+      g.fillStyle="rgba(255,255,255,.22)";g.fillRect(S*.35,S*.32,S*.06,S*.42);
+      g.fillStyle="rgba(0,0,0,.35)";rr(g,S*.36,S*.44,S*.28,S*.22,S*.03); }
+  };
+  function grd(g,S,a,b,c){const q=g.createLinearGradient(0,S*.15,0,S*.85);
+    q.addColorStop(0,a);q.addColorStop(.5,b);q.addColorStop(1,c);return q}
+  function rr(g,x,y,w,h,r){g.beginPath();g.roundRect(x,y,w,h,r);g.fill()}
+  function burst(g,S,c,k){g.strokeStyle=hx(c,.7);g.lineWidth=S*.035;
+    for(let i=0;i<8;i++){const a=i/8*6.283;g.beginPath();
+      g.moveTo(S*.5+Math.cos(a)*S*.30*k,S*.5+Math.sin(a)*S*.30*k);
+      g.lineTo(S*.5+Math.cos(a)*S*.44*k,S*.5+Math.sin(a)*S*.44*k);g.stroke()}}
+  function spark(g,x,y,r,c){const q=g.createRadialGradient(x,y,0,x,y,r*2);
+    q.addColorStop(0,c);q.addColorStop(1,"rgba(255,180,80,0)");g.fillStyle=q;
+    g.beginPath();g.arc(x,y,r*2,0,6.283);g.fill()}
+  function steam(g,S){g.strokeStyle="rgba(255,255,255,.30)";g.lineWidth=S*.028;
+    for(let i=0;i<2;i++){g.beginPath();g.moveTo(S*(.44+i*.12),S*.16);
+      g.quadraticCurveTo(S*(.38+i*.12),S*.08,S*(.46+i*.12),S*.03);g.stroke()}}
+
+  // ---------- данные ----------
+  const ACT=[
+    ["fist","Кураж","15 С · КД 45 С","Урон кирки ×3.","Ритм после окончания обнуляется."],
+    ["dyn","Динамит","МГНОВЕННО · КД 40 С","Сносит стену целиком, вместе с гранитом.","Руда с выброшенной породы не идёт — она уходит в осыпь."],
+    ["flare","Вспышка","8 С · КД 90 С","Свет добивает до конца тоннеля. Видно всё.","После неё фонарь пять секунд разгорается заново."],
+    ["eye","Жадный глаз","20 С · КД 120 С","Руда ×5.","Трещины на это время не появляются."],
+    ["bell","Смена","25 С · КД 120 С","Бригада копает ×3.","Шанс потерять человека на это время удваивается."],
+    ["frame","Крепь","30 С · КД 300 С","Обвал и погоня не действуют.","Пока стоит крепь, шагать вперёд нельзя."],
+    ["whistle","Свисток","20 С · КД 180 С","Бригада 20 секунд копает так же быстро, как ты.",""],
+    ["rope","Верёвка","МГНОВЕННО · КД 240 С","Подъём в штрек без клети, из любой точки.",""]
+  ];
+  const PAS=[
+    ["knee","Наколенники","ПАССИВ","Шаг вперёд больше не сбивает ритм.","−10% к скорости шага."],
+    ["mask","Респиратор","ПАССИВ","Пыль не мешает: трещины видно даже сразу после удара.","−1 метр к радиусу фонаря: стекло бликует."],
+    ["charm","Оберег","ПАССИВ","Первая пропажа копателя за спуск не считается.","−20% руды. Он как будто откупается."],
+    ["compass","Компас","ПАССИВ","На схеме видно, где ты уже был.","—"],
+    ["plumb","Отвес","ПАССИВ","Показывает, сколько метров до следующего пласта.","—"],
+    ["gauge","Счётчик","ПАССИВ","Показывает прочность блока цифрой.","Глубже определённой отметки начинает врать."],
+    ["glove","Рукавицы","ПАССИВ","+25% урона на удержании.","−30% к скорости удержания."],
+    ["helmet","Двойная лампа","ПАССИВ","+2 метра света.","Фонарь гаснет вдвое чаще."],
+    ["chalk","Мел","ПАССИВ · СЕКРЕТ","Метки на стене. Остаются между забегами.","",1],
+    ["nail","Гвоздь","ПАССИВ · СЕКРЕТ","Начинает работать после того, как отсчёт дошёл до нуля.","",1],
+    ["flask","Пустая фляга","ПАССИВ · СЕКРЕТ","Не делает ничего.","Слот занят. Выбросить нельзя.",1]
+  ];
+  const CON=[
+    ["thermos","Термос","1 ШТ","Снимает дрожь рук полностью, не поднимаясь наверх.",""],
+    ["bulb","Запасная лампа","1 ШТ","Мгновенно зажигает погасший фонарь.",""],
+    ["wedge","Клин","1 ШТ","Следующий удар — гарантированный скол.",""]
+  ];
+
+  function card(host,[ico,name,st,tx,mn,sec]){
+    const d=document.createElement("div");d.className="g"+(sec?" sec":"");
+    const cv=document.createElement("canvas");cv.width=cv.height=200;
+    const box=document.createElement("div");
+    box.innerHTML=`<b>${name}</b><div class="st">${st}</div><div class="tx">${tx}`+
+      (mn&&mn!=="—"?`<span class="mn">${mn}</span>`:"")+`</div>`;
+    if(!sec) box.querySelector("b").style.color = host.id==="act"?A:host.id==="pas"?P:C;
+    d.append(cv,box);host.append(d);
+    const g=cv.getContext("2d");
+    g.fillStyle="#0e0b14";g.fillRect(0,0,200,200);
+    const rg=g.createRadialGradient(100,92,0,100,92,110);
+    rg.addColorStop(0,hx(sec?"#b07ce0":host.id==="act"?A:host.id==="pas"?P:C,.16));
+    rg.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=rg;g.fillRect(0,0,200,200);
+    ICON[ico](g,200,sec?"#b07ce0":A);
+  }
+  ACT.forEach(x=>card(document.getElementById("act"),x));
+  PAS.forEach(x=>card(document.getElementById("pas"),x));
+  CON.forEach(x=>card(document.getElementById("con"),x));
+})();
+</script>
