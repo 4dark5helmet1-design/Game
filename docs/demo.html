@@ -129,6 +129,17 @@
   .lift span{opacity:.7;animation:lp 1.4s ease-in-out infinite}
   @keyframes lp{0%,100%{opacity:.25}50%{opacity:.8}}
 
+  .note{position:absolute;inset:0;z-index:26;display:none;align-items:center;justify-content:center;
+    background:rgba(6,4,9,.82);padding:22px;cursor:pointer}
+  .note.on{display:flex;animation:nfade .5s ease}
+  @keyframes nfade{from{opacity:0}to{opacity:1}}
+  .note-in{max-width:430px;background:#171018;border:1px solid #2f2634;padding:22px 22px 16px;
+    box-shadow:0 0 0 1px #0c0810,0 22px 60px rgba(0,0,0,.7);position:relative;
+    background-image:repeating-linear-gradient(transparent,transparent 25px,rgba(255,255,255,.024) 25px,rgba(255,255,255,.024) 26px)}
+  .note-in .nk{font-family:var(--mono);font-size:9px;letter-spacing:.28em;color:var(--lamp)}
+  .note-in .nb{margin-top:12px;font-family:var(--body);font-size:15.5px;line-height:1.68;
+    color:#cec5d7;white-space:pre-line;letter-spacing:.005em}
+  .note-in .nx{margin-top:16px;font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;color:#5d5570}
   .hub{position:absolute;inset:0;background:#100c14;display:none;flex-direction:column;z-index:23;
     overflow:auto;font-family:var(--mono)}
   .hub.on{display:flex}
@@ -215,6 +226,13 @@
     <div class="hub-go" id="hubgo">СПУСТИТЬСЯ<small id="hubdepth">НА 0 М</small></div>
   </div>
   <div class="fail" id="fail"></div>
+  <div class="note" id="note">
+    <div class="note-in">
+      <span class="nk" id="notek">ЛИСТОК</span>
+      <div class="nb" id="noteb"></div>
+      <div class="nx">нажми, чтобы убрать</div>
+    </div>
+  </div>
 </div>
 
 <div class="keys">
@@ -287,38 +305,74 @@
 
   // подвал: комната 9 x 3.2 x 9, пол на Y = 0
   const RH = 4.5, RW = 4.5, CEIL = -3.1;
-  for (let y = 0; y < NY; y++) {
-    const Y = wy(y);
-    for (let z = 0; z < NZ; z++) {
-      const Z = wz(z);
-      for (let x = 0; x < NX; x++) {
-        const X = wx(x);
-        let d;
-        if (Y < 0 && Y > CEIL && Math.abs(X) < RW && Math.abs(Z) < RH) d = 0;      // воздух в комнате
-        else if (Y < CEIL - 0.55) d = 0;                                            // выше перекрытия — ничего
-        else d = 255;
-        den[di(x, y, z)] = d;
+  // каждая смена копает свой забой — сид меняется при обвале
+  let WSEED = 0;
+  const hs = (a, b, c) => h3(a + WSEED * 7919, b + WSEED * 104729, c);
+  const ROOMS = [];                                   // чужие подвалы в породе
+
+  function genWorld() {
+    for (let y = 0; y < NY; y++) {
+      const Y = wy(y);
+      for (let z = 0; z < NZ; z++) {
+        const Z = wz(z);
+        for (let x = 0; x < NX; x++) {
+          const X = wx(x);
+          let d;
+          if (Y < 0 && Y > CEIL && Math.abs(X) < RW && Math.abs(Z) < RH) d = 0;    // воздух в комнате
+          else if (Y < CEIL - 0.55) d = 0;                                          // выше перекрытия — ничего
+          else d = 255;
+          den[di(x, y, z)] = d;
+        }
       }
     }
-  }
-  // начатая яма в полу
-  for (let y = 0; y < NY; y++) {
-    const Y = wy(y); if (Y < -0.2 || Y > 3.4) continue;
-    for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) {
-      const X = wx(x), Z = wz(z);
-      const rad = 1.55 - Y * 0.24 + (vn(X * .7, Y * .5, Z * .7) - .5) * .5;
-      if (Math.hypot(X, Z) < rad) den[di(x, y, z)] = 0;
+    // начатая яма в полу
+    for (let y = 0; y < NY; y++) {
+      const Y = wy(y); if (Y < -0.2 || Y > 3.4) continue;
+      for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) {
+        const X = wx(x), Z = wz(z);
+        const rad = 1.55 - Y * 0.24 + (vn(X * .7, Y * .5, Z * .7) - .5) * .5;
+        if (Math.hypot(X, Z) < rad) den[di(x, y, z)] = 0;
+      }
+    }
+    // редкие пустоты глубже
+    for (let k = 0; k < 26; k++) {
+      const cxk = (hs(k, 1, 2) - .5) * 24, czk = (hs(k, 3, 4) - .5) * 24, cyk = 8 + hs(k, 5, 6) * 36;
+      const rr = 1.1 + hs(k, 7, 8) * 1.7;
+      for (let y = 0; y < NY; y++) { const Y = wy(y); if (Math.abs(Y - cyk) > rr + 1) continue;
+        for (let z = 0; z < NZ; z++) { const Z = wz(z); if (Math.abs(Z - czk) > rr + 1) continue;
+          for (let x = 0; x < NX; x++) { const X = wx(x);
+            if (Math.hypot(X - cxk, Y - cyk, Z - czk) < rr) den[di(x, y, z)] = 0;
+          } } }
+    }
+    // карманы: комнаты, которых под землёй быть не должно
+    ROOMS.length = 0;
+    for (let k = 0; k < 2; k++) {
+      const a = hs(k, 21, 2) * Math.PI * 2, rad = 6 + hs(k, 23, 4) * 7;
+      ROOMS.push({
+        x: Math.cos(a) * rad, z: Math.sin(a) * rad,
+        y: 13 + k * 12 + hs(k, 25, 6) * 7,
+        hx: 1.75 + hs(k, 27, 8) * 0.5, hy: 1.28, hz: 1.75 + hs(k, 29, 9) * 0.5
+      });
+    }
+    for (const r of ROOMS) {
+      for (let y = 0; y < NY; y++) { const Y = wy(y); if (Math.abs(Y - r.y) > r.hy + .4) continue;
+        for (let z = 0; z < NZ; z++) { const Z = wz(z); if (Math.abs(Z - r.z) > r.hz + .4) continue;
+          for (let x = 0; x < NX; x++) { const X = wx(x);
+            if (Math.abs(X - r.x) < r.hx && Math.abs(Y - r.y) < r.hy && Math.abs(Z - r.z) < r.hz)
+              den[di(x, y, z)] = 0;
+          } } }
     }
   }
-  // редкие пустоты глубже
-  for (let k = 0; k < 26; k++) {
-    const cxk = (h3(k, 1, 2) - .5) * 24, czk = (h3(k, 3, 4) - .5) * 24, cyk = 8 + h3(k, 5, 6) * 36;
-    const rr = 1.1 + h3(k, 7, 8) * 1.7;
-    for (let y = 0; y < NY; y++) { const Y = wy(y); if (Math.abs(Y - cyk) > rr + 1) continue;
-      for (let z = 0; z < NZ; z++) { const Z = wz(z); if (Math.abs(Z - czk) > rr + 1) continue;
-        for (let x = 0; x < NX; x++) { const X = wx(x);
-          if (Math.hypot(X - cxk, Y - cyk, Z - czk) < rr) den[di(x, y, z)] = 0;
-        } } }
+  genWorld();
+
+  // ближайшая комната — в шейдер уезжает только одна
+  function activeRoom() {
+    let best = null, bd = 1e9;
+    for (const r of ROOMS) {
+      const d = Math.max(Math.abs(r.x - P.x), Math.abs(r.y - (P.y - EYE)), Math.abs(r.z - P.z));
+      if (d < bd) { bd = d; best = r; }
+    }
+    return bd < 13 ? best : null;
   }
 
   const tex = gl.createTexture();
@@ -328,7 +382,11 @@
   gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   for (const w of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_WRAP_R])
     gl.texParameteri(gl.TEXTURE_3D, w, gl.CLAMP_TO_EDGE);
-  gl.texImage3D(gl.TEXTURE_3D, 0, gl.R8, NX, NZ, NY, 0, gl.RED, gl.UNSIGNED_BYTE, den);
+  function uploadWorld() {
+    gl.bindTexture(gl.TEXTURE_3D, tex);
+    gl.texImage3D(gl.TEXTURE_3D, 0, gl.R8, NX, NZ, NY, 0, gl.RED, gl.UNSIGNED_BYTE, den);
+  }
+  uploadWorld();
 
   // выгрызаем шар мягкой кистью
   function carve(X, Y, Z, R) {
@@ -367,6 +425,7 @@
   uniform float uFov, uFar, uGrain, uBright, uLampR, uDrain, uXray;
   uniform vec4 uNode;
   uniform vec4 uPoint;
+  uniform vec3 uRoomC, uRoomH;
 
   vec3 toTex(vec3 w){
     return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
@@ -398,6 +457,26 @@
     return clamp(1.0 - occ, 0.0, 1.0);
   }
 
+  // кладка: одна и та же и в своём подвале, и в чужом
+  vec3 brickC(vec3 w, float yy, out float rough){
+    vec2 q = vec2(w.x, yy);
+    float row = floor(yy*3.4);
+    q.x += mod(row,2.0)*0.15;
+    float mortar = max(smoothstep(0.40,0.47,abs(fract(q.x*3.4)-0.5)),
+                       smoothstep(0.40,0.47,abs(fract(yy*3.4)-0.5)));
+    vec3 c = mix(vec3(0.44,0.24,0.18), vec3(0.46,0.42,0.36), mortar);
+    c *= 0.86+0.30*fbm(w*3.4);
+    rough = 0.55;
+    return c;
+  }
+  vec3 plankC(vec3 w, out float rough){
+    float plank = smoothstep(0.40,0.48,abs(fract(w.x*0.42)-0.5));
+    vec3 c = mix(vec3(0.40,0.25,0.13), vec3(0.26,0.15,0.08), plank);
+    c *= 0.88+0.26*fbm(vec3(w.x*7.0,w.y*2.0,w.z*1.2));
+    rough = 0.62;
+    return c;
+  }
+
   // порода слоями; в подвале — бетон и балки
   vec3 rockColor(vec3 w, out float rough, out float oreAmt, out float emis){
     rough = 1.0; oreAmt = 0.0; emis = 0.0;
@@ -406,22 +485,12 @@
     vec3 c;
     if(w.y < -0.06){                                  // подвал
       if(w.y < -2.72){                                 // деревянное перекрытие
-        float plank = smoothstep(0.40,0.48,abs(fract(w.x*0.42)-0.5));
-        c = mix(vec3(0.40,0.25,0.13), vec3(0.26,0.15,0.08), plank);
-        c *= 0.88+0.26*fbm(vec3(w.x*7.0,w.y*2.0,w.z*1.2));   // волокно вдоль доски
-        rough = 0.62;
+        c = plankC(w, rough);
       } else {                                         // кирпич с извёсткой
-        vec2 q = vec2(w.x, w.y);
-        float row = floor(w.y*3.4);
-        q.x += mod(row,2.0)*0.15;
-        float mortar = max(smoothstep(0.40,0.47,abs(fract(q.x*3.4)-0.5)),
-                           smoothstep(0.40,0.47,abs(fract(w.y*3.4)-0.5)));
-        c = mix(vec3(0.44,0.24,0.18), vec3(0.46,0.42,0.36), mortar);
-        c *= 0.86+0.30*fbm(w*3.4);
+        c = brickC(w, w.y, rough);
         // мох в углах у пола — обжитое место
         float moss = smoothstep(-0.55,-0.05,w.y)*smoothstep(0.62,0.30,fbm(w*1.7));
         c = mix(c, vec3(0.28,0.40,0.20), moss*0.55);
-        rough = 0.55;
       }
       // окошко под потолком: закатный свет
       float win = smoothstep(0.32,0.16,abs(w.z))*smoothstep(0.36,0.20,abs(w.y+2.15))
@@ -455,6 +524,27 @@
       c = mix(c, vec3(0.20,0.62,0.70), oreAmt);
     }
     c *= 0.84+0.34*h31(floor(w*3.0));
+
+    // карман: под землёй кладка, доски и известь — там, где им взяться неоткуда
+    if(uRoomH.x > 0.0){
+      vec3 rv = w - uRoomC;
+      vec3 e = abs(rv) - uRoomH;
+      float edge = max(max(e.x, e.y), e.z);
+      if(edge < 0.55){
+        float rr;
+        vec3 rc = (rv.y < -uRoomH.y + 0.30) ? plankC(w, rr)     // потолок — перекрытие
+                : (rv.y >  uRoomH.y - 0.34) ? vec3(0.20,0.17,0.15)*(0.7+0.6*fbm(w*4.0))  // земляной пол
+                : brickC(w, rv.y + 1.05, rr);
+        rr = mix(rr, 0.5, 0.4);
+        rc *= 0.58;                                    // сырая, давно не топленная
+        float damp = smoothstep(0.55,0.20,fbm(w*1.3));
+        rc = mix(rc, rc*vec3(0.72,0.86,0.80), damp*0.6);
+        float k = 1.0 - smoothstep(0.10, 0.52, edge);
+        c = mix(c, rc, k);
+        rough = mix(rough, rr, k);
+        oreAmt *= 1.0 - k;
+      }
+    }
     return c;
   }
 
@@ -695,20 +785,24 @@
 
   // ---------- прогресс ----------
   const SKEY = "zaboy.save.v1";
-  const SDEF = { bank: 0, shards: 0, pick: 1, lamp: 1, crew: 0, cart: 1, best: 0, seen: {} };
+  const SDEF = { bank: 0, shards: 0, pick: 1, lamp: 1, crew: 0, cart: 1, best: 0,
+                 seen: {}, notes: {}, log: [], shift: 0 };
   let SAV;
   try { SAV = Object.assign({}, SDEF, JSON.parse(localStorage.getItem(SKEY) || "{}")); }
   catch (e) { SAV = Object.assign({}, SDEF); }
-  SAV.seen = SAV.seen || {};
+  SAV.seen = SAV.seen || {}; SAV.notes = SAV.notes || {}; SAV.log = SAV.log || [];
   const saveGame = () => { try { localStorage.setItem(SKEY, JSON.stringify(SAV)); } catch (e) {} };
 
   const PRICE = { pick: l => Math.round(40 * Math.pow(1.42, l - 1)),
                   lamp: l => Math.round(90 * Math.pow(1.55, l - 1)),
                   crew: l => Math.round(140 * Math.pow(1.5, l)),
                   cart: l => Math.round(70 * Math.pow(1.48, l - 1)) };
-  const capOf  = () => 60 + SAV.cart * 55;
+  // осколки переживают обвал и множат всё, что смена наживает заново
+  const shardsFor = d => Math.floor(Math.pow(Math.max(0, d - 14) / 7, 1.2));
+  const shardMul = () => 1 + SAV.shards * 0.09;
+  const capOf  = () => Math.round((60 + SAV.cart * 55) * shardMul());
   const lampR  = () => 1 + SAV.lamp * 0.34;
-  const powOf  = () => 1 + (SAV.pick - 1) * 0.55;
+  const powOf  = () => (1 + (SAV.pick - 1) * 0.55) * shardMul();
 
   const FARQ = [26, 42, 62], SCALEQ = [0.62, 0.82, 1.0];
   function applySet() {
@@ -1291,6 +1385,7 @@
       waiting.el.classList.remove("wait"); waiting.el.textContent = kn(e.code);
       waiting = null; return;
     }
+    if (mode === "note") { e.preventDefault(); closeNote(); return; }
     if (e.code === SET.bind.up) { e.preventDefault(); goUp(); }
     if (e.code === SET.bind.menu) { e.preventDefault(); openMenu(!menu.classList.contains("open")); }
     if (e.code === SET.bind.inv) {
@@ -1350,11 +1445,153 @@
       };
       hubRows.append(d);
     }
+    const gain = shardsFor(SAV.best), ready = gain > 0;
+    const cr = document.createElement("div");
+    cr.className = "hrow" + (ready ? " can" : " max");
+    const paint = () => {
+      cr.innerHTML = armed
+        ? `<span class="n">ТОЧНО?</span><span class="p">+${gain}</span>` +
+          `<span class="s">кирка, фонарь, вагонетка и бригада останутся внизу</span>`
+        : `<span class="n">ОБВАЛ</span><span class="p">${ready ? "+" + gain : "—"}</span>` +
+          `<span class="s">${ready ? "закончить смену и начать заново с осколками"
+                                   : "копай глубже — пока сыпать нечему"}</span>`;
+    };
+    paint();
+    if (ready) cr.onclick = () => {
+      if (!armed) { armed = true; paint(); thud(true, 0.7);
+        setTimeout(() => { if (armed) { armed = false; paint(); } }, 4000); return; }
+      armed = false; collapse();
+    };
+    hubRows.append(cr);
+
+    const found = DIARY.filter((_, i) => SAV.notes[i]).length;
+    const nr = document.createElement("div");
+    nr.className = "hrow" + (found ? " can" : "");
+    nr.innerHTML = `<span class="n">ДНЕВНИКИ</span><span class="p">${found} / ${DIARY.length}</span>` +
+                   `<span class="s">${found ? "перечитать найденное" : "пока ничего не поднял"}</span>`;
+    if (found) nr.onclick = () => buildArchive();
+    hubRows.append(nr);
+
     const a = document.createElement("div");
     a.className = "hrow max";
     a.innerHTML = `<span class="n">ОСКОЛКИ</span><span class="p">${SAV.shards}</span>` +
                   `<span class="s">рекорд глубины · ${Math.round(SAV.best)} м</span>`;
     hubRows.append(a);
+  }
+
+  // архив: то, что подняла эта смена и все до неё
+  function buildArchive() {
+    hubRows.innerHTML = "";
+    const back = document.createElement("div");
+    back.className = "hrow can";
+    back.innerHTML = `<span class="n">← НАЗАД</span><span class="s">к снаряжению</span>`;
+    back.onclick = () => buildHub();
+    hubRows.append(back);
+    (SAV.log || []).slice().reverse().forEach(l => {
+      const d = document.createElement("div");
+      d.className = "hrow max";
+      d.innerHTML = `<span class="n">СМЕНА ${l.n}</span><span class="p">${l.d} м</span>` +
+                    `<span class="s">осколков ${l.s}${l.c ? " · бригада " + l.c + " чел." : " · копал один"}</span>`;
+      hubRows.append(d);
+    });
+    DIARY.forEach((n, i) => {
+      const d = document.createElement("div");
+      const got = !!SAV.notes[i];
+      d.className = "hrow" + (got ? " can" : " max");
+      d.innerHTML = `<span class="n">${got ? n.k.replace("ЛИСТОК · ", "") : "· · · · ·"}</span>` +
+                    `<span class="p">${Math.round(n.y)} м</span>` +
+                    `<span class="s">${got ? n.t.split("\n")[0] : "не найден"}</span>`;
+      if (got) d.onclick = () => { hubEl.classList.remove("on"); openNote(i);
+        noteEl.onclick = () => { noteEl.classList.remove("on"); noteEl.onclick = closeNote;
+          mode = "hub"; hubEl.classList.add("on"); }; };
+      hubRows.append(d);
+    });
+  }
+
+  // ---------- обвал ----------
+  // Проиграть нельзя. Можно только закончить смену — и это единственный способ идти дальше.
+  let caveEnd = 0, caveGain = 0, caveDepth = 0, armed = false;
+
+  function collapse() {
+    caveGain = shardsFor(SAV.best); caveDepth = Math.round(SAV.best);
+    SAV.shards += caveGain;
+    SAV.shift = (SAV.shift || 0) + 1;
+    SAV.log = SAV.log || [];
+    SAV.log.push({ n: SAV.shift, d: caveDepth, s: caveGain, c: SAV.crew });
+    SAV.bank = 0; SAV.pick = 1; SAV.lamp = 1; SAV.cart = 1; SAV.crew = 0; SAV.best = 0;
+    saveGame();
+
+    WSEED++;                                          // новая смена — новый забой
+    genWorld(); uploadWorld(); seedNodes(); seedNotes();
+    cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
+    dread = 0; evCool = 0; hush = 0; tear = 0; faceT = 0; liar = 0; lights = 0;
+    lampOut = 0; knockAt = 0; cnt = -1; shake = 0;
+    for (const k in fired) delete fired[k];
+    P.x = 0; P.y = -0.02; P.z = 3.2; P.vy = 0; P.yaw = Math.PI; P.pitch = -0.40;
+
+    hubEl.classList.remove("on");
+    document.getElementById("game").classList.add("void");
+    mode = "cave"; caveEnd = performance.now() + 6600;
+    applySet();
+    rumble();
+  }
+
+  function caveTick() {
+    if (performance.now() < caveEnd) return;
+    document.getElementById("game").classList.remove("void");
+    mode = "dig";
+  }
+
+  function drawCave(g, W, H) {
+    const left = (caveEnd - performance.now()) / 6600;      // 1 -> 0
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+    // первые секунды сверху идёт порода
+    const fall = Math.max(0, Math.min(1, (left - 0.42) / 0.58));
+    if (fall > 0) {
+      g.globalAlpha = fall;
+      for (let i = 0; i < 90; i++) {
+        const t = (performance.now() / 1000 * (0.6 + (i % 7) * 0.32) + i * 0.137) % 1;
+        const x = ((i * 97) % 101) / 100 * W, sz = 2 + (i % 5) * 3.5;
+        g.fillStyle = i % 4 ? "#3a3040" : "#4d4152";
+        g.fillRect(x, t * H, sz, sz * (1.4 + (i % 3)));
+      }
+      g.globalAlpha = 1;
+    }
+    const tf = Math.max(0, Math.min(1, (0.72 - left) / 0.18));
+    if (tf <= 0) return;
+    g.globalAlpha = tf * Math.min(1, left / 0.10);
+    g.textAlign = "center";
+    g.fillStyle = "#efe8f6";
+    g.font = "700 " + Math.round(H * 0.062) + "px ui-monospace,monospace";
+    g.fillText("СМЕНА ЗАКОНЧЕНА", W / 2, H * 0.44);
+    g.fillStyle = "#8d84a6";
+    g.font = Math.round(H * 0.028) + "px ui-monospace,monospace";
+    g.fillText("дошёл до " + caveDepth + " м", W / 2, H * 0.53);
+    g.fillStyle = "#ffc14d";
+    g.fillText("осколков  +" + caveGain, W / 2, H * 0.585);
+    g.fillStyle = "#6b637f";
+    g.font = Math.round(H * 0.023) + "px ui-monospace,monospace";
+    g.fillText("остальное осталось внизу", W / 2, H * 0.65);
+    g.globalAlpha = 1;
+  }
+
+  function rumble() {
+    try {
+      const A = AC; if (!A) return;
+      const n = A.createBufferSource(), len = A.sampleRate * 4.2;
+      const buf = A.createBuffer(1, len, A.sampleRate), ch = buf.getChannelData(0);
+      let v = 0;
+      for (let i = 0; i < len; i++) { v = v * 0.982 + (Math.random() * 2 - 1) * 0.018; ch[i] = v * 3.2; }
+      n.buffer = buf;
+      const f = A.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 220;
+      const g = A.createGain();
+      g.gain.setValueAtTime(0.0001, A.currentTime);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.55 * (SET.vol / 100) * (SET.sfx / 100)), A.currentTime + 0.5);
+      g.gain.exponentialRampToValueAtTime(0.0001, A.currentTime + 4.0);
+      n.connect(f); f.connect(g); g.connect(A.destination);
+      n.start(); n.stop(A.currentTime + 4.2);
+    } catch (e) {}
   }
 
   function goUp() {
@@ -1393,10 +1630,14 @@
 
   // ---------- то, чего нет ----------
   const NODES = [];
-  for (let i = 0; i < 3; i++) NODES.push({
-    x: (h3(i, 11, 3) - .5) * 22, z: (h3(i, 13, 5) - .5) * 22,
-    y: 24 + h3(i, 17, 7) * 24, r: 1.5, hit: 0
-  });
+  function seedNodes() {
+    NODES.length = 0;
+    for (let i = 0; i < 3; i++) NODES.push({
+      x: (hs(i, 11, 3) - .5) * 22, z: (hs(i, 13, 5) - .5) * 22,
+      y: 24 + hs(i, 17, 7) * 24, r: 1.5, hit: 0
+    });
+  }
+  seedNodes();
   let blackOre = 0, nodeBreaks = 0, fallEnd = 0, fallSave = null;
 
   function nodeNear(x, y, z) {
@@ -1410,6 +1651,68 @@
       if (d < bd) { bd = d; best = n; }
     }
     return bd < 16 ? best : null;
+  }
+
+  // ---------- дневники ----------
+  // Их писал тот, кто копал здесь до тебя. То есть ты.
+  const DIARY = [
+    { y: 3.5, k: "ЛИСТОК · ПОНЕДЕЛЬНИК", t:
+      "Начал с пола в подвале. Жена не спрашивает, зачем.\nЭто хуже, чем если бы спрашивала.\n\nЗа день ушёл на два метра. Земля мягкая, пахнет погребом." },
+    { y: 8, k: "ЛИСТОК · ЧЕТВЁРТЫЙ ДЕНЬ", t:
+      "Понял одну вещь: вниз идти легче, чем вбок.\nВниз тебе помогает вес. Вбок — только ты сам.\n\nПоэтому все, кто копал до меня, ушли вниз.\nПоэтому вбок никто и не смотрел." },
+    { y: 13, k: "ЛИСТОК · БЕЗ ДАТЫ", t:
+      "Пробил стену и попал в комнату.\nКирпич, известь, доски над головой. Подвал.\n\nНад ним нет дома. Я проверял сверху — там глина и глина.\nЗначит, дом был раньше, а земля пришла потом.\n\nИли подвал вырыли уже здесь. Не знаю, что хуже." },
+    { y: 18, k: "ЛИСТОК · СЧЁТ", t:
+      "Взял привычку считать бригаду перед подъёмом.\nСегодня посчитал два раза, вышло одинаково.\nЗначит, всё в порядке.\n\nНе понимаю, почему меня это не успокоило." },
+    { y: 23, k: "ЛИСТОК · ПРО ФОНАРЬ", t:
+      "Фонарь показывает не то, что есть, а то, что отражает.\nЭто очевидно, но здесь начинает мешать.\n\nЕсть места, где он светит и ничего не возвращается.\nЯ туда больше не свечу. Не потому что страшно.\nПотому что не хочется знать, сколько там до дна." },
+    { y: 28, k: "ЛИСТОК · ВТОРАЯ КОМНАТА", t:
+      "Ещё одна. Такая же, только глубже.\nПланировка та же самая. Мох в тех же углах.\n\nЯ стоял в ней и ждал, что услышу сверху шаги.\nНе услышал. Долго ждал." },
+    { y: 33, k: "ЛИСТОК · ТИШИНА", t:
+      "Здесь тихо не так, как наверху.\nНаверху тишина — это когда никто не шумит.\nЗдесь тишина — это когда звук не доходит.\n\nРазница в том, что во втором случае кто-то может шуметь." },
+    { y: 38, k: "ЛИСТОК · РИТМ", t:
+      "Слышал, как надо мной кто-то бьёт киркой.\nРовно, спокойно, с моим темпом.\nОстановился — он остановился.\n\nПотом сообразил, что надо мной только моя же шахта." },
+    { y: 43, k: "ЛИСТОК · ПОСЛЕДНИЙ", t:
+      "Если ты это читаешь, значит, свод всё-таки сошёл.\nНе бойся, это не конец, это просто конец смены.\n\nЗабери осколки, они переживают обвал. Всё остальное — нет.\nИ не ищи меня внизу. Я уже наверху, начинаю заново.\n\nТебя зовут так же, как меня." }
+  ];
+  let NOTEPOS = [];
+  SAV.notes = SAV.notes || {};
+  function seedNotes() {
+    NOTEPOS = [];
+    for (let i = 0; i < DIARY.length; i++) {
+      if (SAV.notes[i]) continue;                       // поднятое обратно не ложится
+      if (i === 2 && ROOMS[0]) { const r = ROOMS[0]; NOTEPOS.push({ i, x: r.x + r.hx*0.5, y: r.y + r.hy - 0.35, z: r.z - r.hz*0.5 }); continue; }
+      if (i === 5 && ROOMS[1]) { const r = ROOMS[1]; NOTEPOS.push({ i, x: r.x - r.hx*0.5, y: r.y + r.hy - 0.35, z: r.z + r.hz*0.5 }); continue; }
+      const a = hs(i, 41, 3) * Math.PI * 2, rad = 0.4 + hs(i, 43, 5) * 2.4;
+      NOTEPOS.push({ i, x: Math.cos(a) * rad, y: DIARY[i].y + hs(i, 45, 7) * 2.2, z: Math.sin(a) * rad });
+    }
+  }
+  seedNotes();
+  const noteEl = document.getElementById("note");
+  const notekEl = document.getElementById("notek"), notebEl = document.getElementById("noteb");
+  function openNote(i) {
+    notekEl.textContent = DIARY[i].k;
+    notebEl.textContent = DIARY[i].t;
+    noteEl.classList.add("on");
+    mode = "note";
+    if (document.pointerLockElement === cv) document.exitPointerLock();
+  }
+  function closeNote() {
+    if (mode !== "note") return;
+    noteEl.classList.remove("on");
+    mode = "dig";
+  }
+  noteEl.onclick = closeNote;
+  function noteTick() {
+    for (let k = 0; k < NOTEPOS.length; k++) {
+      const n = NOTEPOS[k];
+      if (Math.hypot(n.x - P.x, n.y - (P.y - EYE * 0.5), n.z - P.z) > 1.6) continue;
+      if (solidAt(n.x, n.y, n.z)) continue;             // ещё в породе — не видно
+      NOTEPOS.splice(k, 1);
+      SAV.notes[n.i] = 1; saveGame();
+      openNote(n.i);
+      return;
+    }
   }
 
   // ---------- точка ----------
@@ -1691,6 +1994,8 @@
     if (mode !== "dig") {
       if (mode === "lift") liftTick();
       if (mode === "fall") { fallTick(); drawFall(fxc, fx.width, fx.height); }
+      if (mode === "cave") { caveTick(); drawCave(fxc, fx.width, fx.height); }
+      if (mode === "note") fxc.clearRect(0, 0, fx.width, fx.height);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       requestAnimationFrame(frame);
       return;
@@ -1732,6 +2037,7 @@
     if (P.y > 46) { P.x = 0; P.z = 3; P.y = -.02; P.vy = 0; }
 
     beltTick(dt);
+    noteTick();
     digCd -= dt; swing = Math.max(0, swing - dt * 3.4);
     if (digging && digCd <= 0 && useHeld()) { digCd = .25; swing = 1; }
     else if (digging && digCd <= 0) {
@@ -1787,6 +2093,9 @@
     else gl.uniform4f(U("uNode"), 0, 0, 0, 0);
     if (PT && ptDist() < 26) gl.uniform4f(U("uPoint"), PT.x, PT.y, PT.z, PT.r);
     else gl.uniform4f(U("uPoint"), 0, 0, 0, 0);
+    const rm = activeRoom();
+    if (rm) { gl.uniform3f(U("uRoomC"), rm.x, rm.y, rm.z); gl.uniform3f(U("uRoomH"), rm.hx, rm.hy, rm.hz); }
+    else gl.uniform3f(U("uRoomH"), 0, 0, 0);
     gl.uniform1f(U("uDrain"), buff.warm > 0 ? 0 : Math.max(0, Math.min(.92, (P.y - 10) / 46)));
     gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 7) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
