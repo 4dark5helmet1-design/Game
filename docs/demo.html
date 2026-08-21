@@ -34,6 +34,9 @@
 
   .cross{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;
     background:rgba(255,255,255,.92);box-shadow:0 0 5px rgba(0,0,0,.95),0 0 12px rgba(255,200,130,.5);pointer-events:none}
+  .toolname{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font-size:11px;letter-spacing:.22em;
+    color:rgba(255,193,77,.9);text-shadow:0 1px 8px #000;pointer-events:none}
+  @media (max-width:759px){ .toolname{bottom:120px} }
   .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;font-size:11px;letter-spacing:.14em;
     color:rgba(255,255,255,.66);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .8s}
   .hint.gone{opacity:0}
@@ -77,6 +80,7 @@
     <span class="pill"><span class="sm" id="ore">0</span><span class="lbl">РУДА</span></span>
   </div>
   <div class="cross"></div>
+  <div class="toolname" id="toolname">КИРКА</div>
   <div class="hint" id="hint">НАЖМИ, ЧТОБЫ ЗАХВАТИТЬ МЫШЬ · WASD ХОДИТЬ · ЛКМ ДОЛБИТЬ</div>
   <div class="stick" id="stick"><i id="knob"></i></div>
   <div class="dig" id="digbtn">ДОЛБИТЬ</div>
@@ -85,7 +89,7 @@
 
 <div class="keys">
   <span><b>WASD</b> ходить</span><span><b>мышь</b> смотреть</span><span><b>ЛКМ</b> долбить</span>
-  <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span>
+  <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span><span><b>1–7</b> сменить инструмент</span>
 </div>
 
 <h2>Что изменилось</h2>
@@ -93,7 +97,10 @@
   <li><strong>Мир больше не из кубиков.</strong> Порода — сплошное поле плотности, и кирка выгрызает из него округлую выемку. Дыра получается той формы, которой ты её выкопал, а не лесенкой.</li>
   <li><strong>Старт в подвале дома.</strong> Бетонные стены, деревянные балки, лампочка под потолком, земляной пол и начатая кем-то яма.</li>
   <li><strong>Слои породы.</strong> Земля, глина, камень, гранит, жилы руды — идут пластами и видны в срезе стенки, как в настоящем шурфе.</li>
-  <li><strong>Кирка в кадре</strong> с замахом и ударом, покачивается при ходьбе.</li>
+  <li><strong>Семь инструментов, и каждый нарисован отдельно.</strong> Лопата со штыком и заклёпками, кирка с остриём и лопаткой, кованое кайло с зазубринами, кувалда с оковкой, пневматический отбойник со шлангом, винтовой бур и термокопьё с раскалённым добела наконечником. Переключаются клавишами 1–7 — посмотри все.</li>
+  <li><strong>Тени от лампочки и от окна.</strong> Луч к источнику идёт сквозь породу, поэтому в яме темно, а за выступами лежат настоящие тени.</li>
+  <li><strong>Пыль в луче.</strong> Свет из окошка и от лампочки виден в воздухе — это то, что делает подвал обжитым, а не пустым.</li>
+  <li><strong>Мокрая глина.</strong> Влажные пятна темнее и отражают свет, сухая порода — нет.</li>
   <li><strong>Осколки, тряска и звук.</strong> Каждый удар выбивает крошку, дёргает камеру и звучит по-разному в зависимости от породы.</li>
 <li><strong>Уют — это приём, а не украшение.</strong> Тёплая лампочка, закатное окошко, мох по углам, кирпичная кладка: подвал должен выглядеть обжитым и почти милым. Игра честно притворяется доброй, и именно поэтому темнота потом сработает.</li>
 </ul>
@@ -211,6 +218,7 @@
   out vec4 outColor;
   uniform vec2 uRes; uniform vec3 uCam; uniform mat3 uRot;
   uniform sampler3D uDen; uniform vec3 uN; uniform float uVS, uY0, uTime, uBulb;
+  uniform vec3 uWin;
 
   vec3 toTex(vec3 w){
     return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
@@ -229,6 +237,18 @@
                mix(mix(h31(i+vec3(0,0,1)),h31(i+vec3(1,0,1)),f.x), mix(h31(i+vec3(0,1,1)),h31(i+vec3(1,1,1)),f.x),f.y),f.z);
   }
   float fbm(vec3 p){ return n3(p)*.55 + n3(p*2.07)*.28 + n3(p*4.13)*.17; }
+
+  // мягкая тень: луч к источнику сквозь породу
+  float shade(vec3 p, vec3 L, float maxD){
+    float t = 0.22, occ = 0.0;
+    for(int i=0;i<22;i++){
+      if(t > maxD) break;
+      occ += smoothstep(0.35, 0.62, dens(p + L*t)) * 0.34;
+      if(occ > 1.0) return 0.0;
+      t += maxD/22.0 + 0.05;
+    }
+    return clamp(1.0 - occ, 0.0, 1.0);
+  }
 
   // порода слоями; в подвале — бетон и балки
   vec3 rockColor(vec3 w, out float rough, out float oreAmt, out float emis){
@@ -262,7 +282,12 @@
       c = mix(c, vec3(1.0,0.86,0.62), win);
     }
     else if(d < 1.0)  c = vec3(0.30,0.21,0.12);       // рыхлая земля
-    else if(d < 4.0)  c = vec3(0.44,0.28,0.15);       // тёплая глина
+    else if(d < 4.0){                                  // тёплая глина, местами мокрая
+      c = vec3(0.44,0.28,0.15);
+      float wet = smoothstep(0.52,0.68,fbm(w*0.85+vec3(9.0)));
+      c = mix(c, c*0.52, wet);
+      rough = mix(1.0, 0.14, wet);
+    }
     else if(d < 9.0)  c = vec3(0.44,0.35,0.28);       // суглинок
     else if(d < 20.0) c = vec3(0.40,0.38,0.39);       // камень
     else              c = vec3(0.30,0.27,0.35);       // гранит
@@ -319,7 +344,7 @@
     float bulb = max(dot(N,BL),0.0)/(1.0+0.19*bd*bd) * uBulb;
 
     // закатный свет из окошка
-    vec3 wp2 = vec3(4.4, -2.15, 0.0);
+    vec3 wp2 = uWin;
     vec3 WL = wp2 - w; float wd = length(WL); WL/=wd;
     float win = max(dot(N,WL),0.0)/(1.0+0.10*wd*wd) * uBulb;
 
@@ -328,14 +353,36 @@
     float spec = pow(max(dot(N, normalize(L+V)),0.0), 26.0)*0.5*rough
                + pow(max(dot(N, normalize(BL+V)),0.0), 34.0)*0.7*rough*uBulb;
 
+    float bSh = bd < 16.0 ? shade(w + N*0.16, BL, bd-0.3) : 1.0;
+    float wSh = wd < 16.0 ? shade(w + N*0.16, WL, wd-0.3) : 1.0;
+    bulb *= 0.10 + 0.90*bSh;      // немного света всё же затекает
+    win  *= 0.06 + 0.94*wSh;
+
     vec3 col = alb * ( vec3(1.0,0.80,0.52)*lamp*1.55
-                     + vec3(1.0,0.82,0.54)*bulb*2.5
-                     + vec3(1.0,0.66,0.36)*win*2.1
-                     + vec3(0.09,0.08,0.12)*0.22 );          // мягкая заливка, тени не чёрные
+                     + vec3(1.0,0.82,0.54)*bulb*2.7
+                     + vec3(1.0,0.62,0.30)*win*2.6
+                     + vec3(0.09,0.08,0.12)*0.13 );          // мягкая заливка, тени не чёрные
     col += vec3(1.0,0.90,0.72)*spec*(lamp+bulb*0.8);
     col += vec3(0.08,0.34,0.42)*oreAmt*(lamp+bulb)*1.4;
     col += vec3(1.0,0.88,0.66)*emis*2.6;                    // само окно светится
     col *= 0.64 + 0.74*hC;
+
+    // пылинки в косом луче из окошка — только в подвале, иначе дорого
+    if(uCam.y < 1.0){
+      float acc = 0.0;
+      float seg = min(d, 13.0);
+      for(int i=0;i<7;i++){
+        float tt = seg*(float(i)+0.5)/7.0;
+        vec3 sp = ro + rd*tt;
+        if(sp.y > -0.05 || sp.y < -3.05) continue;
+        vec3 dl = wp2 - sp; float dld = length(dl);
+        acc += shade(sp, dl/dld, dld-0.25) / (1.0 + 0.22*dld*dld);
+        vec3 bl2 = bp - sp; float bld = length(bl2);
+        acc += 0.55 * shade(sp, bl2/bld, bld-0.25) / (1.0 + 0.30*bld*bld);
+      }
+      acc *= seg/7.0 * uBulb * 0.030;
+      col += vec3(1.0,0.76,0.42) * acc;
+    }
 
     float fogD = mix(0.013, 0.095, clamp((w.y-2.0)/34.0,0.0,1.0));
     vec3 fogC = mix(vec3(0.09,0.06,0.05), vec3(0.020,0.016,0.026), clamp((w.y-1.0)/16.0,0.0,1.0));
@@ -351,7 +398,8 @@
     col = max(col, 0.0);
     col = col/(col+0.95)*1.30;                              // мягкое сведение бликов
     col = pow(col, vec3(0.4545));
-    col = mix(col, col*vec3(1.06,1.00,0.92)+vec3(0.014,0.008,0.004), 0.85);
+    col = mix(col, col*col*(3.0-2.0*col), 0.34);            // контраст: свет отделяется от тени
+    col = mix(col, col*vec3(1.07,1.00,0.90)+vec3(0.008,0.005,0.003), 0.85);
     outColor = vec4(col,1.0);
   }`;
 
@@ -375,6 +423,7 @@
   gl.uniform1i(U("uDen"), 0); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D, tex);
   gl.uniform3f(U("uN"), NX, NY, NZ);
   gl.uniform1f(U("uVS"), VS); gl.uniform1f(U("uY0"), Y0);
+  gl.uniform3f(U("uWin"), 4.4, -2.15, 0.0);
 
   // ---------- игрок ----------
   const P = { x: 0, y: -0.02, z: 3.2, vy: 0, yaw: Math.PI, pitch: -0.40, ground: false };
@@ -390,8 +439,13 @@
   addEventListener("keydown", e => { keys[e.code] = true;
     if (document.pointerLockElement === cv && ["KeyW","KeyA","KeyS","KeyD","Space"].includes(e.code)) e.preventDefault(); });
   addEventListener("keyup", e => keys[e.code] = false);
+  addEventListener("keydown", e => {
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= TOOLS.length) { tool = n - 1; toolEl.textContent = TOOLS[tool].name; }
+  });
 
   const hint = document.getElementById("hint");
+  const toolEl = document.getElementById("toolname");
   const isTouch = matchMedia("(hover:none)").matches;
   cv.addEventListener("click", () => { if (!isTouch) cv.requestPointerLock(); audioOn(); });
   document.addEventListener("pointerlockchange", () => { if (document.pointerLockElement === cv) hint.classList.add("gone"); });
@@ -445,43 +499,217 @@
       life: .5 + Math.random() * .5, t: 0, s: 1.4 + Math.random() * 3.2, c: col
     });
   }
-  function drawPick(g, W, H, sw) {
+  // ---------- инструменты ----------
+  // Каждый рисуется отдельно: своя форма, свой металл, свой хват, свой износ.
+  const TOOLS = [
+    { name: "ЛОПАТА",      key: "shovel", pow: 1,  cd: .36 },
+    { name: "КИРКА",       key: "pick",   pow: 2,  cd: .30 },
+    { name: "КАЙЛО",       key: "maul",   pow: 3,  cd: .34 },
+    { name: "КУВАЛДА",     key: "sledge", pow: 5,  cd: .46 },
+    { name: "ОТБОЙНИК",    key: "hammer", pow: 8,  cd: .12 },
+    { name: "БУР",         key: "auger",  pow: 13, cd: .16 },
+    { name: "ТЕРМОКОПЬЁ",  key: "lance",  pow: 22, cd: .22 }
+  ];
+  let tool = 1;
+
+  function grad(g, x0, y0, x1, y1, stops) {
+    const q = g.createLinearGradient(x0, y0, x1, y1);
+    for (const [o, c] of stops) q.addColorStop(o, c);
+    return q;
+  }
+
+  // общая деревянная рукоять
+  function handle(g, px, len, w, wrapFrom, tint) {
+    g.fillStyle = grad(g, 0, -w, 0, w, [[0, tint[0]], [.28, tint[1]], [.66, tint[2]], [1, tint[3]]]);
+    g.beginPath();
+    g.moveTo(0, -w * .9); g.lineTo(len, -w * .6); g.lineTo(len, w * .6); g.lineTo(0, w * .9);
+    g.closePath(); g.fill();
+    // волокно
+    g.globalAlpha = .26;
+    for (let i = 0; i < 22; i++) {
+      g.fillStyle = h3(i, 2, 9) > .5 ? "#e8c896" : "#2a1c10";
+      g.fillRect(px(12) + h3(i, 4, 9) * len * .85, (h3(i, 3, 9) - .5) * w * 1.5, len * (.05 + h3(i, 5, 9) * .13), px(2));
+    }
+    g.globalAlpha = 1;
+    // обмотка
+    for (let i = 0; i < 8; i++) {
+      const q = wrapFrom + i * px(17);
+      if (q > len - px(12)) break;
+      g.fillStyle = i % 2 ? "#1e130c" : "#332315";
+      g.fillRect(q, -w * .88, px(12), w * 1.76);
+    }
+    g.fillStyle = "rgba(255,214,150,.30)";
+    g.fillRect(0, -w * .9, len, px(3));
+  }
+
+  function steel(g, dark) {
+    return dark
+      ? [[0, "#8d8798"], [.2, "#5d5768"], [.55, "#37313f"], [1, "#191420"]]
+      : [[0, "#f4ecdf"], [.2, "#aca093"], [.55, "#5c5462"], [1, "#221d29"]];
+  }
+
+  function drawTool(g, W, H, sw, kind) {
     const px = n => n * (W / 900);
     const dip = Math.sin(sw * Math.PI) * px(150);
-    const rot = -0.62 + Math.sin(sw * Math.PI) * 0.95;
-    const gx = W + px(60) - Math.sin(bob) * px(9), gy = H + px(50) + dip * .35 + Math.abs(Math.cos(bob)) * px(11);
+    const rot = -0.60 + Math.sin(sw * Math.PI) * 0.98;
+    const gx = W + px(60) - Math.sin(bob) * px(9);
+    const gy = H + px(50) + dip * .35 + Math.abs(Math.cos(bob)) * px(11);
     const hx = W - px(250) + dip * .55, hy = H - px(300) + dip;
-    g.save(); g.translate(hx, hy); g.rotate(rot);
-    // тень
-    g.save(); g.globalAlpha = .3; g.filter = "blur(9px)"; g.fillStyle = "#000";
-    g.fillRect(px(-40), px(10), px(360), px(60)); g.restore();
-    g.restore();
-
     const ang = Math.atan2(hy - gy, hx - gx), len = Math.hypot(hx - gx, hy - gy);
+
+    // тень под инструментом
+    g.save(); g.globalAlpha = .34; g.filter = "blur(10px)";
+    g.translate(hx + px(14), hy + px(22)); g.rotate(ang - Math.PI / 2);
+    g.fillStyle = "#000"; g.fillRect(px(-130), px(-24), px(260), px(48)); g.restore();
+
+    // ---- рукоять / корпус ----
     g.save(); g.translate(gx, gy); g.rotate(ang);
-    const w = px(19);
-    const wg = g.createLinearGradient(0, -w, 0, w);
-    wg.addColorStop(0, "#caa06a"); wg.addColorStop(.3, "#8e6a3e"); wg.addColorStop(.68, "#5a3f26"); wg.addColorStop(1, "#281a0f");
-    g.fillStyle = wg;
-    g.beginPath(); g.moveTo(0, -w * .9); g.lineTo(len, -w * .62); g.lineTo(len, w * .62); g.lineTo(0, w * .9); g.closePath(); g.fill();
-    for (let i = 0; i < 7; i++) { g.fillStyle = i % 2 ? "#22160f" : "#3a2819"; g.fillRect(px(8) + i * px(17), -w * .88, px(12), w * 1.76); }
-    g.fillStyle = "rgba(255,214,150,.30)"; g.fillRect(0, -w * .9, len, px(3));
+    if (kind === "hammer") {
+      // пневматический корпус с рёбрами и шлангом
+      g.fillStyle = grad(g, 0, -px(30), 0, px(30), [[0,"#d9b66c"],[.3,"#9b7c3d"],[.72,"#4d3c1d"],[1,"#241b0e"]]);
+      g.beginPath(); g.roundRect(0, -px(28), len, px(56), px(16)); g.fill();
+      for (let i = 0; i < 9; i++) {
+        g.fillStyle = i % 2 ? "rgba(0,0,0,.30)" : "rgba(255,238,196,.16)";
+        g.fillRect(px(30) + i * px(26), -px(28), px(11), px(56));
+      }
+      // шланг
+      g.strokeStyle = "#20180f"; g.lineWidth = px(15); g.lineCap = "round";
+      g.beginPath(); g.moveTo(px(24), px(22));
+      g.bezierCurveTo(px(-70), px(80), px(-150), px(40), px(-190), px(120));
+      g.stroke();
+      g.strokeStyle = "#3a2c1c"; g.lineWidth = px(6); g.stroke();
+    } else if (kind === "lance") {
+      // термокопьё: труба с вентилем и раскалённым концом
+      g.fillStyle = grad(g, 0, -px(17), 0, px(17), [[0,"#cfd6dc"],[.26,"#8b939c"],[.66,"#454c56"],[1,"#1d2128"]]);
+      g.beginPath(); g.roundRect(0, -px(16), len, px(32), px(10)); g.fill();
+      for (const q of [.28, .55, .8]) {
+        g.fillStyle = "#2b3138"; g.fillRect(len * q, -px(20), px(14), px(40));
+        g.fillStyle = "#6d7681"; g.fillRect(len * q, -px(20), px(14), px(5));
+      }
+      g.fillStyle = "#b4372a"; g.beginPath(); g.arc(len * .18, -px(24), px(15), 0, 6.283); g.fill();
+      g.fillStyle = "#e0705c"; g.beginPath(); g.arc(len * .18 - px(4), -px(28), px(6), 0, 6.283); g.fill();
+    } else if (kind === "auger") {
+      // бур: вал под винтом
+      g.fillStyle = grad(g, 0, -px(14), 0, px(14), [[0,"#b9b2c6"],[.3,"#77708a"],[.7,"#3d3750"],[1,"#1b1725"]]);
+      g.beginPath(); g.roundRect(0, -px(13), len, px(26), px(8)); g.fill();
+      g.fillStyle = "#241a12"; g.fillRect(0, -px(18), px(96), px(36));
+      g.fillStyle = "#3d2c1c"; g.fillRect(0, -px(18), px(96), px(6));
+    } else {
+      const tint = kind === "shovel" ? ["#d3b184","#9d7a4c","#63472b","#2c1e12"]
+                 : kind === "sledge" ? ["#b99263","#875f36","#4f3620","#241708"]
+                 : ["#caa06a","#8e6a3e","#5a3f26","#281a0f"];
+      handle(g, px, len, px(kind === "sledge" ? 22 : 19), px(8), tint);
+      if (kind === "shovel") {              // Т-образный хват
+        g.fillStyle = "#3a2819";
+        g.fillRect(px(-6), -px(46), px(16), px(92));
+        g.fillStyle = "#5d4227"; g.fillRect(px(-6), -px(46), px(16), px(8));
+      }
+    }
     g.restore();
 
+    // ---- рабочая часть ----
     g.save(); g.translate(hx, hy); g.rotate(ang - Math.PI / 2);
-    const mg = g.createLinearGradient(0, -px(20), 0, px(20));
-    mg.addColorStop(0, "#f0e8dc"); mg.addColorStop(.2, "#a89c92"); mg.addColorStop(.55, "#5a5260"); mg.addColorStop(1, "#221d29");
-    g.fillStyle = mg;
-    g.beginPath();
-    g.moveTo(-px(128), -px(5)); g.lineTo(-px(40), -px(17)); g.lineTo(px(40), -px(17));
-    g.lineTo(px(122), -px(11)); g.lineTo(px(122), px(8)); g.lineTo(px(40), px(17));
-    g.lineTo(-px(40), px(17)); g.lineTo(-px(128), px(3)); g.closePath(); g.fill();
-    g.fillStyle = "rgba(255,255,255,.5)";
-    g.beginPath(); g.moveTo(-px(122), -px(5)); g.lineTo(-px(40), -px(14)); g.lineTo(px(40), -px(14));
-    g.lineTo(px(118), -px(9)); g.lineTo(px(118), -px(6)); g.lineTo(px(40), -px(10.5));
-    g.lineTo(-px(40), -px(10.5)); g.lineTo(-px(122), -px(2)); g.closePath(); g.fill();
-    g.fillStyle = "#191424"; g.fillRect(-px(20), -px(20), px(40), px(40));
-    g.fillStyle = "#443a5a"; g.fillRect(-px(20), -px(20), px(40), px(5));
+
+    if (kind === "shovel") {
+      // широкий штык с ребром жёсткости и заклёпками
+      g.fillStyle = grad(g, 0, -px(20), 0, px(150), steel(g, false));
+      g.beginPath();
+      g.moveTo(-px(78), -px(10)); g.lineTo(px(78), -px(10));
+      g.lineTo(px(66), px(112)); g.quadraticCurveTo(0, px(158), -px(66), px(112));
+      g.closePath(); g.fill();
+      g.fillStyle = "rgba(255,255,255,.34)";
+      g.fillRect(-px(10), -px(6), px(20), px(120));            // ребро
+      g.fillStyle = "rgba(255,252,244,.85)";
+      g.beginPath(); g.moveTo(-px(64), px(108)); g.quadraticCurveTo(0, px(152), px(64), px(108));
+      g.quadraticCurveTo(0, px(140), -px(64), px(108)); g.fill();
+      g.fillStyle = "#2a2432";
+      for (const q of [-30, 0, 30]) { g.beginPath(); g.arc(px(q), px(6), px(7), 0, 6.283); g.fill(); }
+
+    } else if (kind === "pick") {
+      // классика: остриё и лопатка
+      g.fillStyle = grad(g, 0, -px(20), 0, px(20), steel(g, false));
+      g.beginPath();
+      g.moveTo(-px(132), -px(4)); g.lineTo(-px(42), -px(18)); g.lineTo(px(42), -px(18));
+      g.lineTo(px(124), -px(11)); g.lineTo(px(124), px(9)); g.lineTo(px(42), px(18));
+      g.lineTo(-px(42), px(18)); g.lineTo(-px(132), px(3));
+      g.closePath(); g.fill();
+      g.fillStyle = "rgba(255,255,255,.5)";
+      g.beginPath(); g.moveTo(-px(126), -px(4)); g.lineTo(-px(42), -px(15));
+      g.lineTo(px(120), -px(9)); g.lineTo(px(120), -px(6)); g.lineTo(-px(42), -px(11));
+      g.closePath(); g.fill();
+      g.fillStyle = "rgba(255,252,246,.9)";
+      g.beginPath(); g.moveTo(-px(132), -px(4)); g.lineTo(-px(104), -px(8)); g.lineTo(-px(104), px(1)); g.fill();
+      g.fillStyle = "#191424"; g.fillRect(-px(21), -px(22), px(42), px(44));
+      g.fillStyle = "#463c5c"; g.fillRect(-px(21), -px(22), px(42), px(6));
+
+    } else if (kind === "maul") {
+      // кайло: два острия, кованая тёмная сталь, зазубрины
+      g.fillStyle = grad(g, 0, -px(26), 0, px(26), steel(g, true));
+      g.beginPath();
+      g.moveTo(-px(152), px(2)); g.lineTo(-px(56), -px(24)); g.lineTo(px(56), -px(24));
+      g.lineTo(px(152), px(2)); g.lineTo(px(56), px(26)); g.lineTo(-px(56), px(26));
+      g.closePath(); g.fill();
+      g.fillStyle = "rgba(220,214,232,.42)";
+      g.beginPath(); g.moveTo(-px(146), px(1)); g.lineTo(-px(56), -px(20));
+      g.lineTo(px(56), -px(20)); g.lineTo(px(146), px(1)); g.lineTo(px(56), -px(14));
+      g.lineTo(-px(56), -px(14)); g.closePath(); g.fill();
+      g.fillStyle = "rgba(0,0,0,.4)";                          // выщербины
+      for (let i = 0; i < 7; i++) g.fillRect(px(-120 + i * 34), px(6 + (i % 3) * 5), px(12), px(5));
+      g.fillStyle = "#141020"; g.fillRect(-px(26), -px(30), px(52), px(58));
+      g.fillStyle = "#3b3352"; g.fillRect(-px(26), -px(30), px(52), px(7));
+
+    } else if (kind === "sledge") {
+      // кувалда: тяжёлый брусок с оковкой и клин в другой руке
+      g.fillStyle = grad(g, 0, -px(38), 0, px(38), steel(g, true));
+      g.beginPath(); g.roundRect(-px(66), -px(38), px(132), px(76), px(8)); g.fill();
+      g.fillStyle = "rgba(230,224,240,.4)"; g.fillRect(-px(66), -px(38), px(132), px(12));
+      g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(-px(66), px(24), px(132), px(14));
+      g.fillStyle = "#2b2438";
+      g.fillRect(-px(74), -px(30), px(10), px(60)); g.fillRect(px(64), -px(30), px(10), px(60));
+      g.fillStyle = "#c9c2d8"; g.fillRect(-px(74), -px(30), px(10), px(6)); g.fillRect(px(64), -px(30), px(10), px(6));
+      g.fillStyle = "#0f0c17"; g.fillRect(-px(20), -px(42), px(40), px(84));
+
+    } else if (kind === "hammer") {
+      // отбойник: пика с буртиком
+      g.fillStyle = grad(g, 0, -px(16), 0, px(16), steel(g, false));
+      g.beginPath();
+      g.moveTo(-px(20), -px(15)); g.lineTo(px(150), -px(6)); g.lineTo(px(168), 0);
+      g.lineTo(px(150), px(6)); g.lineTo(-px(20), px(15));
+      g.closePath(); g.fill();
+      g.fillStyle = "rgba(255,255,255,.52)"; g.fillRect(-px(18), -px(13), px(160), px(5));
+      g.fillStyle = "#2b2438"; g.fillRect(-px(30), -px(26), px(26), px(52));
+      g.fillStyle = "#736a86"; g.fillRect(-px(30), -px(26), px(26), px(6));
+
+    } else if (kind === "auger") {
+      // бур: винтовая навивка
+      g.fillStyle = grad(g, 0, -px(14), 0, px(14), steel(g, false));
+      g.beginPath(); g.roundRect(-px(14), -px(14), px(200), px(28), px(9)); g.fill();
+      for (let i = 0; i < 9; i++) {
+        const q = px(-4 + i * 22), ph = i * 0.72;
+        g.fillStyle = i % 2 ? "#9a93ab" : "#5f5872";
+        g.beginPath();
+        g.ellipse(q, 0, px(11), px(30) * Math.abs(Math.cos(ph)) + px(6), 0, 0, 6.283);
+        g.fill();
+        g.fillStyle = "rgba(255,255,255,.30)";
+        g.fillRect(q - px(11), -px(30), px(22), px(4));
+      }
+      g.fillStyle = "#e8e2f2";
+      g.beginPath(); g.moveTo(px(186), -px(12)); g.lineTo(px(214), 0); g.lineTo(px(186), px(12)); g.fill();
+
+    } else if (kind === "lance") {
+      // термокопьё: раскалённый добела наконечник
+      g.fillStyle = grad(g, 0, -px(13), 0, px(13), [[0,"#8d949d"],[.4,"#4c535d"],[1,"#1b1f26"]]);
+      g.beginPath(); g.roundRect(-px(10), -px(12), px(150), px(24), px(7)); g.fill();
+      const hot = g.createRadialGradient(px(150), 0, 0, px(150), 0, px(80));
+      hot.addColorStop(0, "rgba(255,252,230,.95)");
+      hot.addColorStop(.25, "rgba(255,196,90,.75)");
+      hot.addColorStop(.6, "rgba(226,92,30,.35)");
+      hot.addColorStop(1, "rgba(226,92,30,0)");
+      g.fillStyle = hot; g.beginPath(); g.arc(px(150), 0, px(80), 0, 6.283); g.fill();
+      g.fillStyle = "#fff6d8";
+      g.beginPath(); g.moveTo(px(126), -px(11)); g.lineTo(px(178), 0); g.lineTo(px(126), px(11)); g.fill();
+      g.fillStyle = "#ffd27a"; g.fillRect(px(96), -px(9), px(34), px(18));
+    }
     g.restore();
   }
 
@@ -537,14 +765,14 @@
     if (digging && digCd <= 0) {
       const t = aim();
       if (t) {
-        digCd = .3; swing = 1;
-        carve(t[0], t[1], t[2], 0.62);
+        digCd = TOOLS[tool].cd; swing = 1;
+        carve(t[0], t[1], t[2], 0.42 + TOOLS[tool].pow * 0.028);
         const deep = t[1] > 9;
         thud(deep, .8 + Math.random() * .5);
         shake = deep ? 7 : 5;
         spawnChips(t[1] < 0 ? "#9a9088" : t[1] < 4 ? "#6d4d2f" : "#8a8290");
         cart = Math.min(1, cart + .012);
-        ore += t[1] > 0 ? 3 + Math.floor(Math.random() * 4) : 0;
+        ore += t[1] > 0 ? TOOLS[tool].pow + Math.floor(Math.random() * 4) : 0;
         oreEl.textContent = ore >= 1000 ? (ore / 1000).toFixed(1) + "K" : ore;
         cartEl.style.width = (cart * 100) + "%";
       }
@@ -574,7 +802,7 @@
       fxc.fillRect(p2.x, p2.y, p2.s, p2.s);
     }
     fxc.globalAlpha = 1;
-    drawPick(fxc, fx.width, fx.height, swing);
+    drawTool(fxc, fx.width, fx.height, swing, TOOLS[tool].key);
 
     requestAnimationFrame(frame);
   }
