@@ -149,6 +149,7 @@
   .hub-top{display:flex;justify-content:space-between;align-items:baseline;padding:18px 16px 14px;
     border-bottom:1px solid #241d2f;position:relative}
   .hub-top .place{font-size:12px;letter-spacing:.28em;color:var(--lamp)}
+  .hub-top .place em{font-style:normal;margin-left:14px;letter-spacing:.16em;color:#4c4560}
   .hub-top .hore b{font-size:19px;color:#fff;font-variant-numeric:tabular-nums}
   .hub-top .hore i{font-style:normal;font-size:8px;letter-spacing:.18em;color:#6f6788;margin-left:5px}
   .hrow{display:grid;grid-template-columns:1fr auto;gap:3px 12px;padding:13px 16px;
@@ -220,7 +221,7 @@
   <div class="dig" id="digbtn">ДОЛБИТЬ</div>
   <div class="lift" id="lift"><span id="liftmsg">ПОДЪЁМ</span></div>
   <div class="hub" id="hub">
-    <div class="hub-top"><span class="place">ШТРЕК</span>
+    <div class="hub-top"><span class="place">ШТРЕК<em id="konst"></em></span>
       <span class="hore"><b id="hbank">0</b><i>РУДЫ</i></span></div>
     <div class="hub-rows" id="hubrows"></div>
     <div class="hub-go" id="hubgo">СПУСТИТЬСЯ<small id="hubdepth">НА 0 М</small></div>
@@ -426,6 +427,7 @@
   uniform vec4 uNode;
   uniform vec4 uPoint;
   uniform vec3 uRoomC, uRoomH;
+  uniform float uTide, uShift, uDark;
 
   vec3 toTex(vec3 w){
     return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
@@ -525,6 +527,16 @@
     }
     c *= 0.84+0.34*h31(floor(w*3.0));
 
+    // тёмный пласт: ровно двенадцать метров породы, которая ничего не отдаёт
+    if(uDark > 0.0 && w.y > uDark && w.y < uDark + 12.0){
+      float ed = min(w.y - uDark, uDark + 12.0 - w.y);
+      float k = smoothstep(0.0, 1.1, ed);
+      c = mix(c, vec3(0.030,0.028,0.034), k);        // ни зерна, ни жил, ни блеска
+      rough = mix(rough, 0.0, k);
+      oreAmt *= 1.0 - k;
+      emis *= 1.0 - k;
+    }
+
     // карман: под землёй кладка, доски и известь — там, где им взяться неоткуда
     if(uRoomH.x > 0.0){
       vec3 rv = w - uRoomC;
@@ -550,6 +562,14 @@
 
   void main(){
     vec2 uv = (gl_FragCoord.xy - .5*uRes)/uRes.y;
+    // приливная: три секунды всё вытягивается к точке под ногами
+    if(uTide > 0.0){
+      vec2 c = vec2(0.0, -0.86);
+      vec2 dv = uv - c;
+      float r = length(dv);
+      uv = c + dv*(1.0 + uTide*0.95/(1.0 + r*r*1.9));
+      uv.y -= uTide*0.055;
+    }
     vec3 rd = normalize(uRot*vec3(uv,uFov));
     vec3 ro = uCam;
 
@@ -666,6 +686,12 @@
       float dn = length(w - uNode.xyz);
       float k = 1.0 - smoothstep(uNode.w*0.72, uNode.w*1.25, dn);
       col = mix(col, vec3(0.0), k);
+    }
+    // смещение: вниз краснее, вверх синее. Порога нет, поэтому это списывают на глаза
+    if(uShift > 0.001){
+      float look = clamp(-rd.y*0.5 + 0.5, 0.0, 1.0);   // 0 вверх, 1 вниз
+      vec3 tint = mix(vec3(0.935,0.970,1.065), vec3(1.055,0.965,0.915), look);
+      col *= mix(vec3(1.0), tint, uShift);
     }
     col = max(col, 0.0) * uBright;
     col = col/(col+0.95)*1.30;                              // мягкое сведение бликов
@@ -1431,6 +1457,8 @@
   ];
 
   function buildHub() {
+    // К6. Подписи нет, и она никогда не меняется
+    document.getElementById("konst").textContent = SAV.seen.cosmic ? "137" : "";
     hBank.textContent = fmt(SAV.bank);
     hDepth.textContent = "НА " + Math.max(0, Math.round(retPos ? retPos.y : 0)) + " М";
     hubRows.innerHTML = "";
@@ -1715,6 +1743,59 @@
     }
   }
 
+  // ---------- космическое ----------
+  // Не события и не твари. Свойства места: они просто есть там, где ты оказался.
+  let DARK0 = 0;                                     // начало тёмного пласта
+  function seedCosmic() { DARK0 = 25.5 + hs(3, 61, 11) * 2; }
+  seedCosmic();
+  const inDark = y => y > DARK0 && y < DARK0 + 12;
+
+  let tideEnd = 0, tideNext = 42 + Math.random() * 70;
+  // огибающая: медленно натягивает, держит, медленно отпускает
+  function tideAmt() {
+    if (!tideEnd) return 0;
+    const left = (tideEnd - performance.now()) / 3000;
+    if (left <= 0) { tideEnd = 0; return 0; }
+    return Math.sin(Math.min(1, Math.max(0, 1 - left)) * Math.PI);
+  }
+  function tideTick(dt) {
+    if (P.y < 12 || tideEnd) return;
+    tideNext -= dt;
+    if (tideNext > 0) return;
+    tideNext = 55 + Math.random() * 95;
+    tideEnd = performance.now() + 3000;
+  }
+  // смещение: включается плавно, порога нет
+  const shiftAmt = () => Math.min(1, Math.max(0, (P.y - 14) / 10));
+
+  // крупа: после Точки на границе света висят одиночные искры
+  let grit = [], gritNext = 0, sawPoint = false;
+  function gritTick(dt) {
+    if (!sawPoint) return;
+    gritNext -= dt;
+    if (gritNext <= 0) {
+      gritNext = 8 + Math.random() * 16;             // штук пять в минуту
+      const a = Math.random() * Math.PI * 2, r = fx.height * (0.30 + Math.random() * 0.16);
+      grit.push({ x: fx.width / 2 + Math.cos(a) * r * 1.5, y: fx.height / 2 + Math.sin(a) * r, t: 0,
+                  life: 1.1 + Math.random() * 1.4 });
+    }
+    for (let i = grit.length - 1; i >= 0; i--) {
+      grit[i].t += dt;
+      if (grit[i].t > grit[i].life) grit.splice(i, 1);
+    }
+  }
+  function drawGrit(g) {
+    for (const q of grit) {
+      const k = Math.sin(q.t / q.life * Math.PI);
+      g.globalAlpha = k * 0.85;
+      g.fillStyle = "#dfe6ff";
+      g.beginPath(); g.arc(q.x, q.y, 1.15 + k * 0.7, 0, 7); g.fill();
+      g.globalAlpha = k * 0.16;
+      g.beginPath(); g.arc(q.x, q.y, 5 + k * 4, 0, 7); g.fill();
+      g.globalAlpha = 1;
+    }
+  }
+
   // ---------- точка ----------
   // Свет к ней сворачивает, шаг к ней укорачивается, время рядом с ней тянется.
   let PT = null, depthLag = 0;
@@ -1806,7 +1887,7 @@
     { id:"face",   at: 34, go(){ faceT = 2; } },
     { id:"count",  at: 38, go(){ cnt = 9; cntAt = P.y; } },
     { id:"lights", at: 44, go(){ lights = 3.2; } },
-    { id:"point",  at: 36, go(){ spawnPoint(); } }
+    { id:"point",  at: 40, go(){ spawnPoint(); } }
   ];
 
   function dreadTick(dt) {
@@ -2043,19 +2124,22 @@
     else if (digging && digCd <= 0) {
       const t = aim();
       if (t) {
-        digCd = Math.max(.1, .34 - powOf() * .03); swing = 1;
+        const dk = inDark(t[1]);
+        digCd = dk ? .09 : Math.max(.1, .34 - powOf() * .03); swing = 1;
         carve(t[0], t[1], t[2], (0.40 + powOf() * 0.13) * (buff.dmg > 0 ? 1.5 : 1) * (buff.soft > 0 ? 1.35 : 1));
         const deep = t[1] > 9;
-        thud(deep, .8 + Math.random() * .5);
-        shake = deep ? 7 : 5;
-        spawnChips(t[1] < 0 ? "#9a9088" : t[1] < 4 ? "#6d4d2f" : "#8a8290");
-        const nd = nodeNear(t[0], t[1], t[2]);
+        if (!dk) {                                   // в тёмном пласте кирка не встречает ничего
+          thud(deep, .8 + Math.random() * .5);
+          shake = deep ? 7 : 5;
+          spawnChips(t[1] < 0 ? "#9a9088" : t[1] < 4 ? "#6d4d2f" : "#8a8290");
+        }
+        const nd = dk ? null : nodeNear(t[0], t[1], t[2]);
         if (nd) {
           nd.hit++; blackOre += 6; cart = Math.min(capOf(), cart + 6);
           thud(false, .30);
           if (nd.hit === 1) nodeBreaks++;
           if (nodeBreaks >= 2 && !fired.nodrop) { fired.nodrop = 1; startFall(); }
-        } else if (t[1] > 0) cart = Math.min(capOf(), cart + (2 + Math.random() * 3 * powOf()) * (buff.ore > 0 ? 5 : 1));
+        } else if (t[1] > 0 && !dk) cart = Math.min(capOf(), cart + (2 + Math.random() * 3 * powOf()) * (buff.ore > 0 ? 5 : 1));
         oreEl.textContent = fmt(cart) + " / " + capOf();
         oreEl.classList.add("hot"); oreHot = 1.4;
         cartEl.style.width = (cart / capOf() * 100) + "%";
@@ -2064,6 +2148,9 @@
     }
     shake = Math.max(0, shake - dt * 34);
     dreadTick(dt); countTick();
+    tideTick(dt); gritTick(dt);
+    if (!sawPoint && PT && ptDist() < 18) { sawPoint = true; SAV.seen.cosmic = 1; saveGame(); }
+    if (!SAV.seen.cosmic && (inDark(P.y) || P.y > 20)) { SAV.seen.cosmic = 1; saveGame(); }
     if (hush > 0) hush -= dt;
     if (lampOut > 0) {
       lampOut -= dt + (digging ? dt * 1.6 : 0);      // раздувается кликами
@@ -2096,6 +2183,9 @@
     const rm = activeRoom();
     if (rm) { gl.uniform3f(U("uRoomC"), rm.x, rm.y, rm.z); gl.uniform3f(U("uRoomH"), rm.hx, rm.hy, rm.hz); }
     else gl.uniform3f(U("uRoomH"), 0, 0, 0);
+    gl.uniform1f(U("uTide"), tideAmt());
+    gl.uniform1f(U("uShift"), shiftAmt());
+    gl.uniform1f(U("uDark"), DARK0);
     gl.uniform1f(U("uDrain"), buff.warm > 0 ? 0 : Math.max(0, Math.min(.92, (P.y - 10) / 46)));
     gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 7) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -2111,8 +2201,17 @@
       fxc.fillRect(p2.x, p2.y, p2.s, p2.s);
     }
     fxc.globalAlpha = 1;
+    drawGrit(fxc);
     drawDread(fxc, fx.width, fx.height, dt);
+    const ta = tideAmt();
+    if (ta > 0) {                                    // руки тянет вместе со всем остальным
+      const cx = fx.width / 2, cy = fx.height * 1.34;
+      fxc.save(); fxc.translate(cx, cy);
+      fxc.scale(1 - ta * 0.09, 1 + ta * 0.34);
+      fxc.translate(-cx, -cy);
+    }
     drawTool(fxc, fx.width, fx.height, swing, heldKind());
+    if (ta > 0) fxc.restore();
 
     requestAnimationFrame(frame);
   }
