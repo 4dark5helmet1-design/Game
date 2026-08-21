@@ -10,19 +10,18 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-text-size-adjust:100%}
   .wrap{max-width:70ch;margin:0 auto;padding:0 20px 90px}
-
-  header.top{padding:44px 20px 30px;text-align:center;border-bottom:1px solid var(--line);
+  header.top{padding:44px 20px 28px;text-align:center;border-bottom:1px solid var(--line);
     background:radial-gradient(ellipse 70% 80% at 50% 0%,rgba(255,193,77,.10),transparent 70%),var(--bg)}
   header.top .kick{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--lamp);margin:0 0 12px}
   header.top h1{font-family:var(--mono);font-size:clamp(24px,7vw,38px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 14px}
   header.top p{max-width:52ch;margin:0 auto;color:var(--ink2);font-size:16px}
 
-  /* ---- игра ---- */
-  .game{position:relative;width:100%;max-width:820px;margin:26px auto 14px;aspect-ratio:9/16;
-    max-height:78vh;background:#000;border:1px solid #372f47;border-radius:16px;overflow:hidden;
+  .game{position:relative;width:100%;max-width:860px;margin:24px auto 12px;aspect-ratio:9/16;max-height:78vh;
+    background:#000;border:1px solid #372f47;border-radius:16px;overflow:hidden;
     box-shadow:0 26px 64px rgba(0,0,0,.7);touch-action:none;user-select:none;font-family:var(--mono)}
   @media (min-width:760px){ .game{aspect-ratio:16/10;max-height:none} }
-  .game canvas{width:100%;height:100%;display:block}
+  .game canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #fx{pointer-events:none}
 
   .hud{position:absolute;inset:14px 12px auto 12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
   .pill{background:rgba(10,8,14,.5);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:7px 11px;backdrop-filter:blur(6px);line-height:1.15}
@@ -30,61 +29,56 @@
   .pill .big i{font-style:normal;font-size:10px;color:#c3bcd2;margin-left:2px}
   .pill .sm{font-size:13px;color:#e6e0f0;font-variant-numeric:tabular-nums}
   .pill .lbl{display:block;font-size:7.5px;letter-spacing:.2em;color:#8f86a4;margin-top:2px}
+  .cartbar{margin-top:7px;width:78px;height:4px;border-radius:3px;background:rgba(255,255,255,.16);overflow:hidden}
+  .cartbar i{display:block;height:100%;width:0%;background:#7fc9e8;transition:width .2s}
 
-  .cross{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);pointer-events:none;opacity:.85}
-  .cross i{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 4px rgba(0,0,0,.9)}
-  .cross i:nth-child(1){left:50%;top:0;width:1px;height:7px;margin-left:-.5px}
-  .cross i:nth-child(2){left:50%;bottom:0;width:1px;height:7px;margin-left:-.5px}
-  .cross i:nth-child(3){top:50%;left:0;height:1px;width:7px;margin-top:-.5px}
-  .cross i:nth-child(4){top:50%;right:0;height:1px;width:7px;margin-top:-.5px}
+  .cross{position:absolute;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);pointer-events:none;opacity:.8}
+  .cross i{position:absolute;background:rgba(255,255,255,.9);box-shadow:0 0 4px rgba(0,0,0,.9)}
+  .cross i:nth-child(1){left:50%;top:0;width:1px;height:6px;margin-left:-.5px}
+  .cross i:nth-child(2){left:50%;bottom:0;width:1px;height:6px;margin-left:-.5px}
+  .cross i:nth-child(3){top:50%;left:0;height:1px;width:6px;margin-top:-.5px}
+  .cross i:nth-child(4){top:50%;right:0;height:1px;width:6px;margin-top:-.5px}
 
-  .hint{position:absolute;left:0;right:0;bottom:96px;text-align:center;font-size:11px;letter-spacing:.14em;
-    color:rgba(255,255,255,.62);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .6s}
+  .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;font-size:11px;letter-spacing:.14em;
+    color:rgba(255,255,255,.66);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .8s}
   .hint.gone{opacity:0}
-
   .stick{position:absolute;left:18px;bottom:18px;width:104px;height:104px;border-radius:50%;
-    border:1px solid rgba(255,255,255,.14);background:rgba(10,8,14,.32);backdrop-filter:blur(4px)}
+    border:1px solid rgba(255,255,255,.14);background:rgba(10,8,14,.3);backdrop-filter:blur(4px)}
   .stick i{position:absolute;left:50%;top:50%;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;
     background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2)}
   .dig{position:absolute;right:18px;bottom:24px;width:86px;height:86px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;font-size:12px;letter-spacing:.12em;color:var(--lamp);
     border:1px solid rgba(255,193,77,.55);background:rgba(40,28,14,.4);backdrop-filter:blur(4px)}
-  .dig.on{background:rgba(255,193,77,.28)}
+  .dig.on{background:rgba(255,193,77,.3)}
   @media (min-width:760px){ .stick,.dig{display:none} }
-
-  .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;
-    text-align:center;font-size:13px;color:var(--ink2);background:#0b0910}
+  .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;text-align:center;font-size:13px;color:var(--ink2);background:#0b0910}
 
   .keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 4px}
-  .keys span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink3);
-    border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+  .keys span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink3);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
   .keys b{color:var(--ink);font-weight:700}
-
-  h2{font-family:var(--mono);font-size:19px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-    margin:44px 0 4px;padding-bottom:11px;border-bottom:1px solid var(--line)}
+  h2{font-family:var(--mono);font-size:19px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:44px 0 4px;padding-bottom:11px;border-bottom:1px solid var(--line)}
   p{margin:14px 0}
-  p strong{color:#fff}
   ul{margin:0 0 14px;padding-left:1.25em;color:var(--ink2)}
   li{margin-bottom:7px}
   li strong{color:var(--ink)}
   .note{border-left:2px solid var(--lamp);padding:4px 0 4px 16px;color:var(--ink2);font-size:15.5px;margin:18px 0}
-  code{font-family:var(--mono);font-size:.85em;background:#191524;border-radius:4px;padding:1px 6px}
-  footer.end{border-top:1px solid var(--line);margin-top:48px;padding-top:18px;font-family:var(--mono);
-    font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+  footer.end{border-top:1px solid var(--line);margin-top:48px;padding-top:18px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
 </style>
 
 <header class="top">
-  <p class="kick">Забой · играбельный прототип</p>
-  <h1>Настоящее первое лицо</h1>
-  <p>Не картинка. Воксельная шахта в реальном 3D: крути головой, ходи, долби породу. Всё считается в браузере на видеокарте.</p>
+  <p class="kick">Забой · прототип 2</p>
+  <h1>Подвал</h1>
+  <p>Ты в подвале собственного дома. Лампочка, бетон, земляной пол и дыра, которую кто-то уже начал. Копать можно куда угодно и любой формы — никаких кубиков.</p>
 </header>
 
 <div class="wrap">
 
 <div class="game" id="game">
   <canvas id="gl"></canvas>
+  <canvas id="fx"></canvas>
   <div class="hud">
-    <span class="pill"><span class="big" id="depth">0<i>М</i></span></span>
+    <span class="pill"><span class="big" id="depth">0<i>М</i></span>
+      <span class="cartbar"><i id="cart"></i></span></span>
     <span class="pill"><span class="sm" id="ore">0</span><span class="lbl">РУДА</span></span>
   </div>
   <div class="cross"><i></i><i></i><i></i><i></i></div>
@@ -98,30 +92,16 @@
   <span><b>WASD</b> ходить</span><span><b>мышь</b> смотреть</span><span><b>ЛКМ</b> долбить</span>
   <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span>
 </div>
-<p style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink3);letter-spacing:.05em">
-  На телефоне: левый круг — ходьба, палец по экрану — камера, кнопка справа — долбить.
-</p>
 
-<h2>Что здесь настоящего</h2>
+<h2>Что изменилось</h2>
 <ul>
-  <li><strong>Мир воксельный и разрушаемый.</strong> Каждый блок реально существует в памяти. Разбил — его нет, и в дыру видно дальше.</li>
-  <li><strong>Свет — фонарь на каске.</strong> Освещено то, во что смотришь, и ничего больше. С глубиной дневной свет сверху угасает сам собой: на поверхности светло, на тридцати метрах уже нет.</li>
-  <li><strong>Рельеф не нарисован, а посчитан.</strong> Шероховатость камня даёт настоящие блики и тени, поэтому стена не выглядит наклейкой.</li>
-  <li><strong>Порода разная.</strong> Земля, камень, гранит и жилы руды — по цвету и по тому, сколько ударов держат.</li>
-  <li><strong>Туман по глубине.</strong> Чем глубже, тем короче видно.</li>
+  <li><strong>Мир больше не из кубиков.</strong> Порода — сплошное поле плотности, и кирка выгрызает из него округлую выемку. Дыра получается той формы, которой ты её выкопал, а не лесенкой.</li>
+  <li><strong>Старт в подвале дома.</strong> Бетонные стены, деревянные балки, лампочка под потолком, земляной пол и начатая кем-то яма.</li>
+  <li><strong>Слои породы.</strong> Земля, глина, камень, гранит, жилы руды — идут пластами и видны в срезе стенки, как в настоящем шурфе.</li>
+  <li><strong>Кирка в кадре</strong> с замахом и ударом, покачивается при ходьбе.</li>
+  <li><strong>Осколки, тряска и звук.</strong> Каждый удар выбивает крошку, дёргает камеру и звучит по-разному в зависимости от породы.</li>
 </ul>
-
-<div class="note">Это прототип вида и ощущения, а не игра. Тут нет ни штрека, ни бригады, ни экономики, ни ужаса — только то, ради чего всё затевалось: <strong>каково это, стоять в забое и бить киркой</strong>.</div>
-
-<h2>Чем это сделано</h2>
-<p>Одна веб-страница. Никаких движков, никаких библиотек, ничего не скачивается.</p>
-<ul>
-  <li><strong>WebGL 2</strong> — картинка. Мир лежит в трёхмерной текстуре, а луч на каждый пиксель экрана пробегает по сетке блоков и находит, во что упёрся. Так же устроен Minecraft, только у нас без полигонов вообще.</li>
-  <li><strong>GLSL</strong> — язык шейдеров. Тут живут свет, рельеф, туман и цвет породы.</li>
-  <li><strong>JavaScript</strong> — мир, физика, ходьба, удары.</li>
-  <li><strong>CSS</strong> — интерфейс поверх: счётчики, прицел, кнопки.</li>
-</ul>
-<p class="note">Про <strong>Swift и Kotlin</strong>: они бы означали две отдельные игры — одну под iPhone, другую под Android, обе пишутся и чинятся врозь, и ни одна не открывается по ссылке. Веб даёт одну игру на всё сразу, включая компьютер. Когда захотим в сторы — эта же страница заворачивается в приложение без переписывания.</p>
+<div class="note">Свет: лампочка в подвале и фонарь на каске. Чем глубже уходишь, тем меньше достаёт лампочка — темнота приходит сама, без всяких переключателей.</div>
 
 <footer class="end">Забой · прототип · WebGL 2 · без библиотек</footer>
 </div>
@@ -129,400 +109,438 @@
 <script>
 (function () {
   const cv = document.getElementById("gl");
-  const gl = cv.getContext("webgl2", { antialias: false, powerPreference: "high-performance" });
+  const fx = document.getElementById("fx");
+  const fxc = fx.getContext("2d");
   const failBox = document.getElementById("fail");
-  if (!gl) {
-    failBox.style.display = "flex";
-    failBox.textContent = "Нужен WebGL 2 — в этом браузере его нет. Открой на другом, прототип лёгкий.";
-    return;
-  }
+  const gl = cv.getContext("webgl2", { antialias: false, powerPreference: "high-performance" });
+  if (!gl) { failBox.style.display = "flex"; failBox.textContent = "Нужен WebGL 2 — в этом браузере его нет."; return; }
 
-  // ---------- мир ----------
-  const SX = 96, SY = 128, SZ = 96;          // блоков по X, вниз, Z
-  const AIR = 0, DIRT = 1, GRASS = 2, STONE = 3, GRANITE = 4, ORE = 5;
-  const world = new Uint8Array(SX * SY * SZ);
-  const idx = (x, y, z) => (y * SZ + z) * SX + x;
-  const inside = (x, y, z) => x >= 0 && y >= 0 && z >= 0 && x < SX && y < SY && z < SZ;
-  const get = (x, y, z) => inside(x, y, z) ? world[idx(x, y, z)] : (y < 0 ? AIR : STONE);
+  // ---------- поле плотности ----------
+  const NX = 128, NY = 176, NZ = 128, VS = 0.28;   // метров на ячейку
+  const Y0 = -4.0;                                  // мировая Y у первой ячейки
+  const den = new Uint8Array(NX * NY * NZ);
+  const di = (x, y, z) => (y * NZ + z) * NX + x;
+  const wx = i => (i - NX / 2) * VS, wy = i => Y0 + i * VS, wz = i => (i - NZ / 2) * VS;
 
-  function hash3(x, y, z) {
+  function h3(x, y, z) {
     let n = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(z | 0, 1442695041);
     n = Math.imul(n ^ (n >>> 13), 1274126177);
     return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
   }
   function vn(x, y, z) {
     const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
-    const fx = x - ix, fy = y - iy, fz = z - iz;
-    const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy), w = fz * fz * (3 - 2 * fz);
+    const fx2 = x - ix, fy = y - iy, fz = z - iz;
+    const u = fx2 * fx2 * (3 - 2 * fx2), v = fy * fy * (3 - 2 * fy), w = fz * fz * (3 - 2 * fz);
     let r = 0;
-    for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) for (let c = 0; c < 2; c++) {
-      const wt = (a ? u : 1 - u) * (b ? v : 1 - v) * (c ? w : 1 - w);
-      r += wt * hash3(ix + a, iy + b, iz + c);
-    }
+    for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) for (let c = 0; c < 2; c++)
+      r += (a ? u : 1 - u) * (b ? v : 1 - v) * (c ? w : 1 - w) * h3(ix + a, iy + b, iz + c);
     return r;
   }
 
-  const TOP = 6;                              // сколько блоков дёрна сверху
-  for (let y = 0; y < SY; y++) {
-    for (let z = 0; z < SZ; z++) {
-      for (let x = 0; x < SX; x++) {
-        let m;
-        if (y < 2) m = AIR;
-        else if (y < 3) m = GRASS;
-        else if (y < TOP + 3) m = DIRT;
-        else {
-          m = STONE;
-          if (vn(x / 9, y / 9, z / 9) > 0.63) m = GRANITE;
-          const oa = vn(x / 6.5 + 40, y / 4.5, z / 6.5 + 40);
-          const ob = vn(x / 24 + 90, y / 20, z / 24 + 90);
-          if (oa > 0.70 && ob > 0.58) m = ORE;
-        }
-        world[idx(x, y, z)] = m;
+  // подвал: комната 9 x 3.2 x 9, пол на Y = 0
+  const RH = 4.5, RW = 4.5, CEIL = -3.1;
+  for (let y = 0; y < NY; y++) {
+    const Y = wy(y);
+    for (let z = 0; z < NZ; z++) {
+      const Z = wz(z);
+      for (let x = 0; x < NX; x++) {
+        const X = wx(x);
+        let d;
+        if (Y < 0 && Y > CEIL && Math.abs(X) < RW && Math.abs(Z) < RH) d = 0;      // воздух в комнате
+        else if (Y < CEIL - 0.55) d = 0;                                            // выше перекрытия — ничего
+        else d = 255;
+        den[di(x, y, z)] = d;
       }
     }
   }
-  // стартовая яма: ступенчатая воронка в центре
-  const CX = SX >> 1, CZ = SZ >> 1;
-  for (let y = 2; y < 26; y++) {
-    const rad = Math.max(2.2, 11 - y * 0.42);
-    for (let z = 0; z < SZ; z++) for (let x = 0; x < SX; x++) {
-      const dx = x - CX + 0.5, dz = z - CZ + 0.5;
-      const d = Math.sqrt(dx * dx + dz * dz) * (1 + (vn(x / 7, y / 30, z / 7) - .5) * .34);
-      if (d < rad) world[idx(x, y, z)] = AIR;
+  // начатая яма в полу
+  for (let y = 0; y < NY; y++) {
+    const Y = wy(y); if (Y < -0.2 || Y > 3.4) continue;
+    for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) {
+      const X = wx(x), Z = wz(z);
+      const rad = 1.55 - Y * 0.24 + (vn(X * .7, Y * .5, Z * .7) - .5) * .5;
+      if (Math.hypot(X, Z) < rad) den[di(x, y, z)] = 0;
     }
   }
+  // редкие пустоты глубже
+  for (let k = 0; k < 26; k++) {
+    const cxk = (h3(k, 1, 2) - .5) * 24, czk = (h3(k, 3, 4) - .5) * 24, cyk = 8 + h3(k, 5, 6) * 36;
+    const rr = 1.1 + h3(k, 7, 8) * 1.7;
+    for (let y = 0; y < NY; y++) { const Y = wy(y); if (Math.abs(Y - cyk) > rr + 1) continue;
+      for (let z = 0; z < NZ; z++) { const Z = wz(z); if (Math.abs(Z - czk) > rr + 1) continue;
+        for (let x = 0; x < NX; x++) { const X = wx(x);
+          if (Math.hypot(X - cxk, Y - cyk, Z - czk) < rr) den[di(x, y, z)] = 0;
+        } } }
+  }
 
-  // ---------- текстура мира ----------
   const tex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_3D, tex);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
-  gl.texImage3D(gl.TEXTURE_3D, 0, gl.R8, SX, SZ, SY, 0, gl.RED, gl.UNSIGNED_BYTE, world);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  for (const w of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_WRAP_R])
+    gl.texParameteri(gl.TEXTURE_3D, w, gl.CLAMP_TO_EDGE);
+  gl.texImage3D(gl.TEXTURE_3D, 0, gl.R8, NX, NZ, NY, 0, gl.RED, gl.UNSIGNED_BYTE, den);
 
-  function poke(x, y, z, v) {
-    world[idx(x, y, z)] = v;
+  // выгрызаем шар мягкой кистью
+  function carve(X, Y, Z, R) {
+    const x0 = Math.max(0, Math.floor((X - R) / VS + NX / 2)), x1 = Math.min(NX - 1, Math.ceil((X + R) / VS + NX / 2));
+    const y0 = Math.max(0, Math.floor((Y - R - Y0) / VS)), y1 = Math.min(NY - 1, Math.ceil((Y + R - Y0) / VS));
+    const z0 = Math.max(0, Math.floor((Z - R) / VS + NZ / 2)), z1 = Math.min(NZ - 1, Math.ceil((Z + R) / VS + NZ / 2));
+    if (x1 < x0 || y1 < y0 || z1 < z0) return;
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, d = z1 - z0 + 1;
+    const buf = new Uint8Array(w * d * h);
+    for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
+      const dist = Math.hypot(wx(x) - X, wy(y) - Y, wz(z) - Z);
+      const cut = 1 - Math.min(1, Math.max(0, (R - dist) / (R * 0.55)));
+      const nv = Math.min(den[di(x, y, z)], Math.round(255 * cut));
+      den[di(x, y, z)] = nv;
+      buf[((y - y0) * d + (z - z0)) * w + (x - x0)] = nv;
+    }
     gl.bindTexture(gl.TEXTURE_3D, tex);
-    gl.texSubImage3D(gl.TEXTURE_3D, 0, x, z, y, 1, 1, 1, gl.RED, gl.UNSIGNED_BYTE, new Uint8Array([v]));
+    gl.texSubImage3D(gl.TEXTURE_3D, 0, x0, z0, y0, w, d, h, gl.RED, gl.UNSIGNED_BYTE, buf);
   }
+  const solidAt = (X, Y, Z) => {
+    const x = Math.round(X / VS + NX / 2), y = Math.round((Y - Y0) / VS), z = Math.round(Z / VS + NZ / 2);
+    if (x < 0 || y < 0 || z < 0 || x >= NX || y >= NY || z >= NZ) return Y > Y0;
+    return den[di(x, y, z)] > 120;
+  };
 
-  // ---------- шейдеры ----------
-  const VS = `#version 300 es
-  in vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }`;
+  // ---------- шейдер ----------
+  const VSH = `#version 300 es
+  in vec2 p; void main(){ gl_Position=vec4(p,0.,1.); }`;
 
-  const FS = `#version 300 es
+  const FSH = `#version 300 es
   precision highp float; precision highp sampler3D;
   out vec4 outColor;
-  uniform vec2  uRes;
-  uniform vec3  uCam;
-  uniform mat3  uRot;
-  uniform sampler3D uWorld;
-  uniform vec3  uSize;
-  uniform float uTime;
+  uniform vec2 uRes; uniform vec3 uCam; uniform mat3 uRot;
+  uniform sampler3D uDen; uniform vec3 uN; uniform float uVS, uY0, uTime, uBulb;
 
-  float mat(ivec3 c){
-    if(c.x<0||c.y<0||c.z<0||c.x>=int(uSize.x)||c.y>=int(uSize.y)||c.z>=int(uSize.z)) return 0.0;
-    return texelFetch(uWorld, ivec3(c.x,c.z,c.y), 0).r * 255.0;
+  vec3 toTex(vec3 w){
+    return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
+                 (w.z/uVS + uN.z*0.5 + 0.5)/uN.z,
+                 ((w.y-uY0)/uVS + 0.5)/uN.y );
+  }
+  float dens(vec3 w){
+    vec3 t = toTex(w);
+    if(any(lessThan(t,vec3(0.0))) || any(greaterThan(t,vec3(1.0)))) return w.y>uY0 ? 1.0 : 0.0;
+    return texture(uDen, t).r;
   }
   float h31(vec3 p){ return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453); }
   float n3(vec3 p){
     vec3 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
-    float a=mix(mix(mix(h31(i+vec3(0,0,0)),h31(i+vec3(1,0,0)),f.x),
-                    mix(h31(i+vec3(0,1,0)),h31(i+vec3(1,1,0)),f.x),f.y),
-                mix(mix(h31(i+vec3(0,0,1)),h31(i+vec3(1,0,1)),f.x),
-                    mix(h31(i+vec3(0,1,1)),h31(i+vec3(1,1,1)),f.x),f.y),f.z);
-    return a;
+    return mix(mix(mix(h31(i),h31(i+vec3(1,0,0)),f.x), mix(h31(i+vec3(0,1,0)),h31(i+vec3(1,1,0)),f.x),f.y),
+               mix(mix(h31(i+vec3(0,0,1)),h31(i+vec3(1,0,1)),f.x), mix(h31(i+vec3(0,1,1)),h31(i+vec3(1,1,1)),f.x),f.y),f.z);
   }
-  float fbm(vec3 p){ return n3(p)*0.55 + n3(p*2.03)*0.28 + n3(p*4.11)*0.17; }
+  float fbm(vec3 p){ return n3(p)*.55 + n3(p*2.07)*.28 + n3(p*4.13)*.17; }
 
-  vec3 albedo(float m, vec3 wp){
+  // порода слоями; в подвале — бетон и балки
+  vec3 rockColor(vec3 w, out float rough, out float oreAmt){
+    rough = 1.0; oreAmt = 0.0;
+    float warp = (fbm(w*0.22)-0.5)*2.4;
+    float d = w.y + warp;
     vec3 c;
-    if(m<1.5)      c = vec3(0.44,0.30,0.19);            // земля
-    else if(m<2.5) c = vec3(0.26,0.46,0.16)*(0.82+0.42*n3(wp*0.7)); // дёрн
-    else if(m<3.5) c = vec3(0.40,0.36,0.36);            // камень
-    else if(m<4.5) c = vec3(0.29,0.27,0.34);            // гранит
-    else           c = vec3(0.16,0.42,0.50);            // руда
-    float v = 0.80 + 0.40*h31(floor(wp));
-    return c*v;
+    if(w.y < -0.06){                                  // подвал
+      float beam = smoothstep(0.44,0.5,abs(fract(w.x*0.36)-0.5));
+      c = mix(vec3(0.42,0.40,0.38), vec3(0.30,0.22,0.15), (w.y<-2.75)?beam:0.0);
+      c *= 0.86+0.28*fbm(w*2.6);
+      rough = 0.5;
+    }
+    else if(d < 1.2)  c = vec3(0.34,0.24,0.15);       // земля
+    else if(d < 4.5)  c = vec3(0.42,0.30,0.19);       // глина
+    else if(d < 9.0)  c = vec3(0.34,0.29,0.26);       // суглинок
+    else if(d < 20.0) c = vec3(0.38,0.35,0.35);       // камень
+    else              c = vec3(0.28,0.26,0.32);       // гранит
+    float ov = fbm(w*0.5+vec3(31.0));
+    float ob = fbm(w*0.14+vec3(77.0));
+    if(w.y>0.4 && ov>0.60 && ob>0.52){
+      oreAmt = smoothstep(0.60,0.72,ov);
+      c = mix(c, vec3(0.14,0.44,0.52), oreAmt);
+    }
+    c *= 0.80+0.40*h31(floor(w*3.0));
+    return c;
   }
 
   void main(){
-    vec2 uv = (gl_FragCoord.xy - 0.5*uRes)/uRes.y;
-    vec3 rd = normalize(uRot * vec3(uv, 1.05));
+    vec2 uv = (gl_FragCoord.xy - .5*uRes)/uRes.y;
+    vec3 rd = normalize(uRot*vec3(uv,1.15));
     vec3 ro = uCam;
 
-    ivec3 cell = ivec3(floor(ro));
-    vec3 srd = sign(rd);
-    vec3 dd  = abs(1.0/max(abs(rd),vec3(1e-5)));
-    vec3 sd  = (srd*(vec3(cell)-ro) + srd*0.5 + 0.5)*dd;
-    vec3 nrm = vec3(0.0);
-    float m = 0.0, dist = 0.0;
-    bool hit=false;
-
-    for(int i=0;i<220;i++){
-      float mm = mat(cell);
-      if(mm>0.5){ hit=true; m=mm; break; }
-      if(sd.x<sd.y && sd.x<sd.z){ dist=sd.x; sd.x+=dd.x; cell.x+=int(srd.x); nrm=vec3(-srd.x,0,0); }
-      else if(sd.y<sd.z){        dist=sd.y; sd.y+=dd.y; cell.y+=int(srd.y); nrm=vec3(0,-srd.y,0); }
-      else {                     dist=sd.z; sd.z+=dd.z; cell.z+=int(srd.z); nrm=vec3(0,0,-srd.z); }
-      if(dist>90.0) break;
-      if(cell.y<-2) break;
+    float t = 0.05, hit = -1.0;
+    for(int i=0;i<190;i++){
+      vec3 p = ro + rd*t;
+      if(dens(p) > 0.47){ hit = t; break; }
+      t += mix(0.10, 0.42, clamp(t/14.0,0.0,1.0));
+      if(t>42.0) break;
     }
+    if(hit<0.0){ outColor = vec4(0.012,0.010,0.016,1.0); return; }
 
-    vec3 sky = mix(vec3(0.28,0.36,0.44), vec3(0.55,0.66,0.62), clamp(rd.y*1.4+0.4,0.0,1.0));
-    if(!hit){ outColor=vec4(sky,1.0); return; }
+    // уточняем поверхность
+    float a = max(hit-0.42,0.0), b = hit;
+    for(int i=0;i<7;i++){ float m=(a+b)*0.5; if(dens(ro+rd*m)>0.47) b=m; else a=m; }
+    float d = b;
+    vec3 w = ro + rd*d;
 
-    vec3 wp = ro + rd*dist;
-
-    // рельеф: шероховатость даёт настоящие блики
-    float e = 0.14;
-    float hC = fbm(wp*3.1), hX = fbm((wp+vec3(e,0,0))*3.1), hY = fbm((wp+vec3(0,e,0))*3.1), hZ = fbm((wp+vec3(0,0,e))*3.1);
-    vec3 bump = vec3(hX-hC, hY-hC, hZ-hC)/e;
-    vec3 N = normalize(nrm - (bump - nrm*dot(bump,nrm))*0.55);
+    // нормаль из градиента плотности + микрорельеф
+    float e = 0.09;
+    vec3 g = vec3(dens(w+vec3(e,0,0))-dens(w-vec3(e,0,0)),
+                  dens(w+vec3(0,e,0))-dens(w-vec3(0,e,0)),
+                  dens(w+vec3(0,0,e))-dens(w-vec3(0,0,e)));
+    vec3 N = normalize(-g + vec3(1e-5));
+    float rough, oreAmt;
+    vec3 alb = rockColor(w, rough, oreAmt);
+    float e2=0.07, hC=fbm(w*5.5);
+    vec3 bump = vec3(fbm((w+vec3(e2,0,0))*5.5)-hC, fbm((w+vec3(0,e2,0))*5.5)-hC, fbm((w+vec3(0,0,e2))*5.5)-hC)/e2;
+    N = normalize(N - (bump - N*dot(bump,N))*0.10*rough);
 
     // фонарь на каске
-    vec3 L = uCam - wp; float ld = length(L); L/=ld;
-    float lamp = max(dot(N,L),0.0) / (1.0 + 0.055*ld*ld);
-    float beam = 1.0 - smoothstep(0.12, 0.78, length(uv));
-    lamp *= 0.30 + 1.05*beam;
+    vec3 L = uCam - w; float ld = length(L); L /= ld;
+    float lamp = max(dot(N,L),0.0)/(1.0+0.05*ld*ld);
+    lamp *= 0.26 + 1.1*(1.0 - smoothstep(0.10,0.80,length(uv)));
 
-    // дневной свет сверху, гаснет с глубиной
-    float day = exp(-max(wp.y-2.0,0.0)*0.14);
-    float sun = max(dot(N, normalize(vec3(0.35,-1.0,0.22))),0.0);
-    float skyAmb = 0.5 + 0.5*(-N.y);
-    vec3 dayCol = vec3(1.05,0.98,0.84)*sun*day*1.5 + vec3(0.30,0.40,0.50)*day*skyAmb*0.26;
+    // лампочка под потолком подвала
+    vec3 bp = vec3(0.0,-2.5,0.0);
+    vec3 BL = bp - w; float bd = length(BL); BL/=bd;
+    float bulb = max(dot(N,BL),0.0)/(1.0+0.19*bd*bd) * uBulb;
 
-    // край блока темнее — блоки читаются как объём
-    vec3 fp = fract(wp);
-    vec3 ec = abs(fp-0.5);
-    float edge = max(max(ec.x,ec.y),ec.z);
-    float crease = 1.0 - smoothstep(0.42,0.5,edge)*0.55;
+    vec3 col = alb * (vec3(1.0,0.80,0.52)*lamp*1.6 + vec3(1.0,0.84,0.58)*bulb*3.4 + 0.008);
+    col += vec3(0.06,0.26,0.34)*oreAmt*(lamp+bulb)*1.2;
+    col *= 0.60 + 0.80*hC;
 
-    vec3 col = albedo(m, wp) * (dayCol + vec3(1.0,0.80,0.52)*lamp*1.35 + 0.018);
-    col *= crease;
-    col *= 0.66 + 0.68*hC;
-
-    if(m>4.5) col += vec3(0.07,0.30,0.40)*lamp*1.1;   // руда переливается
-
-    // туман: с глубиной видно короче
-    float fogD = mix(0.0030, 0.090, clamp((wp.y-5.0)/40.0,0.0,1.0));
-    vec3 fogCol = mix(vec3(0.44,0.52,0.52), vec3(0.024,0.018,0.032), clamp((wp.y-2.0)/13.0,0.0,1.0));
-    col = mix(col, fogCol, 1.0-exp(-dist*fogD));
-
-    // виньетка и зерно
-    float vig = 1.0 - 0.55*pow(length(uv*vec2(1.0,1.25)),2.2);
-    col *= vig;
-    col += (h31(vec3(gl_FragCoord.xy, floor(uTime*24.0)))-0.5)*0.022;
-
-    col = pow(max(col,0.0), vec3(0.4545));
-    outColor = vec4(col,1.0);
+    float fogD = mix(0.020, 0.095, clamp((w.y-2.0)/34.0,0.0,1.0));
+    col = mix(col, vec3(0.022,0.018,0.028), 1.0-exp(-d*fogD));
+    col *= 1.0 - 0.62*pow(length(uv*vec2(1.0,1.2)),2.0);
+    col += (h31(vec3(gl_FragCoord.xy, floor(uTime*24.0)))-0.5)*0.02;
+    // сама лампочка видна как пятно света
+    vec3 tb = bp - ro; float pb = dot(tb, rd);
+    if(pb > 0.0 && pb < d){
+      float dl = length(tb - rd*pb);
+      col += vec3(1.0,0.88,0.66) * uBulb * exp(-dl*dl*7.0) * 1.5;
+    }
+    outColor = vec4(pow(max(col,0.0), vec3(0.4545)),1.0);
   }`;
 
-  function sh(type, src) {
-    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
-    return s;
-  }
+  function mk(t, s) { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o);
+    if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; }
   let prog;
   try {
     prog = gl.createProgram();
-    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
-    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+    gl.attachShader(prog, mk(gl.VERTEX_SHADER, VSH));
+    gl.attachShader(prog, mk(gl.FRAGMENT_SHADER, FSH));
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
-  } catch (e) {
-    failBox.style.display = "flex";
-    failBox.textContent = "Шейдер не собрался: " + e.message;
-    return;
-  }
+  } catch (e) { failBox.style.display = "flex"; failBox.textContent = "Шейдер: " + e.message; return; }
   gl.useProgram(prog);
   const vb = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vb);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
-  const loc = gl.getAttribLocation(prog, "p");
-  gl.enableVertexAttribArray(loc);
-  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const al = gl.getAttribLocation(prog, "p");
+  gl.enableVertexAttribArray(al); gl.vertexAttribPointer(al, 2, gl.FLOAT, false, 0, 0);
   const U = n => gl.getUniformLocation(prog, n);
-  gl.uniform1i(U("uWorld"), 0);
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_3D, tex);
-  gl.uniform3f(U("uSize"), SX, SY, SZ);
+  gl.uniform1i(U("uDen"), 0); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D, tex);
+  gl.uniform3f(U("uN"), NX, NY, NZ);
+  gl.uniform1f(U("uVS"), VS); gl.uniform1f(U("uY0"), Y0);
 
   // ---------- игрок ----------
-  // y растёт ВНИЗ: P.y — ноги, голова на EYE выше, то есть на P.y - EYE
-  const P = { x: CX + .5, y: 2.0, z: CZ + 15.5, vy: 0, yaw: Math.PI, pitch: -0.34, ground: false };
-  const EYE = 1.62, RAD = 0.3, TALL = 1.72;
-
-  function solid(x, y, z) { return get(Math.floor(x), Math.floor(y), Math.floor(z)) !== AIR; }
+  const P = { x: 0, y: -0.02, z: 3.2, vy: 0, yaw: Math.PI, pitch: -0.40, ground: false };
+  const EYE = 1.6, RAD = 0.3, TALL = 1.72;
   function blocked(x, y, z) {
-    for (const yy of [y - 0.06, y - TALL * 0.55, y - TALL + 0.06]) {
-      if (solid(x - RAD, yy, z - RAD) || solid(x + RAD, yy, z - RAD) ||
-          solid(x - RAD, yy, z + RAD) || solid(x + RAD, yy, z + RAD)) return true;
-    }
+    for (const yy of [y - 0.08, y - TALL * .55, y - TALL + 0.1])
+      for (const [ox, oz] of [[-RAD,-RAD],[RAD,-RAD],[-RAD,RAD],[RAD,RAD],[0,0]])
+        if (solidAt(x + ox, yy, z + oz)) return true;
     return false;
   }
 
   const keys = {};
-  addEventListener("keydown", e => {
-    keys[e.code] = true;
-    if (["KeyW","KeyA","KeyS","KeyD","Space"].includes(e.code) && document.pointerLockElement === cv) e.preventDefault();
-  });
+  addEventListener("keydown", e => { keys[e.code] = true;
+    if (document.pointerLockElement === cv && ["KeyW","KeyA","KeyS","KeyD","Space"].includes(e.code)) e.preventDefault(); });
   addEventListener("keyup", e => keys[e.code] = false);
 
   const hint = document.getElementById("hint");
-  cv.addEventListener("click", () => { if (!isTouch) cv.requestPointerLock(); });
-  document.addEventListener("pointerlockchange", () => {
-    if (document.pointerLockElement === cv) hint.classList.add("gone");
-  });
+  const isTouch = matchMedia("(hover:none)").matches;
+  cv.addEventListener("click", () => { if (!isTouch) cv.requestPointerLock(); audioOn(); });
+  document.addEventListener("pointerlockchange", () => { if (document.pointerLockElement === cv) hint.classList.add("gone"); });
   document.addEventListener("mousemove", e => {
     if (document.pointerLockElement !== cv) return;
-    P.yaw -= e.movementX * 0.0026;
-    P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch - e.movementY * 0.0026));
+    P.yaw -= e.movementX * .0026;
+    P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch - e.movementY * .0026));
   });
   let digging = false;
-  cv.addEventListener("mousedown", e => { if (e.button === 0) digging = true; });
+  cv.addEventListener("mousedown", e => { if (e.button === 0) { digging = true; audioOn(); } });
   addEventListener("mouseup", () => digging = false);
 
-  // --- телефон ---
-  const isTouch = matchMedia("(hover:none)").matches;
-  const stick = document.getElementById("stick"), knob = document.getElementById("knob");
-  const digbtn = document.getElementById("digbtn");
-  let moveX = 0, moveZ = 0;
-  let lookId = null, lastLX = 0, lastLY = 0, stickId = null, sx0 = 0, sy0 = 0;
-
-  function stickStart(e) {
-    const t = e.changedTouches[0]; stickId = t.identifier;
-    const r = stick.getBoundingClientRect(); sx0 = r.left + r.width / 2; sy0 = r.top + r.height / 2;
-    e.preventDefault();
-  }
-  stick.addEventListener("touchstart", stickStart, { passive: false });
-  digbtn.addEventListener("touchstart", e => { digging = true; digbtn.classList.add("on"); e.preventDefault(); }, { passive: false });
-  digbtn.addEventListener("touchend", e => { digging = false; digbtn.classList.remove("on"); e.preventDefault(); }, { passive: false });
-
-  cv.addEventListener("touchstart", e => {
-    for (const t of e.changedTouches) if (lookId === null) { lookId = t.identifier; lastLX = t.clientX; lastLY = t.clientY; }
-    hint.classList.add("gone");
-    e.preventDefault();
-  }, { passive: false });
-  addEventListener("touchmove", e => {
-    for (const t of e.changedTouches) {
-      if (t.identifier === lookId) {
-        P.yaw -= (t.clientX - lastLX) * 0.0055;
-        P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch - (t.clientY - lastLY) * 0.0055));
-        lastLX = t.clientX; lastLY = t.clientY;
-      } else if (t.identifier === stickId) {
-        let dx = t.clientX - sx0, dy = t.clientY - sy0;
-        const d = Math.hypot(dx, dy), max = 42;
-        if (d > max) { dx *= max / d; dy *= max / d; }
-        knob.style.transform = `translate(${dx}px,${dy}px)`;
-        moveX = dx / max; moveZ = -dy / max;
-      }
-    }
-    e.preventDefault();
-  }, { passive: false });
-  addEventListener("touchend", e => {
-    for (const t of e.changedTouches) {
+  const stick = document.getElementById("stick"), knob = document.getElementById("knob"), digbtn = document.getElementById("digbtn");
+  let moveX = 0, moveZ = 0, lookId = null, lx = 0, ly = 0, stickId = null, sx0 = 0, sy0 = 0;
+  stick.addEventListener("touchstart", e => { const t = e.changedTouches[0]; stickId = t.identifier;
+    const r = stick.getBoundingClientRect(); sx0 = r.left + r.width/2; sy0 = r.top + r.height/2; audioOn(); e.preventDefault(); }, {passive:false});
+  digbtn.addEventListener("touchstart", e => { digging = true; digbtn.classList.add("on"); audioOn(); e.preventDefault(); }, {passive:false});
+  digbtn.addEventListener("touchend", e => { digging = false; digbtn.classList.remove("on"); e.preventDefault(); }, {passive:false});
+  cv.addEventListener("touchstart", e => { for (const t of e.changedTouches) if (lookId === null) { lookId = t.identifier; lx = t.clientX; ly = t.clientY; }
+    hint.classList.add("gone"); audioOn(); e.preventDefault(); }, {passive:false});
+  addEventListener("touchmove", e => { for (const t of e.changedTouches) {
+      if (t.identifier === lookId) { P.yaw -= (t.clientX - lx)*.0055; P.pitch = Math.max(-1.5,Math.min(1.5,P.pitch-(t.clientY-ly)*.0055)); lx=t.clientX; ly=t.clientY; }
+      else if (t.identifier === stickId) { let dx=t.clientX-sx0, dy=t.clientY-sy0; const d=Math.hypot(dx,dy),m=42;
+        if(d>m){dx*=m/d;dy*=m/d;} knob.style.transform=`translate(${dx}px,${dy}px)`; moveX=dx/m; moveZ=-dy/m; } }
+    e.preventDefault(); }, {passive:false});
+  addEventListener("touchend", e => { for (const t of e.changedTouches) {
       if (t.identifier === lookId) lookId = null;
-      if (t.identifier === stickId) { stickId = null; moveX = moveZ = 0; knob.style.transform = ""; }
-    }
-  });
+      if (t.identifier === stickId) { stickId = null; moveX = moveZ = 0; knob.style.transform = ""; } } });
+
+  // ---------- звук ----------
+  let AC = null;
+  function audioOn() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state === "suspended") AC.resume(); }
+  function thud(hard, pitch) {
+    if (!AC) return;
+    const n = AC.sampleRate * 0.16, buf = AC.createBuffer(1, n, AC.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, hard ? 2.4 : 4.2);
+    const src = AC.createBufferSource(); src.buffer = buf;
+    const f = AC.createBiquadFilter(); f.type = "bandpass";
+    f.frequency.value = (hard ? 1500 : 420) * pitch; f.Q.value = hard ? 1.6 : 0.8;
+    const g = AC.createGain(); g.gain.value = hard ? .3 : .38;
+    src.connect(f); f.connect(g); g.connect(AC.destination); src.start();
+  }
+
+  // ---------- эффекты ----------
+  const parts = [];
+  let shake = 0, swing = 0, bob = 0;
+  function spawnChips(col) {
+    for (let i = 0; i < 16; i++) parts.push({
+      x: fx.width * .5 + (Math.random() - .5) * 40, y: fx.height * .5 + (Math.random() - .5) * 34,
+      vx: (Math.random() - .5) * 460, vy: -140 - Math.random() * 320,
+      life: .5 + Math.random() * .5, t: 0, s: 1.4 + Math.random() * 3.2, c: col
+    });
+  }
+  function drawPick(g, W, H, sw) {
+    const px = n => n * (W / 900);
+    const dip = Math.sin(sw * Math.PI) * px(150);
+    const rot = -0.62 + Math.sin(sw * Math.PI) * 0.95;
+    const gx = W + px(60) - Math.sin(bob) * px(9), gy = H + px(50) + dip * .35 + Math.abs(Math.cos(bob)) * px(11);
+    const hx = W - px(250) + dip * .55, hy = H - px(300) + dip;
+    g.save(); g.translate(hx, hy); g.rotate(rot);
+    // тень
+    g.save(); g.globalAlpha = .3; g.filter = "blur(9px)"; g.fillStyle = "#000";
+    g.fillRect(px(-40), px(10), px(360), px(60)); g.restore();
+    g.restore();
+
+    const ang = Math.atan2(hy - gy, hx - gx), len = Math.hypot(hx - gx, hy - gy);
+    g.save(); g.translate(gx, gy); g.rotate(ang);
+    const w = px(19);
+    const wg = g.createLinearGradient(0, -w, 0, w);
+    wg.addColorStop(0, "#caa06a"); wg.addColorStop(.3, "#8e6a3e"); wg.addColorStop(.68, "#5a3f26"); wg.addColorStop(1, "#281a0f");
+    g.fillStyle = wg;
+    g.beginPath(); g.moveTo(0, -w * .9); g.lineTo(len, -w * .62); g.lineTo(len, w * .62); g.lineTo(0, w * .9); g.closePath(); g.fill();
+    for (let i = 0; i < 7; i++) { g.fillStyle = i % 2 ? "#22160f" : "#3a2819"; g.fillRect(px(8) + i * px(17), -w * .88, px(12), w * 1.76); }
+    g.fillStyle = "rgba(255,214,150,.30)"; g.fillRect(0, -w * .9, len, px(3));
+    g.restore();
+
+    g.save(); g.translate(hx, hy); g.rotate(ang - Math.PI / 2);
+    const mg = g.createLinearGradient(0, -px(20), 0, px(20));
+    mg.addColorStop(0, "#f0e8dc"); mg.addColorStop(.2, "#a89c92"); mg.addColorStop(.55, "#5a5260"); mg.addColorStop(1, "#221d29");
+    g.fillStyle = mg;
+    g.beginPath();
+    g.moveTo(-px(128), -px(5)); g.lineTo(-px(40), -px(17)); g.lineTo(px(40), -px(17));
+    g.lineTo(px(122), -px(11)); g.lineTo(px(122), px(8)); g.lineTo(px(40), px(17));
+    g.lineTo(-px(40), px(17)); g.lineTo(-px(128), px(3)); g.closePath(); g.fill();
+    g.fillStyle = "rgba(255,255,255,.5)";
+    g.beginPath(); g.moveTo(-px(122), -px(5)); g.lineTo(-px(40), -px(14)); g.lineTo(px(40), -px(14));
+    g.lineTo(px(118), -px(9)); g.lineTo(px(118), -px(6)); g.lineTo(px(40), -px(10.5));
+    g.lineTo(-px(40), -px(10.5)); g.lineTo(-px(122), -px(2)); g.closePath(); g.fill();
+    g.fillStyle = "#191424"; g.fillRect(-px(20), -px(20), px(40), px(40));
+    g.fillStyle = "#443a5a"; g.fillRect(-px(20), -px(20), px(40), px(5));
+    g.restore();
+  }
 
   // ---------- добыча ----------
-  const hpOf = m => m === GRASS ? 4 : m === DIRT ? 6 : m === STONE ? 16 : m === GRANITE ? 44 : 12;
-  let target = null, targetHp = 0, ore = 0, digCd = 0;
-
-  function pick() {
-    const cy2 = Math.cos(P.pitch), sy2 = Math.sin(P.pitch);
-    const dir = [Math.sin(P.yaw) * cy2, -sy2, Math.cos(P.yaw) * cy2];
+  let ore = 0, cart = 0, digCd = 0;
+  const oreEl = document.getElementById("ore"), depthEl = document.getElementById("depth"), cartEl = document.getElementById("cart");
+  function aim() {
+    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
+    const dir = [Math.sin(P.yaw) * cp, -sp, Math.cos(P.yaw) * cp];
     let x = P.x, y = P.y - EYE, z = P.z;
-    for (let i = 0; i < 220; i++) {
-      x += dir[0] * 0.045; y += dir[1] * 0.045; z += dir[2] * 0.045;
-      const cx2 = Math.floor(x), cy3 = Math.floor(y), cz2 = Math.floor(z);
-      if (!inside(cx2, cy3, cz2)) return null;
-      if (get(cx2, cy3, cz2) !== AIR) return [cx2, cy3, cz2];
+    for (let i = 0; i < 90; i++) {
+      x += dir[0] * .06; y += dir[1] * .06; z += dir[2] * .06;
+      if (solidAt(x, y, z)) return [x, y, z];
     }
     return null;
   }
 
-  const depthEl = document.getElementById("depth"), oreEl = document.getElementById("ore");
-
-  // ---------- цикл ----------
   function resize() {
-    const dpr = Math.min(devicePixelRatio || 1, isTouch ? 1.5 : 2);
+    const dpr = Math.min(devicePixelRatio || 1, isTouch ? 1.4 : 1.8);
     const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
-    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    if (cv.width !== w) { cv.width = w; cv.height = h; fx.width = w; fx.height = h; }
     gl.viewport(0, 0, cv.width, cv.height);
     gl.uniform2f(U("uRes"), cv.width, cv.height);
   }
 
   let last = performance.now();
   function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
     resize();
 
-    // движение
-    let fwd = moveZ, str = moveX;
-    if (keys.KeyW) fwd += 1; if (keys.KeyS) fwd -= 1;
-    if (keys.KeyD) str += 1; if (keys.KeyA) str -= 1;
-    const len = Math.hypot(fwd, str) || 1;
-    const spd = (keys.ShiftLeft ? 7.2 : 4.2) * dt;
+    let fw = moveZ, st = moveX;
+    if (keys.KeyW) fw += 1; if (keys.KeyS) fw -= 1;
+    if (keys.KeyD) st += 1; if (keys.KeyA) st -= 1;
+    const L = Math.hypot(fw, st) || 1;
+    const spd = (keys.ShiftLeft ? 6.4 : 3.9) * dt;
     const sn = Math.sin(P.yaw), cs = Math.cos(P.yaw);
-    const dx = (sn * fwd / len + cs * str / len) * spd;
-    const dz = (cs * fwd / len - sn * str / len) * spd;
-
-    if (fwd || str) {
+    const dx = (sn * fw / L + cs * st / L) * spd, dz = (cs * fw / L - sn * st / L) * spd;
+    if (fw || st) {
       if (!blocked(P.x + dx, P.y, P.z)) P.x += dx;
       if (!blocked(P.x, P.y, P.z + dz)) P.z += dz;
+      if (P.ground) bob += dt * 11;
     }
 
-    // гравитация: +vy — падение вниз
-    P.vy += 24 * dt;
+    P.vy += 22 * dt;
     const ny = P.y + P.vy * dt;
     P.ground = false;
-    if (blocked(P.x, ny, P.z)) {
-      if (P.vy > 0) { P.y = Math.floor(ny); P.ground = true; }
-      P.vy = 0;
-    } else P.y = ny;
-    if (keys.Space && P.ground) { P.vy = -7.6; P.ground = false; }
-    if (P.y > SY + 30) { P.x = CX + .5; P.z = CZ + 15.5; P.y = 2; P.vy = 0; }
+    if (blocked(P.x, ny, P.z)) { if (P.vy > 0) { P.ground = true; while (!blocked(P.x, P.y + 0.02, P.z) && P.y < ny) P.y += 0.02; } P.vy = 0; }
+    else P.y = ny;
+    if (keys.Space && P.ground) { P.vy = -7.2; }
+    if (P.y > 46) { P.x = 0; P.z = 3; P.y = -.02; P.vy = 0; }
 
-    // долбёжка
-    digCd -= dt;
+    digCd -= dt; swing = Math.max(0, swing - dt * 3.4);
     if (digging && digCd <= 0) {
-      digCd = 0.11;
-      const t = pick();
+      const t = aim();
       if (t) {
-        const key = t.join(",");
-        if (!target || target !== key) { target = key; targetHp = hpOf(get(t[0], t[1], t[2])); }
-        targetHp -= 3;
-        if (targetHp <= 0) {
-          const m = get(t[0], t[1], t[2]);
-          poke(t[0], t[1], t[2], AIR);
-          ore += m === ORE ? 40 : m === GRANITE ? 6 : 2;
-          target = null;
-          oreEl.textContent = ore >= 1000 ? (ore / 1000).toFixed(1) + "K" : ore;
-        }
+        digCd = .3; swing = 1;
+        carve(t[0], t[1], t[2], 0.62);
+        const deep = t[1] > 9;
+        thud(deep, .8 + Math.random() * .5);
+        shake = deep ? 7 : 5;
+        spawnChips(t[1] < 0 ? "#9a9088" : t[1] < 4 ? "#6d4d2f" : "#8a8290");
+        cart = Math.min(1, cart + .012);
+        ore += t[1] > 0 ? 3 + Math.floor(Math.random() * 4) : 0;
+        oreEl.textContent = ore >= 1000 ? (ore / 1000).toFixed(1) + "K" : ore;
+        cartEl.style.width = (cart * 100) + "%";
       }
     }
+    shake = Math.max(0, shake - dt * 34);
 
-    const depth = Math.max(0, Math.round(P.y - 2));
+    const depth = Math.max(0, Math.round(P.y));
     depthEl.innerHTML = depth + "<i>М</i>";
 
-    // камера
-    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
-    const cyw = Math.cos(P.yaw), syw = Math.sin(P.yaw);
-    // столбцы матрицы: вправо, вверх, вперёд. Мир с осью Y вниз, поэтому «вверх» = -Y.
-    const R  = [cyw, 0, -syw];
-    const F  = [syw * cp, -sp, cyw * cp];
-    const Uv = [-syw * sp, -cp, -cyw * sp];
+    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch), cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
+    const R = [cy, 0, -sy], F = [sy * cp, -sp, cy * cp], Uv = [-sy * sp, -cp, -cy * sp];
     gl.uniformMatrix3fv(U("uRot"), false, new Float32Array([R[0],R[1],R[2], Uv[0],Uv[1],Uv[2], F[0],F[1],F[2]]));
-    gl.uniform3f(U("uCam"), P.x, P.y - EYE, P.z);
+    const sk = shake * .004;
+    gl.uniform3f(U("uCam"), P.x + (Math.random()-.5)*sk, P.y - EYE + Math.sin(bob*2)*.035 + (Math.random()-.5)*sk, P.z + (Math.random()-.5)*sk);
     gl.uniform1f(U("uTime"), now / 1000);
-
+    gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 7));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // накладной слой
+    fxc.clearRect(0, 0, fx.width, fx.height);
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p2 = parts[i]; p2.t += dt;
+      if (p2.t > p2.life) { parts.splice(i, 1); continue; }
+      p2.vy += 900 * dt; p2.x += p2.vx * dt; p2.y += p2.vy * dt;
+      fxc.globalAlpha = 1 - p2.t / p2.life;
+      fxc.fillStyle = p2.c;
+      fxc.fillRect(p2.x, p2.y, p2.s, p2.s);
+    }
+    fxc.globalAlpha = 1;
+    drawPick(fxc, fx.width, fx.height, swing);
+
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
