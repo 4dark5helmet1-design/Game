@@ -46,7 +46,7 @@
 <header class="top">
   <p class="kick">Забой · инструменты</p>
   <h1>Кирки</h1>
-  <p>Четырнадцать штук по четырём уровням. Чем глубже добыт материал, тем сильнее он уходит в фиолетовый — цвет, которого в нормальной породе не бывает.</p>
+  <p>Четырнадцать штук по четырём уровням. Чем выше редкость, тем больше зубьев и тем сильнее материал уходит в фиолетовый — цвет, которого в нормальной породе не бывает.</p>
 </header>
 
 <div class="wrap">
@@ -76,33 +76,30 @@
 <script>
 (function () {
   // ---------- перечень ----------
+  // teeth — сколько зубьев на сторону; растёт вместе с редкостью.
   const TIERS = [
-    { t: "C", col: "#5aa9e6", label: "покупные",
-      picks: [
-        { n:"Ржавая",     mat:["#8d6a4a","#5e4230","#3a281b"], rim:"#b89268", sh:"classic", hd:"wood", glow:0 },
-        { n:"Стальная",   mat:["#e7e2ec","#9a94a6","#3f3a4b"], rim:"#ffffff", sh:"classic", hd:"wood", glow:0 },
-        { n:"Медная",     mat:["#f0b077","#c07c3e","#6b4220"], rim:"#ffd7a8", sh:"classic", hd:"wood", glow:0 },
-        { n:"Закалённая", mat:["#b9c2cc","#6d7683","#2e343d"], rim:"#e6f0fa", sh:"fork",    hd:"dark", glow:0 }
-      ]},
-    { t: "B", col: "#f2c14e", label: "находки",
-      picks: [
-        { n:"Кобальтовая", mat:["#8fd4f5","#3f8fc4","#17456b"], rim:"#d5f2ff", sh:"crescent", hd:"dark", glow:.18 },
-        { n:"Титановая",   mat:["#f2f0f6","#a7a3b4","#4a4658"], rim:"#ffffff", sh:"crescent", hd:"dark", glow:.1 },
-        { n:"Золотая",     mat:["#ffdf8a","#d5a026","#7a5410"], rim:"#fff3c4", sh:"fork",     hd:"wood", glow:.14 },
-        { n:"Обсидиан",    mat:["#5a4d70","#2b2338","#100b18"], rim:"#a08cc4", sh:"shard",    hd:"dark", glow:.12 }
-      ]},
-    { t: "A", col: "#f08a3c", label: "глубинные",
-      picks: [
-        { n:"Магмовая",   mat:["#ffb057","#c9451c","#4a1408"], rim:"#ffd39a", sh:"crescent", hd:"dark", glow:.55, gcol:"#ff6a1e" },
-        { n:"Костяная",   mat:["#efe6d2","#b8a888","#5f5443"], rim:"#fff8e8", sh:"fork",     hd:"bone", glow:.16, gcol:"#c8b48c" },
-        { n:"Кристалл",   mat:["#c9a6f0","#8256bd","#3b1f63"], rim:"#e8d5ff", sh:"shard",    hd:"dark", glow:.5,  gcol:"#9a5ce0" }
-      ]},
-    { t: "S", col: "#e8556d", label: "не должно существовать",
-      picks: [
-        { n:"Аметист",  mat:["#dcb8ff","#9a5ce0","#431d78"], rim:"#f3e4ff", sh:"crescent", hd:"void", glow:.7,  gcol:"#a86cf0" },
-        { n:"Бездна",   mat:["#a878e8","#6b2f8f","#25093f"], rim:"#d9b6ff", sh:"wing",     hd:"void", glow:.85, gcol:"#8a2fd0" },
-        { n:"Нечто",    mat:["#c9a0ff","#4e1478","#120320"], rim:"#efd8ff", sh:"wing",     hd:"void", glow:1,   gcol:"#6b2f8f", wrong:true }
-      ]}
+    { t: "C", col: "#5aa9e6", label: "покупные", picks: [
+      { n:"Ржавая",     mat:["#9c7752","#5e4230","#33241a"], rim:"#c79f74", teeth:1, sweep:.16, hd:"nails",   glow:0 },
+      { n:"Стальная",   mat:["#e9e4ee","#98929f","#3c3844"], rim:"#ffffff", teeth:1, sweep:.20, hd:"leather", glow:0 },
+      { n:"Медная",     mat:["#f3b478","#c07c3e","#6b4220"], rim:"#ffd7a8", teeth:1, sweep:.24, hd:"rings",   glow:.06 },
+      { n:"Закалённая", mat:["#c3cbd4","#6d7683","#2b313a"], rim:"#eaf3ff", teeth:2, sweep:.30, hd:"steel",   glow:.06 }
+    ]},
+    { t: "B", col: "#f2c14e", label: "находки", picks: [
+      { n:"Кобальтовая", mat:["#93d6f5","#3f8fc4","#16456b"], rim:"#d5f2ff", teeth:2, sweep:.42, hd:"twist",  glow:.24, gcol:"#3f9fd8" },
+      { n:"Титановая",   mat:["#f4f2f8","#a5a1b2","#484454"], rim:"#ffffff", teeth:2, sweep:.38, hd:"hollow", glow:.14, gcol:"#c9c6d8" },
+      { n:"Золотая",     mat:["#ffe08c","#d5a026","#775210"], rim:"#fff3c4", teeth:2, sweep:.34, hd:"inlay",  glow:.20, gcol:"#e8b23c" },
+      { n:"Обсидиан",    mat:["#6b5c84","#2b2338","#0e0a16"], rim:"#a88cd0", teeth:3, sweep:.46, hd:"char",   glow:.18, gcol:"#7a5ca8" }
+    ]},
+    { t: "A", col: "#f08a3c", label: "глубинные", picks: [
+      { n:"Магмовая", mat:["#ffb457","#c9451c","#460f06"], rim:"#ffd8a4", teeth:3, sweep:.52, hd:"ember",   glow:.62, gcol:"#ff6a1e" },
+      { n:"Костяная", mat:["#f2eada","#b8a888","#5c5142"], rim:"#fffaf0", teeth:3, sweep:.44, hd:"bone",    glow:.18, gcol:"#cbb894" },
+      { n:"Кристалл", mat:["#cfaef5","#8256bd","#371c5e"], rim:"#ecdcff", teeth:3, sweep:.58, hd:"crystal", glow:.55, gcol:"#9a5ce0" }
+    ]},
+    { t: "S", col: "#e8556d", label: "не должно существовать", picks: [
+      { n:"Аметист", mat:["#e2c2ff","#9a5ce0","#3f1a72"], rim:"#f6ecff", teeth:4, sweep:.66, hd:"crystal", glow:.72, gcol:"#a86cf0" },
+      { n:"Бездна",  mat:["#ad7dee","#6b2f8f","#20073a"], rim:"#dcbaff", teeth:4, sweep:.78, hd:"void",    glow:.88, gcol:"#8a2fd0" },
+      { n:"Нечто",   mat:["#cfa6ff","#4e1478","#0f0219"], rim:"#f2dcff", teeth:5, sweep:.9,  hd:"broken",  glow:1,   gcol:"#6b2f8f", wrong:true }
+    ]}
   ];
 
   function h(x, y) {
@@ -110,150 +107,261 @@
     n = Math.imul(n ^ (n >>> 13), 1274126177);
     return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
   }
+  function hexA(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+  }
 
-  // ---------- рисование одной кирки ----------
+  // ---------- рукояти ----------
+  // Десять типов. Каждая рассказывает, из чего сделан инструмент.
+  function drawHandle(g, px, cx, y0, y1, w, s) {
+    const H = y1 - y0, k = s.hd;
+    const base = { nails:["#c99a63","#8a6238","#452f1c"], leather:["#a8794c","#6b4526","#33200f"],
+                   rings:["#cfa06a","#8d6134","#4a3018"],  steel:["#c4c9d4","#6c7280","#282d36"],
+                   twist:["#a8c4d8","#4d6f8a","#1d2c38"],  hollow:["#e6e3ec","#8e8a9a","#33303c"],
+                   inlay:["#c9a067","#7f5a2e","#3f2a12"],  char:["#5a5064","#2a2432","#0e0b14"],
+                   ember:["#6b5748","#33231a","#140b07"],  bone:["#f2ead6","#c0b193","#6a604d"],
+                   crystal:["#c9a6f0","#6f43a8","#2a1247"], void:["#8a63b8","#3f1d66","#150823"],
+                   broken:["#8a63b8","#3f1d66","#150823"] }[k];
+
+    function shaft(a, b) {
+      const gr = g.createLinearGradient(cx - w, 0, cx + w, 0);
+      gr.addColorStop(0, base[0]); gr.addColorStop(.44, base[1]); gr.addColorStop(1, base[2]);
+      g.fillStyle = gr;
+      g.beginPath();
+      g.moveTo(cx - w, a); g.lineTo(cx + w, a);
+      g.lineTo(cx + w * .78, b); g.lineTo(cx - w * .78, b);
+      g.closePath(); g.fill();
+    }
+
+    if (k === "broken") {                      // рукоять, которой местами нет
+      const segs = [[0,.18],[.26,.44],[.52,.66],[.78,1]];
+      for (const [p0, p1] of segs) {
+        const a = y0 + H * p0, b = y0 + H * p1;
+        g.save(); g.translate((h(p0*97,3)-.5)*px(9), 0); shaft(a, b);
+        g.fillStyle = hexA(s.gcol, .5); g.fillRect(cx - w, a, w * 2, px(3)); g.restore();
+      }
+      return;
+    }
+
+    shaft(y0, y1);
+
+    if (k === "nails") {                       // грубое дерево с гвоздями
+      g.globalAlpha = .3;
+      for (let i = 0; i < 26; i++) {
+        g.fillStyle = h(i,3) > .5 ? "#e6c89a" : "#2b1d10";
+        g.fillRect(cx - w + h(i,1) * w * 1.8, y0 + h(i,2) * H, px(2), px(12 + h(i,4) * 22));
+      }
+      g.globalAlpha = 1;
+      for (const p of [.22, .55, .84]) {
+        const y = y0 + H * p;
+        g.fillStyle = "#5e5a52"; g.beginPath(); g.arc(cx - w * .45, y, px(5), 0, 6.283); g.fill();
+        g.fillStyle = "#a09a90"; g.beginPath(); g.arc(cx - w * .45 - px(1), y - px(1), px(2.4), 0, 6.283); g.fill();
+      }
+    } else if (k === "leather") {              // косая кожаная обмотка
+      for (let i = 0; i < 13; i++) {
+        const y = y0 + H * (.06 + i * .072);
+        g.fillStyle = i % 2 ? "#4a2f1a" : "#66432a";
+        g.save(); g.translate(cx, y); g.rotate(.22);
+        g.fillRect(-w * 1.05, 0, w * 2.1, px(11)); g.restore();
+        g.fillStyle = "rgba(255,222,180,.18)";
+        g.save(); g.translate(cx, y); g.rotate(.22);
+        g.fillRect(-w * 1.05, 0, w * 2.1, px(3)); g.restore();
+      }
+    } else if (k === "rings") {                // медные кольца
+      for (let i = 0; i < 5; i++) {
+        const y = y0 + H * (.12 + i * .18);
+        g.fillStyle = "#c07c3e"; g.fillRect(cx - w * 1.12, y, w * 2.24, px(12));
+        g.fillStyle = "#f3c489"; g.fillRect(cx - w * 1.12, y, w * 2.24, px(4));
+        g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(cx - w * 1.12, y + px(9), w * 2.24, px(3));
+      }
+    } else if (k === "steel") {                // трубка с рифлением
+      for (let i = 0; i < 18; i++) {
+        const y = y0 + H * (.04 + i * .053);
+        g.fillStyle = i % 2 ? "rgba(0,0,0,.34)" : "rgba(255,255,255,.13)";
+        g.fillRect(cx - w, y, w * 2, px(5));
+      }
+      g.fillStyle = "rgba(255,255,255,.4)"; g.fillRect(cx - w * .55, y0, px(4), H);
+    } else if (k === "twist") {                // витой металл
+      for (let i = 0; i < 16; i++) {
+        const y = y0 + H * (i / 16), ph = i * .8;
+        g.fillStyle = "rgba(255,255,255,.24)";
+        g.fillRect(cx - w + Math.sin(ph) * w * .7, y, px(7), H / 16 + px(2));
+        g.fillStyle = "rgba(0,0,0,.3)";
+        g.fillRect(cx - w + Math.sin(ph + 2.1) * w * .7, y, px(6), H / 16 + px(2));
+      }
+    } else if (k === "hollow") {               // полая трубка с окном
+      g.fillStyle = "#15131c";
+      g.beginPath(); g.roundRect(cx - w * .46, y0 + H * .30, w * .92, H * .34, px(7)); g.fill();
+      g.fillStyle = "rgba(255,255,255,.30)";
+      g.fillRect(cx - w * .66, y0, px(4), H);
+      g.fillStyle = "#2b2833";
+      g.fillRect(cx - w * 1.06, y0 + H * .26, w * 2.12, px(7));
+      g.fillRect(cx - w * 1.06, y0 + H * .66, w * 2.12, px(7));
+    } else if (k === "inlay") {                // золотая насечка по дереву
+      g.strokeStyle = "#ffdf8a"; g.lineWidth = px(3);
+      for (let i = 0; i < 6; i++) {
+        const y = y0 + H * (.10 + i * .15);
+        g.beginPath();
+        g.moveTo(cx - w * .8, y); g.quadraticCurveTo(cx, y + px(13), cx + w * .8, y);
+        g.stroke();
+      }
+      g.fillStyle = "#ffe9a8";
+      for (let i = 0; i < 5; i++) g.fillRect(cx - px(3), y0 + H * (.17 + i * .15), px(6), px(6));
+    } else if (k === "char" || k === "ember") { // обугленное дерево, у магмы — со светом
+      g.globalAlpha = .5;
+      for (let i = 0; i < 30; i++) {
+        g.fillStyle = "#08060a";
+        g.fillRect(cx - w + h(i,1) * w * 1.9, y0 + h(i,2) * H, px(3), px(10 + h(i,4) * 24));
+      }
+      g.globalAlpha = 1;
+      if (k === "ember") {
+        for (let i = 0; i < 9; i++) {
+          const y = y0 + h(i,7) * H, x = cx - w * .6 + h(i,8) * w * 1.2;
+          const gg = g.createRadialGradient(x, y, 0, x, y, px(16));
+          gg.addColorStop(0, "rgba(255,150,50,.85)"); gg.addColorStop(1, "rgba(255,90,20,0)");
+          g.fillStyle = gg; g.fillRect(x - px(16), y - px(16), px(32), px(32));
+          g.fillStyle = "#ffd08a"; g.fillRect(x, y, px(3), px(9));
+        }
+      }
+    } else if (k === "bone") {                 // позвонки
+      for (let i = 0; i < 6; i++) {
+        const y = y0 + H * (.05 + i * .16);
+        g.fillStyle = "#e8dfc8";
+        g.beginPath(); g.ellipse(cx, y, w * 1.16, px(11), 0, 0, 6.283); g.fill();
+        g.fillStyle = "rgba(0,0,0,.30)";
+        g.beginPath(); g.ellipse(cx, y + px(6), w * 1.02, px(5), 0, 0, 6.283); g.fill();
+        g.fillStyle = "#fffaf0";
+        g.beginPath(); g.ellipse(cx - w * .3, y - px(4), w * .3, px(4), 0, 0, 6.283); g.fill();
+      }
+    } else if (k === "crystal") {              // гранёный кристалл со светом внутри
+      g.fillStyle = hexA(s.gcol, .30); g.fillRect(cx - w * 1.2, y0, w * 2.4, H);
+      for (let i = 0; i < 9; i++) {
+        const y = y0 + H * (i / 9);
+        g.fillStyle = i % 2 ? "rgba(255,255,255,.22)" : "rgba(0,0,0,.22)";
+        g.beginPath();
+        g.moveTo(cx - w, y); g.lineTo(cx + w, y + px(6));
+        g.lineTo(cx + w * .8, y + H / 9); g.lineTo(cx - w * .8, y + H / 9 - px(5));
+        g.closePath(); g.fill();
+      }
+      g.fillStyle = hexA(s.rim, .55); g.fillRect(cx - px(4), y0 + px(6), px(8), H - px(12));
+    } else if (k === "void") {                 // рукоять из пустоты
+      g.fillStyle = "#0b0412"; g.fillRect(cx - w * .5, y0, w, H);
+      for (let i = 0; i < 14; i++) {
+        const y = y0 + h(i,5) * H;
+        g.fillStyle = hexA(s.gcol, .18 + h(i,6) * .5);
+        g.fillRect(cx - w * (.4 + h(i,7) * .9), y, w * (.5 + h(i,8) * 1.4), px(4));
+      }
+      const gg = g.createLinearGradient(cx - w, 0, cx + w, 0);
+      gg.addColorStop(0, hexA(s.gcol, .5)); gg.addColorStop(.5, "rgba(0,0,0,0)"); gg.addColorStop(1, hexA(s.gcol, .5));
+      g.fillStyle = gg; g.fillRect(cx - w, y0, w * 2, H);
+    }
+
+    // навершие
+    g.fillStyle = base[2];
+    g.beginPath(); g.ellipse(cx, y1, w * .95, px(7), 0, 0, 6.283); g.fill();
+    g.fillStyle = hexA(s.rim, .22);
+    g.beginPath(); g.ellipse(cx, y1 - px(2), w * .7, px(3), 0, 0, 6.283); g.fill();
+  }
+
+  // ---------- голова: N зубьев на сторону ----------
+  function headPath(px, L, T, teeth, sweep, side) {
+    const hp = new Path2D();
+    // клин у проушины
+    hp.moveTo(0, -T); hp.lineTo(px(18), -T - px(4));
+    hp.lineTo(px(18), T + px(2)); hp.lineTo(0, T);
+    hp.closePath();
+
+    for (let i = 0; i < teeth; i++) {
+      const f = teeth === 1 ? 0 : i / (teeth - 1);
+      const up = sweep * (0.35 + f * 1.15);            // верхние зубья задраны сильнее
+      const len = L * (1 - f * 0.16) * (teeth === 1 ? 1 : 0.94);
+      const y0 = -T + f * (T * 1.5);                    // веером от проушины вниз
+      const th = T * (1 - f * 0.34);
+      const p = new Path2D();
+      p.moveTo(px(14), y0 - th * .55);
+      p.quadraticCurveTo(len * .55, y0 - th - len * up * .42, len, y0 - len * up);
+      p.lineTo(len * .93, y0 - len * up + th * .8);
+      p.quadraticCurveTo(len * .5, y0 + th * .5, px(14), y0 + th * .6);
+      p.closePath();
+      hp.addPath(p);
+    }
+
+    // у простых кирок обратная сторона — лопатка, а не второе остриё
+    if (teeth === 1 && side < 0) {
+      const b = new Path2D();
+      b.moveTo(px(14), -T);
+      b.quadraticCurveTo(L * .5, -T - px(6), L * .74, -T - px(7));
+      b.lineTo(L * .80, px(10));
+      b.quadraticCurveTo(L * .46, px(8), px(14), T);
+      b.closePath();
+      return b;
+    }
+    return hp;
+  }
+
   function drawPick(cv, s) {
     const W = cv.width, H = cv.height, g = cv.getContext("2d");
     const px = n => n * (W / 300);
     const cx = W * .5, top = H * .30;
     g.clearRect(0, 0, W, H);
 
-    // подложка-свечение
     if (s.glow > 0) {
-      const rg = g.createRadialGradient(cx, H * .42, 0, cx, H * .42, W * .52);
-      rg.addColorStop(0, hexA(s.gcol || s.mat[0], .30 * s.glow));
+      const rg = g.createRadialGradient(cx, H * .40, 0, cx, H * .40, W * .55);
+      rg.addColorStop(0, hexA(s.gcol || s.mat[0], .34 * s.glow));
       rg.addColorStop(1, hexA(s.gcol || s.mat[0], 0));
       g.fillStyle = rg; g.fillRect(0, 0, W, H);
     }
 
-    // ---- рукоять ----
-    const hy0 = top + px(6), hy1 = H - px(26), hw = px(11);
-    const hgs = { wood: [["#c99a63"], ["#8a6238"], ["#4a3320"]],
-                  dark: [["#6e6a7a"], ["#3c3846"], ["#191722"]],
-                  bone: [["#f0e7d4"], ["#c0b193"], ["#6a604d"]],
-                  void: [["#8a63b8"], ["#43206b"], ["#170a26"]] }[s.hd];
-    const wg = g.createLinearGradient(cx - hw, 0, cx + hw, 0);
-    wg.addColorStop(0, hgs[0][0]); wg.addColorStop(.42, hgs[1][0]); wg.addColorStop(1, hgs[2][0]);
-    g.fillStyle = wg;
-    g.beginPath(); g.moveTo(cx - hw, hy0); g.lineTo(cx + hw, hy0);
-    g.lineTo(cx + hw * .78, hy1); g.lineTo(cx - hw * .78, hy1); g.closePath(); g.fill();
-    // текстура рукояти
-    g.globalAlpha = .22;
-    for (let i = 0; i < 16; i++) {
-      g.fillStyle = h(i, 3) > .5 ? "#ffffff" : "#000000";
-      g.fillRect(cx - hw + h(i, 1) * hw * 1.7, hy0 + h(i, 2) * (hy1 - hy0), px(2), px(9 + h(i, 4) * 16));
-    }
-    g.globalAlpha = 1;
-    // обмотка
-    for (let i = 0; i < 4; i++) {
-      const y = hy0 + (hy1 - hy0) * (.42 + i * .1);
-      g.fillStyle = i % 2 ? "#241a12" : "#3a2a1c";
-      if (s.hd === "void") g.fillStyle = i % 2 ? "#1c0c2e" : "#341a52";
-      g.fillRect(cx - hw * .96, y, hw * 1.92, px(8));
-    }
-    // навершие
-    g.fillStyle = hgs[2][0];
-    g.beginPath(); g.ellipse(cx, hy1, hw * .95, px(7), 0, 0, 6.283); g.fill();
+    drawHandle(g, px, cx, top + px(6), H - px(26), px(11), s);
 
-    // ---- голова ----
-    // Форма считается отдельно для каждой стороны: у простых кирок
-    // слева остриё, справа лопатка — именно это и делает силуэт узнаваемым.
     for (const side of [1, -1]) {
       g.save(); g.translate(cx, top); g.scale(side, 1);
-      const L = px(100), T = px(14);
-      const hp = new Path2D();
+      const L = px(102), T = px(15);
+      const hp = headPath(px, L, T, s.teeth, s.sweep, side);
 
-      if (s.sh === "classic") {
-        if (side > 0) {                       // остриё
-          hp.moveTo(0, -T);
-          hp.quadraticCurveTo(L * .58, -T - px(9), L, -T - px(12));
-          hp.lineTo(L * .99, -T + px(1));
-          hp.quadraticCurveTo(L * .55, px(3), 0, T);
-        } else {                              // лопатка
-          hp.moveTo(0, -T);
-          hp.quadraticCurveTo(L * .5, -T - px(5), L * .74, -T - px(6));
-          hp.lineTo(L * .80, px(9));
-          hp.quadraticCurveTo(L * .46, px(7), 0, T);
-        }
-      } else if (s.sh === "fork") {
-        hp.moveTo(0, -T);
-        hp.quadraticCurveTo(L * .46, -T - px(15), L * .99, -px(38));
-        hp.lineTo(L * .84, -px(24));
-        hp.lineTo(L * .95, -px(2));
-        hp.lineTo(L * .70, -px(13));
-        hp.quadraticCurveTo(L * .42, px(4), 0, T);
-      } else if (s.sh === "crescent") {
-        hp.moveTo(0, -T);
-        hp.quadraticCurveTo(L * .64, -T - px(24), L * 1.02, -px(46));
-        hp.lineTo(L * .86, -px(27));
-        hp.quadraticCurveTo(L * .52, px(5), 0, T);
-      } else if (s.sh === "shard") {
-        hp.moveTo(0, -T);
-        hp.lineTo(L * .34, -px(24)); g.lineTo(L * .50, -px(15));
-        hp.lineTo(L * .99, -px(40)); g.lineTo(L * .82, -px(13));
-        hp.lineTo(L * .94, px(2));  g.lineTo(L * .40, px(4));
-        hp.lineTo(0, T);
-      } else {                                 // wing
-        hp.moveTo(0, -T);
-        hp.quadraticCurveTo(L * .34, -T - px(34), L * .62, -px(64));
-        hp.lineTo(L * .62, -px(38));
-        hp.quadraticCurveTo(L * .86, -px(50), L * 1.04, -px(24));
-        hp.lineTo(L * .82, -px(20));
-        hp.quadraticCurveTo(L * .96, -px(2), L * .74, px(12));
-        hp.lineTo(L * .48, -px(6));
-        hp.quadraticCurveTo(L * .28, px(8), 0, T);
-      }
-      hp.closePath();
-
-      const mg = g.createLinearGradient(0, -px(56), 0, px(14));
+      const mg = g.createLinearGradient(0, -px(70), 0, px(18));
       mg.addColorStop(0, s.mat[0]); mg.addColorStop(.48, s.mat[1]); mg.addColorStop(1, s.mat[2]);
       g.fillStyle = mg; g.fill(hp);
 
       g.save(); g.clip(hp);
-      // блик вдоль верхней кромки
-      g.fillStyle = hexA(s.rim, .42);
+      g.fillStyle = hexA(s.rim, .40);
       g.beginPath();
-      g.moveTo(0, -T); g.quadraticCurveTo(L * .55, -T - px(40), L * 1.1, -px(70));
-      g.lineTo(L * 1.1, -px(52)); g.quadraticCurveTo(L * .5, -T - px(10), 0, -T + px(6));
+      g.moveTo(0, -T); g.quadraticCurveTo(L * .55, -T - px(46), L * 1.15, -px(84));
+      g.lineTo(L * 1.15, -px(64)); g.quadraticCurveTo(L * .5, -T - px(12), 0, -T + px(7));
       g.closePath(); g.fill();
-      // тень снизу — толщина металла
-      g.fillStyle = "rgba(0,0,0,.42)";
-      g.fillRect(0, px(2), L * 1.15, px(16));
+      g.fillStyle = "rgba(0,0,0,.40)";
+      g.fillRect(0, px(3), L * 1.2, px(20));
       if (s.glow > .3) {
-        const eg = g.createLinearGradient(0, 0, L, -px(30));
-        eg.addColorStop(0, hexA(s.gcol, 0)); eg.addColorStop(1, hexA(s.gcol, .6 * s.glow));
-        g.fillStyle = eg; g.fillRect(0, -px(80), L * 1.2, px(110));
+        const eg = g.createLinearGradient(0, 0, L, -px(34));
+        eg.addColorStop(0, hexA(s.gcol, 0)); eg.addColorStop(1, hexA(s.gcol, .62 * s.glow));
+        g.fillStyle = eg; g.fillRect(0, -px(96), L * 1.25, px(130));
       }
       g.restore();
-
-      g.strokeStyle = hexA(s.rim, .22); g.lineWidth = px(1.3); g.stroke(hp);
+      g.strokeStyle = hexA(s.rim, .20); g.lineWidth = px(1.2); g.stroke(hp);
       g.restore();
     }
 
     // проушина
-    g.fillStyle = s.hd === "void" ? "#1b0a2c" : "#1a1622";
-    g.beginPath(); g.roundRect(cx - px(16), top - px(19), px(32), px(38), px(6)); g.fill();
-    g.fillStyle = hexA(s.rim, .3);
-    g.fillRect(cx - px(16), top - px(19), px(32), px(4));
+    g.fillStyle = s.hd === "void" || s.hd === "broken" ? "#190728" : "#191522";
+    g.beginPath(); g.roundRect(cx - px(17), top - px(21), px(34), px(42), px(7)); g.fill();
+    g.fillStyle = hexA(s.rim, .28); g.fillRect(cx - px(17), top - px(21), px(34), px(4));
+    g.fillStyle = "rgba(0,0,0,.4)"; g.fillRect(cx - px(17), top + px(17), px(34), px(4));
 
-    // «нечто»: край подрагивает, как битый сигнал
     if (s.wrong) {
-      for (let i = 0; i < 5; i++) {
-        const y = top - px(60) + h(i, 9) * px(120);
-        const sl = g.getImageData(0, y, W, px(5) | 0);
-        g.putImageData(sl, (h(i, 11) - .5) * px(22), y);
+      for (let i = 0; i < 6; i++) {
+        const y = Math.max(0, top - px(76) + h(i, 9) * px(150)) | 0;
+        const hgt = Math.min(px(6) | 0, H - y);
+        if (hgt <= 0) continue;
+        const sl = g.getImageData(0, y, W, hgt);
+        g.putImageData(sl, (h(i, 11) - .5) * px(26), y);
       }
     }
   }
 
-  function hexA(hex, a) {
-    const n = parseInt(hex.slice(1), 16);
-    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
-  }
-
-  // ---------- сборка страницы ----------
+  // ---------- сборка ----------
   const ramp = document.getElementById("ramp");
-  ["#8d6a4a","#b9c2cc","#8fd4f5","#ffdf8a","#ffb057","#c9a6f0","#a878e8","#6b2f8f"].forEach(c => {
+  ["#9c7752","#c3cbd4","#93d6f5","#ffe08c","#ffb457","#cfaef5","#ad7dee","#4e1478"].forEach(c => {
     const i = document.createElement("i"); i.style.background = c; ramp.append(i);
   });
 
@@ -269,11 +377,12 @@
       c.style.boxShadow = "inset 0 0 26px " + hexA(s.gcol || T.col, .12);
       const cv = document.createElement("canvas"); cv.width = 300; cv.height = 300;
       const nm = document.createElement("b"); nm.textContent = s.n; nm.style.color = T.col;
-      const lb = document.createElement("i"); lb.textContent = T.label;
+      const lb = document.createElement("i"); lb.textContent = s.teeth + " зуб" + (s.teeth === 1 ? "" : s.teeth < 5 ? "а" : "ьев");
       c.append(cv, nm, lb); cards.append(c);
       drawPick(cv, s);
     }
     row.append(tier, cards); host.append(row);
   }
 })();
+
 </script>
