@@ -20,7 +20,7 @@
     background:#000;border:1px solid #372f47;border-radius:16px;overflow:hidden;
     box-shadow:0 26px 64px rgba(0,0,0,.7);touch-action:none;user-select:none;font-family:var(--mono)}
   @media (min-width:760px){ .game{aspect-ratio:16/10;max-height:none} }
-  .game canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #gl,#fx{position:absolute;inset:0;width:100%;height:100%;display:block}
   #fx{pointer-events:none}
 
   .hud{position:absolute;inset:14px 12px auto 12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
@@ -34,9 +34,9 @@
 
   .cross{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;
     background:rgba(255,255,255,.92);box-shadow:0 0 5px rgba(0,0,0,.95),0 0 12px rgba(255,200,130,.5);pointer-events:none}
-  .toolname{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font-size:11px;letter-spacing:.22em;
+  .toolname{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);font-size:11px;letter-spacing:.22em;
     color:rgba(255,193,77,.9);text-shadow:0 1px 8px #000;pointer-events:none}
-  @media (max-width:759px){ .toolname{bottom:120px} }
+  @media (max-width:759px){ .toolname{bottom:150px} .hotbar{left:14px;bottom:74px} .stat{bottom:74px} .clock{bottom:78px} }
   .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;font-size:11px;letter-spacing:.14em;
     color:rgba(255,255,255,.66);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .8s}
   .hint.gone{opacity:0}
@@ -49,6 +49,57 @@
     border:1px solid rgba(255,193,77,.55);background:rgba(40,28,14,.4);backdrop-filter:blur(4px)}
   .dig.on{background:rgba(255,193,77,.3)}
   @media (min-width:760px){ .stick,.dig{display:none} }
+  /* --- хотбар и полосы, как в референсе --- */
+  .stat{position:absolute;left:14px;bottom:14px;display:flex;gap:5px;align-items:flex-end}
+  .stat i{width:9px;border-radius:2px;display:block}
+  .hotbar{position:absolute;left:60px;bottom:14px;display:flex;gap:5px}
+  .slot{position:relative;width:44px;height:44px;border-radius:8px;background:rgba(12,9,17,.62);
+    border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;
+    backdrop-filter:blur(5px);cursor:pointer}
+  .slot.on{border-color:var(--lamp);box-shadow:0 0 14px rgba(255,193,77,.35)}
+  .slot canvas{width:32px;height:32px;display:block}
+  .slot u{position:absolute;right:3px;bottom:1px;font-size:8px;color:#8f86a4;text-decoration:none}
+  .slot em{position:absolute;left:0;right:0;top:0;bottom:0;border-radius:8px;display:flex;
+    align-items:center;justify-content:center;background:rgba(8,6,12,.7);color:#c9c1da;font-size:13px;font-style:normal}
+  .clock{position:absolute;right:14px;bottom:16px;font-size:19px;color:#fff;
+    font-variant-numeric:tabular-nums;text-shadow:0 2px 8px #000}
+
+  /* --- меню --- */
+  .menu{position:absolute;inset:0;background:rgba(6,5,10,.9);backdrop-filter:blur(7px);
+    display:none;flex-direction:column;padding:16px;z-index:20;overflow:auto}
+  .menu.open{display:flex}
+  .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .tabs b{font-size:10.5px;letter-spacing:.14em;padding:8px 12px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--line);color:#8f86a4;background:#100d17}
+  .tabs b.on{color:var(--lamp);border-color:rgba(255,193,77,.6);background:#1c1510}
+  .pane{display:none}.pane.on{display:block}
+  .opt{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+    padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:#cfc7dd}
+  .opt small{display:block;font-size:9.5px;color:#6f6788;letter-spacing:.04em;margin-top:2px}
+  .opt input[type=range]{width:130px;accent-color:#ffc14d}
+  .opt .key{min-width:78px;text-align:center;font-size:10.5px;letter-spacing:.08em;padding:6px 10px;
+    border:1px solid var(--line2);border-radius:7px;background:#171320;color:#e6e0f0;cursor:pointer}
+  .opt .key.wait{border-color:var(--lamp);color:var(--lamp)}
+  .opt .sw{width:44px;height:24px;border-radius:12px;background:#241f30;border:1px solid var(--line2);
+    position:relative;cursor:pointer}
+  .opt .sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
+    background:#6f6788;transition:.15s}
+  .opt .sw.on{background:#3a2a12;border-color:rgba(255,193,77,.6)}
+  .opt .sw.on::after{left:22px;background:var(--lamp)}
+  .opt .val{font-size:11px;color:#8f86a4;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
+  .inv{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:7px}
+  .inv .it{border:1px solid var(--line2);border-radius:9px;background:#121019;padding:8px;
+    display:flex;gap:8px;align-items:center;cursor:pointer}
+  .inv .it.act{border-color:rgba(255,193,77,.55)}
+  .inv .it canvas{width:30px;height:30px;flex:0 0 30px;background:#0b0912;border-radius:6px}
+  .inv .it span{font-size:10px;letter-spacing:.04em;color:#cfc7dd;line-height:1.25}
+  .mbtns{display:flex;gap:8px;margin-top:14px}
+  .mbtns b{flex:1;text-align:center;font-size:11px;letter-spacing:.14em;padding:12px;border-radius:9px;
+    border:1px solid var(--line2);color:#a79ec0;cursor:pointer}
+  .mbtns b.pri{border-color:rgba(255,193,77,.6);color:var(--lamp);background:#1c1510}
+  .gear{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:9px;
+    background:rgba(12,9,17,.55);border:1px solid rgba(255,255,255,.14);color:#a79ec0;
+    display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;backdrop-filter:blur(5px)}
   .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;text-align:center;font-size:13px;color:var(--ink2);background:#0b0910}
 
   .keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 4px}
@@ -75,9 +126,27 @@
   <canvas id="gl"></canvas>
   <canvas id="fx"></canvas>
   <div class="hud">
-    <span class="pill"><span class="big" id="depth">0<i>М</i></span>
+    <span class="pill"><span class="sm" id="ore">0</span><span class="lbl">РУДА</span>
+      <span class="big" id="depth" style="font-size:16px">0<i>М</i></span>
       <span class="cartbar"><i id="cart"></i></span></span>
-    <span class="pill"><span class="sm" id="ore">0</span><span class="lbl">РУДА</span></span>
+  </div>
+  <div class="gear" id="gearbtn">&#9881;</div>
+  <div class="stat" id="stat"></div>
+  <div class="hotbar" id="hotbar"></div>
+  <div class="clock" id="clock">00:00</div>
+  <div class="menu" id="menu">
+    <div class="tabs">
+      <b data-p="ctl" class="on">УПРАВЛЕНИЕ</b><b data-p="game">ИГРА</b>
+      <b data-p="vid">ГРАФИКА</b><b data-p="snd">ЗВУК</b><b data-p="inv">ИНВЕНТАРЬ</b>
+    </div>
+    <div class="pane on" id="p-ctl"></div>
+    <div class="pane" id="p-game"></div>
+    <div class="pane" id="p-vid"></div>
+    <div class="pane" id="p-snd"></div>
+    <div class="pane" id="p-inv"><div class="inv" id="invgrid"></div>
+      <p style="font-size:11px;color:#6f6788;letter-spacing:.05em;margin-top:12px">
+        Нажми на предмет, чтобы положить его в выбранную ячейку пояса.</p></div>
+    <div class="mbtns"><b id="mreset">СБРОСИТЬ</b><b class="pri" id="mclose">ЗАКРЫТЬ</b></div>
   </div>
   <div class="cross"></div>
   <div class="toolname" id="toolname">КИРКА</div>
@@ -89,7 +158,7 @@
 
 <div class="keys">
   <span><b>WASD</b> ходить</span><span><b>мышь</b> смотреть</span><span><b>ЛКМ</b> долбить</span>
-  <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span><span><b>1–7</b> сменить инструмент</span>
+  <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span><span><b>1–8</b> пояс</span><span><b>Tab</b> инвентарь</span><span><b>Esc</b> настройки</span>
 </div>
 
 <h2>Что изменилось</h2>
@@ -102,6 +171,9 @@
   <li><strong>Пыль в луче.</strong> Свет из окошка и от лампочки виден в воздухе — это то, что делает подвал обжитым, а не пустым.</li>
   <li><strong>Мокрая глина.</strong> Влажные пятна темнее и отражают свет, сухая порода — нет.</li>
   <li><strong>Осколки, тряска и звук.</strong> Каждый удар выбивает крошку, дёргает камеру и звучит по-разному в зависимости от породы.</li>
+  <li><strong>Пояс на восемь ячеек.</strong> Клавиши 1–8 или мышью. Слева три полосы: руки, свет, вагонетка. Справа время в смене.</li>
+  <li><strong>Настройки, которые не сбрасываются.</strong> Esc — меню: переназначение любой клавиши, чувствительность мыши и инверсия, поле зрения, покачивание, тряска, качество и дальность видимости, яркость, зерно, громкость. Всё пишется в браузер и переживает перезаход.</li>
+  <li><strong>Инвентарь</strong> — Tab. Нажал на предмет, и он лёг в выбранную ячейку пояса.</li>
 <li><strong>Уют — это приём, а не украшение.</strong> Тёплая лампочка, закатное окошко, мох по углам, кирпичная кладка: подвал должен выглядеть обжитым и почти милым. Игра честно притворяется доброй, и именно поэтому темнота потом сработает.</li>
 </ul>
 <div class="note">Свет: лампочка под потолком, косой луч из окошка и фонарь на каске. Чем глубже уходишь, тем меньше достаёт домашний свет — темнота приходит сама, без единого переключателя. Тени при этом не чёрные, а тёпло-коричневые: это и есть разница между «уютно» и «страшно», и всё, что нужно, чтобы её сломать, — убрать из них цвет.</div>
@@ -219,6 +291,7 @@
   uniform vec2 uRes; uniform vec3 uCam; uniform mat3 uRot;
   uniform sampler3D uDen; uniform vec3 uN; uniform float uVS, uY0, uTime, uBulb;
   uniform vec3 uWin;
+  uniform float uFov, uFar, uGrain, uBright;
 
   vec3 toTex(vec3 w){
     return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
@@ -303,7 +376,7 @@
 
   void main(){
     vec2 uv = (gl_FragCoord.xy - .5*uRes)/uRes.y;
-    vec3 rd = normalize(uRot*vec3(uv,1.15));
+    vec3 rd = normalize(uRot*vec3(uv,uFov));
     vec3 ro = uCam;
 
     float t = 0.05, hit = -1.0;
@@ -311,7 +384,7 @@
       vec3 p = ro + rd*t;
       if(dens(p) > 0.47){ hit = t; break; }
       t += mix(0.10, 0.42, clamp(t/14.0,0.0,1.0));
-      if(t>42.0) break;
+      if(t>uFar) break;
     }
     if(hit<0.0){ outColor = vec4(0.012,0.010,0.016,1.0); return; }
 
@@ -388,14 +461,14 @@
     vec3 fogC = mix(vec3(0.09,0.06,0.05), vec3(0.020,0.016,0.026), clamp((w.y-1.0)/16.0,0.0,1.0));
     col = mix(col, fogC, 1.0-exp(-d*fogD));
     col *= 1.0 - 0.72*pow(length(uv*vec2(1.0,1.15)),1.9);
-    col += (h31(vec3(gl_FragCoord.xy, floor(uTime*24.0)))-0.5)*0.02;
+    col += (h31(vec3(gl_FragCoord.xy, floor(uTime*24.0)))-0.5)*0.02*uGrain;
     // сама лампочка видна как пятно света
     vec3 tb = bp - ro; float pb = dot(tb, rd);
     if(pb > 0.0 && pb < d){
       float dl = length(tb - rd*pb);
       col += vec3(1.0,0.88,0.66) * uBulb * exp(-dl*dl*7.0) * 1.5;
     }
-    col = max(col, 0.0);
+    col = max(col, 0.0) * uBright;
     col = col/(col+0.95)*1.30;                              // мягкое сведение бликов
     col = pow(col, vec3(0.4545));
     col = mix(col, col*col*(3.0-2.0*col), 0.34);            // контраст: свет отделяется от тени
@@ -439,10 +512,6 @@
   addEventListener("keydown", e => { keys[e.code] = true;
     if (document.pointerLockElement === cv && ["KeyW","KeyA","KeyS","KeyD","Space"].includes(e.code)) e.preventDefault(); });
   addEventListener("keyup", e => keys[e.code] = false);
-  addEventListener("keydown", e => {
-    const n = parseInt(e.key, 10);
-    if (n >= 1 && n <= TOOLS.length) { tool = n - 1; toolEl.textContent = TOOLS[tool].name; }
-  });
 
   const hint = document.getElementById("hint");
   const toolEl = document.getElementById("toolname");
@@ -451,8 +520,9 @@
   document.addEventListener("pointerlockchange", () => { if (document.pointerLockElement === cv) hint.classList.add("gone"); });
   document.addEventListener("mousemove", e => {
     if (document.pointerLockElement !== cv) return;
-    P.yaw -= e.movementX * .0026;
-    P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch - e.movementY * .0026));
+    const k = SET.sens / 10000;
+    P.yaw -= e.movementX * k;
+    P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch + (SET.invY ? 1 : -1) * e.movementY * k));
   });
   let digging = false;
   cv.addEventListener("mousedown", e => { if (e.button === 0) { digging = true; audioOn(); } });
@@ -485,7 +555,7 @@
     const src = AC.createBufferSource(); src.buffer = buf;
     const f = AC.createBiquadFilter(); f.type = "bandpass";
     f.frequency.value = (hard ? 1500 : 420) * pitch; f.Q.value = hard ? 1.6 : 0.8;
-    const g = AC.createGain(); g.gain.value = hard ? .3 : .38;
+    const g = AC.createGain(); g.gain.value = (hard ? .3 : .38) * (SET.vol/100) * (SET.sfx/100);
     src.connect(f); f.connect(g); g.connect(AC.destination); src.start();
   }
 
@@ -499,6 +569,37 @@
       life: .5 + Math.random() * .5, t: 0, s: 1.4 + Math.random() * 3.2, c: col
     });
   }
+  // ---------- настройки: живут в localStorage и переживают перезаход ----------
+  const KEY = "zaboy.settings.v1";
+  const DEF = {
+    bind: { fwd:"KeyW", back:"KeyS", left:"KeyA", right:"KeyD", jump:"Space",
+            run:"ShiftLeft", dig:"Mouse0", look:"KeyQ", menu:"Escape", inv:"Tab" },
+    sens: 26, invY: false, fov: 75, headbob: true, shake: true, grain: true,
+    quality: 1, bright: 100, vol: 70, sfx: 100,
+    hot: [1, 0, 2, 4, 5, 6, 3, 7], slot: 1
+  };
+  let SET;
+  try { SET = Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || "{}")); }
+  catch (e) { SET = Object.assign({}, DEF); }
+  SET.bind = Object.assign({}, DEF.bind, SET.bind || {});
+  if (!Array.isArray(SET.hot) || SET.hot.length !== 8) SET.hot = DEF.hot.slice();
+  const saveSet = () => { try { localStorage.setItem(KEY, JSON.stringify(SET)); } catch (e) {} };
+
+  const FARQ = [26, 42, 62], SCALEQ = [0.62, 0.82, 1.0];
+  function applySet() {
+    gl.uniform1f(U("uFov"), 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62);
+    gl.uniform1f(U("uFar"), FARQ[SET.quality]);
+    gl.uniform1f(U("uGrain"), SET.grain ? 1 : 0);
+    gl.uniform1f(U("uBright"), SET.bright / 100);
+    cv.__scale = SCALEQ[SET.quality];
+  }
+
+  const KEYNAME = { Space:"ПРОБЕЛ", ShiftLeft:"SHIFT", ShiftRight:"SHIFT ПР", Escape:"ESC",
+    Tab:"TAB", ControlLeft:"CTRL", AltLeft:"ALT", Mouse0:"ЛКМ", Mouse1:"СКМ", Mouse2:"ПКМ",
+    ArrowUp:"↑", ArrowDown:"↓", ArrowLeft:"←", ArrowRight:"→" };
+  const kn = c => KEYNAME[c] || (c || "").replace(/^Key|^Digit/, "");
+  const down = a => keys[SET.bind[a]] === true;
+
   // ---------- инструменты ----------
   // Каждый рисуется отдельно: своя форма, свой металл, свой хват, свой износ.
   const TOOLS = [
@@ -713,6 +814,220 @@
     g.restore();
   }
 
+
+  // ---------- предметы пояса ----------
+  // Первые семь — инструменты, дальше вещи. Иконки рисуются тут же.
+  const ITEMS = TOOLS.map((t, i) => ({ name: t.name, tool: i, ico: t.key }))
+    .concat([
+      { name: "ДИНАМИТ",  ico: "dyn"    }, { name: "ВСПЫШКА", ico: "flare" },
+      { name: "ЗАЙКА",    ico: "bunny"  }, { name: "ПЕЧЕНЬКА", ico: "cookie" },
+      { name: "КУБИК",    ico: "rubik"  }, { name: "САЛЮТ",   ico: "salute" }
+    ]);
+
+  function icon(g, S, k) {
+    const q = (a, b, c) => { const t = g.createLinearGradient(0, S * .1, 0, S * .9);
+      t.addColorStop(0, a); t.addColorStop(.5, b); t.addColorStop(1, c); return t; };
+    g.clearRect(0, 0, S, S);
+    if (k === "dyn") {
+      g.fillStyle = q("#e8695a", "#b02f26", "#4d100c");
+      g.beginPath(); g.roundRect(S*.32, S*.26, S*.36, S*.54, S*.07); g.fill();
+      g.strokeStyle = "#c9a06a"; g.lineWidth = S*.05; g.beginPath();
+      g.moveTo(S*.5, S*.26); g.quadraticCurveTo(S*.7, S*.12, S*.8, S*.2); g.stroke();
+    } else if (k === "flare") {
+      g.strokeStyle = "rgba(255,226,160,.85)"; g.lineWidth = S*.05;
+      for (let i = 0; i < 8; i++) { const a = i/8*6.283; g.beginPath();
+        g.moveTo(S*.5+Math.cos(a)*S*.18, S*.5+Math.sin(a)*S*.18);
+        g.lineTo(S*.5+Math.cos(a)*S*.40, S*.5+Math.sin(a)*S*.40); g.stroke(); }
+      g.fillStyle = "#fff3d0"; g.beginPath(); g.arc(S*.5, S*.5, S*.13, 0, 6.283); g.fill();
+    } else if (k === "bunny") {
+      g.fillStyle = q("#f8e6ec", "#d3a9bb", "#7d5a68");
+      g.beginPath(); g.ellipse(S*.38, S*.24, S*.08, S*.19, -.2, 0, 6.283); g.fill();
+      g.beginPath(); g.ellipse(S*.62, S*.24, S*.08, S*.19, .2, 0, 6.283); g.fill();
+      g.beginPath(); g.ellipse(S*.5, S*.60, S*.27, S*.24, 0, 0, 6.283); g.fill();
+      g.fillStyle = "#2a2030";
+      g.beginPath(); g.arc(S*.41, S*.57, S*.035, 0, 6.283); g.fill();
+      g.beginPath(); g.arc(S*.59, S*.57, S*.035, 0, 6.283); g.fill();
+    } else if (k === "cookie") {
+      g.fillStyle = q("#e8b872", "#c08a44", "#6d4a1e");
+      g.beginPath(); g.arc(S*.5, S*.52, S*.32, 0, 6.283); g.fill();
+      g.fillStyle = "#3a2414";
+      for (const [x,y] of [[.42,.42],[.60,.48],[.48,.64],[.62,.62]]) {
+        g.beginPath(); g.arc(S*x, S*y, S*.05, 0, 6.283); g.fill(); }
+    } else if (k === "rubik") {
+      const c = ["#e0473a","#f0b429","#4a9f4a","#3d7fd0","#e8e4ee","#ef8b3a"], w = S*.2;
+      for (let r = 0; r < 3; r++) for (let cc = 0; cc < 3; cc++) {
+        g.fillStyle = c[(r*3+cc)%6];
+        g.fillRect(S*.2+cc*w+S*.015, S*.2+r*w+S*.015, w-S*.03, w-S*.03); }
+    } else if (k === "salute") {
+      for (let i = 0; i < 10; i++) { const a = i/10*6.283;
+        g.strokeStyle = i%3 ? "#ffd47a" : "#ff8a5c"; g.lineWidth = S*.04;
+        g.beginPath(); g.moveTo(S*.5+Math.cos(a)*S*.14, S*.36+Math.sin(a)*S*.14);
+        g.lineTo(S*.5+Math.cos(a)*S*.32, S*.36+Math.sin(a)*S*.32); g.stroke(); }
+      g.fillStyle = "#8d6a3e"; g.fillRect(S*.47, S*.48, S*.06, S*.40);
+    } else {
+      // инструмент: силуэт в миниатюре
+      const mm = { shovel:["#efe6d8","#8a8496"], pick:["#f0e8dc","#5a5260"], maul:["#8d8798","#37313f"],
+                   sledge:["#b6b0c6","#2b2438"], hammer:["#d9b66c","#4d3c1d"],
+                   auger:["#b9b2c6","#3d3750"], lance:["#cfd6dc","#454c56"] }[k] || ["#cfc7dd","#4a4458"];
+      g.fillStyle = q("#8a6540", "#5b4028", "#2c1e12");
+      g.fillRect(S*.46, S*.34, S*.09, S*.52);
+      g.fillStyle = q(mm[0], mm[1], "#1a1622");
+      if (k === "shovel") { g.beginPath(); g.moveTo(S*.30,S*.20); g.lineTo(S*.70,S*.20);
+        g.lineTo(S*.62,S*.50); g.quadraticCurveTo(S*.5,S*.62,S*.38,S*.50); g.closePath(); g.fill(); }
+      else if (k === "auger") { for (let i=0;i<5;i++){ g.beginPath();
+        g.ellipse(S*.5, S*.20+i*S*.10, S*.16*Math.abs(Math.cos(i*.8))+S*.04, S*.045, 0, 0, 6.283); g.fill(); } }
+      else if (k === "lance") { g.fillRect(S*.42,S*.16,S*.16,S*.42);
+        g.fillStyle="#ffe0a0"; g.beginPath(); g.arc(S*.5,S*.16,S*.10,0,6.283); g.fill(); }
+      else { g.beginPath(); g.moveTo(S*.12,S*.30); g.lineTo(S*.5,S*.20);
+        g.lineTo(S*.88,S*.30); g.lineTo(S*.88,S*.38); g.lineTo(S*.5,S*.32);
+        g.lineTo(S*.12,S*.38); g.closePath(); g.fill(); }
+    }
+  }
+
+  // ---------- хотбар ----------
+  const hotEl = document.getElementById("hotbar"), statEl = document.getElementById("stat");
+  const clockEl = document.getElementById("clock");
+  function buildHot() {
+    hotEl.innerHTML = "";
+    SET.hot.forEach((it, i) => {
+      const d = document.createElement("div");
+      d.className = "slot" + (i === SET.slot ? " on" : "");
+      const c = document.createElement("canvas"); c.width = c.height = 64;
+      icon(c.getContext("2d"), 64, ITEMS[it].ico);
+      const u = document.createElement("u"); u.textContent = i + 1;
+      d.append(c, u);
+      d.onclick = () => pickSlot(i);
+      hotEl.append(d);
+    });
+  }
+  function pickSlot(i) {
+    SET.slot = i; saveSet();
+    const it = ITEMS[SET.hot[i]];
+    if (it.tool !== undefined) { tool = it.tool; toolEl.textContent = it.name; }
+    else toolEl.textContent = it.name;
+    [...hotEl.children].forEach((c, k) => c.classList.toggle("on", k === i));
+  }
+  // полосы слева: руки, свет, вагонетка
+  ["#e0778c", "#ffc14d", "#7fc9e8"].forEach((c, i) => {
+    const b = document.createElement("i"); b.style.background = c;
+    b.style.height = [34, 44, 26][i] + "px"; b.dataset.k = i; statEl.append(b);
+  });
+
+  // ---------- меню ----------
+  const menu = document.getElementById("menu");
+  const panes = { ctl:"p-ctl", game:"p-game", vid:"p-vid", snd:"p-snd", inv:"p-inv" };
+  document.querySelectorAll(".tabs b").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".tabs b").forEach(x => x.classList.toggle("on", x === b));
+    Object.entries(panes).forEach(([k, id]) =>
+      document.getElementById(id).classList.toggle("on", k === b.dataset.p));
+  });
+  function openMenu(on) {
+    menu.classList.toggle("open", on);
+    if (on && document.pointerLockElement === cv) document.exitPointerLock();
+  }
+  document.getElementById("gearbtn").onclick = () => openMenu(true);
+  document.getElementById("mclose").onclick = () => openMenu(false);
+  document.getElementById("mreset").onclick = () => {
+    SET = JSON.parse(JSON.stringify(DEF)); saveSet(); applySet(); buildUI(); buildHot(); pickSlot(SET.slot);
+  };
+
+  function row(pane, label, hint, ctrl) {
+    const d = document.createElement("div"); d.className = "opt";
+    const l = document.createElement("div");
+    l.innerHTML = label + (hint ? `<small>${hint}</small>` : "");
+    d.append(l, ctrl); pane.append(d); return d;
+  }
+  function slider(key, min, max, unit) {
+    const w = document.createElement("div"); w.style.display = "flex"; w.style.alignItems = "center"; w.style.gap = "8px";
+    const r = document.createElement("input"); r.type = "range"; r.min = min; r.max = max; r.value = SET[key];
+    const v = document.createElement("span"); v.className = "val"; v.textContent = SET[key] + (unit || "");
+    r.oninput = () => { SET[key] = +r.value; v.textContent = r.value + (unit || ""); saveSet(); applySet(); };
+    w.append(r, v); return w;
+  }
+  function toggle(key) {
+    const t = document.createElement("div"); t.className = "sw" + (SET[key] ? " on" : "");
+    t.onclick = () => { SET[key] = !SET[key]; t.classList.toggle("on", SET[key]); saveSet(); applySet(); };
+    return t;
+  }
+  function choice(key, opts) {
+    const w = document.createElement("div"); w.style.display = "flex"; w.style.gap = "5px";
+    opts.forEach((o, i) => {
+      const b = document.createElement("div"); b.className = "key" + (SET[key] === i ? " wait" : "");
+      b.textContent = o;
+      b.onclick = () => { SET[key] = i; saveSet(); applySet();
+        [...w.children].forEach((c, k) => c.classList.toggle("wait", k === i)); };
+      w.append(b);
+    });
+    return w;
+  }
+
+  let waiting = null;
+  const BINDS = [["fwd","Вперёд"],["back","Назад"],["left","Влево"],["right","Вправо"],
+    ["jump","Прыжок"],["run","Бежать"],["dig","Долбить"],["look","Оглянуться"],
+    ["inv","Инвентарь"],["menu","Меню"]];
+  function buildUI() {
+    const ctl = document.getElementById("p-ctl"); ctl.innerHTML = "";
+    BINDS.forEach(([k, label]) => {
+      const b = document.createElement("div"); b.className = "key"; b.textContent = kn(SET.bind[k]);
+      b.onclick = () => {
+        if (waiting) waiting.el.classList.remove("wait");
+        waiting = { k, el: b }; b.classList.add("wait"); b.textContent = "ЖМИ КЛАВИШУ";
+      };
+      row(ctl, label, "", b);
+    });
+    row(ctl, "Чувствительность мыши", "", slider("sens", 4, 90));
+    row(ctl, "Инверсия по вертикали", "", toggle("invY"));
+
+    const gm = document.getElementById("p-game"); gm.innerHTML = "";
+    row(gm, "Поле зрения", "чем больше, теснее кажется тоннель", slider("fov", 60, 100, "°"));
+    row(gm, "Покачивание при ходьбе", "", toggle("headbob"));
+    row(gm, "Тряска от удара", "", toggle("shake"));
+
+    const vd = document.getElementById("p-vid"); vd.innerHTML = "";
+    row(vd, "Качество", "влияет на дальность видимости и чёткость", choice("quality", ["НИЗКОЕ","СРЕДНЕЕ","ВЫСОКОЕ"]));
+    row(vd, "Яркость", "", slider("bright", 60, 160, "%"));
+    row(vd, "Зерно плёнки", "", toggle("grain"));
+
+    const sd = document.getElementById("p-snd"); sd.innerHTML = "";
+    row(sd, "Общая громкость", "", slider("vol", 0, 100, "%"));
+    row(sd, "Эффекты", "", slider("sfx", 0, 100, "%"));
+
+    const ig = document.getElementById("invgrid"); ig.innerHTML = "";
+    ITEMS.forEach((it, i) => {
+      const d = document.createElement("div"); d.className = "it";
+      const c = document.createElement("canvas"); c.width = c.height = 60;
+      icon(c.getContext("2d"), 60, it.ico);
+      const sp = document.createElement("span"); sp.textContent = it.name;
+      d.append(c, sp);
+      d.onclick = () => { SET.hot[SET.slot] = i; saveSet(); buildHot(); pickSlot(SET.slot); };
+      ig.append(d);
+    });
+  }
+
+  addEventListener("keydown", e => {
+    if (waiting) {
+      e.preventDefault();
+      SET.bind[waiting.k] = e.code; saveSet();
+      waiting.el.classList.remove("wait"); waiting.el.textContent = kn(e.code);
+      waiting = null; return;
+    }
+    if (e.code === SET.bind.menu) { e.preventDefault(); openMenu(!menu.classList.contains("open")); }
+    if (e.code === SET.bind.inv) {
+      e.preventDefault(); openMenu(true);
+      document.querySelector('.tabs b[data-p="inv"]').click();
+    }
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= 8) pickSlot(n - 1);
+  });
+
+  buildUI(); buildHot(); applySet(); pickSlot(SET.slot);
+  const t0 = Date.now();
+  setInterval(() => {
+    const s2 = ((Date.now() - t0) / 1000) | 0;
+    clockEl.textContent = String((s2 / 60) | 0).padStart(2, "0") + ":" + String(s2 % 60).padStart(2, "0");
+  }, 500);
+
+
   // ---------- добыча ----------
   let ore = 0, cart = 0, digCd = 0;
   const oreEl = document.getElementById("ore"), depthEl = document.getElementById("depth"), cartEl = document.getElementById("cart");
@@ -728,7 +1043,7 @@
   }
 
   function resize() {
-    const dpr = Math.min(devicePixelRatio || 1, isTouch ? 1.4 : 1.8);
+    const dpr = Math.min(devicePixelRatio || 1, isTouch ? 1.4 : 1.8) * (cv.__scale || 1);
     const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
     if (cv.width !== w) { cv.width = w; cv.height = h; fx.width = w; fx.height = h; }
     gl.viewport(0, 0, cv.width, cv.height);
@@ -741,16 +1056,16 @@
     resize();
 
     let fw = moveZ, st = moveX;
-    if (keys.KeyW) fw += 1; if (keys.KeyS) fw -= 1;
-    if (keys.KeyD) st += 1; if (keys.KeyA) st -= 1;
+    if (down("fwd")) fw += 1; if (down("back")) fw -= 1;
+    if (down("right")) st += 1; if (down("left")) st -= 1;
     const L = Math.hypot(fw, st) || 1;
-    const spd = (keys.ShiftLeft ? 6.4 : 3.9) * dt;
+    const spd = (down("run") ? 6.4 : 3.9) * dt;
     const sn = Math.sin(P.yaw), cs = Math.cos(P.yaw);
     const dx = (sn * fw / L + cs * st / L) * spd, dz = (cs * fw / L - sn * st / L) * spd;
     if (fw || st) {
       if (!blocked(P.x + dx, P.y, P.z)) P.x += dx;
       if (!blocked(P.x, P.y, P.z + dz)) P.z += dz;
-      if (P.ground) bob += dt * 11;
+      if (P.ground && SET.headbob) bob += dt * 11;
     }
 
     P.vy += 22 * dt;
@@ -758,7 +1073,7 @@
     P.ground = false;
     if (blocked(P.x, ny, P.z)) { if (P.vy > 0) { P.ground = true; while (!blocked(P.x, P.y + 0.02, P.z) && P.y < ny) P.y += 0.02; } P.vy = 0; }
     else P.y = ny;
-    if (keys.Space && P.ground) { P.vy = -7.2; }
+    if (down("jump") && P.ground) { P.vy = -7.2; }
     if (P.y > 46) { P.x = 0; P.z = 3; P.y = -.02; P.vy = 0; }
 
     digCd -= dt; swing = Math.max(0, swing - dt * 3.4);
@@ -785,8 +1100,8 @@
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch), cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
     const R = [cy, 0, -sy], F = [sy * cp, -sp, cy * cp], Uv = [-sy * sp, -cp, -cy * sp];
     gl.uniformMatrix3fv(U("uRot"), false, new Float32Array([R[0],R[1],R[2], Uv[0],Uv[1],Uv[2], F[0],F[1],F[2]]));
-    const sk = shake * .004;
-    gl.uniform3f(U("uCam"), P.x + (Math.random()-.5)*sk, P.y - EYE + Math.sin(bob*2)*.035 + (Math.random()-.5)*sk, P.z + (Math.random()-.5)*sk);
+    const sk = SET.shake ? shake * .004 : 0;
+    gl.uniform3f(U("uCam"), P.x + (Math.random()-.5)*sk, P.y - EYE + (SET.headbob?Math.sin(bob*2)*.035:0) + (Math.random()-.5)*sk, P.z + (Math.random()-.5)*sk);
     gl.uniform1f(U("uTime"), now / 1000);
     gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 7) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
