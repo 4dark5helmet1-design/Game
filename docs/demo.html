@@ -43,8 +43,9 @@
   .cart b i{display:block;height:100%;background:#7fc9e8;width:0}
 
   .cross{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;
+    transform:scale(var(--uis,1));
     background:rgba(255,255,255,.92);box-shadow:0 0 5px rgba(0,0,0,.95),0 0 12px rgba(255,200,130,.5);pointer-events:none}
-  .toolname{position:absolute;left:50%;bottom:74px;transform:translateX(-50%);font-size:11px;letter-spacing:.22em;
+  .toolname{position:absolute;left:50%;bottom:74px;transform:translateX(-50%) scale(var(--uis,1));font-size:11px;letter-spacing:.22em;
     color:rgba(255,193,77,.92);text-shadow:0 1px 8px #000;pointer-events:none;opacity:0;transition:opacity .35s}
   .toolname.show{opacity:1}
   @media (max-width:759px){ .toolname{bottom:150px} .hotbar{left:14px;bottom:74px} .stat{bottom:74px} .clock{bottom:78px} }
@@ -62,7 +63,8 @@
   @media (min-width:760px){ .stick,.dig{display:none} }
   /* --- хотбар и полосы, как в референсе --- */
   /* пояс всплывает на полторы секунды при смене и уходит */
-  .hotbar{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:6px;
+  .hotbar{position:absolute;left:50%;bottom:20px;transform:translateX(-50%) scale(var(--uis,1));
+    transform-origin:bottom center;display:flex;gap:6px;
     opacity:0;transition:opacity .35s;pointer-events:none}
   .hotbar.show{opacity:1;pointer-events:auto}
   .slot{position:relative;width:44px;height:44px;border-radius:8px;background:rgba(12,9,17,.62);
@@ -193,11 +195,11 @@
 <div class="game" id="game">
   <canvas id="gl"></canvas>
   <canvas id="fx"></canvas>
-  <div class="hud">
+  <div class="hud" hidden>
     <div class="dep" id="depth">0<i>М</i></div>
     <div class="ore" id="ore">0</div>
   </div>
-  <div class="cart" id="cartbox"><u>ВАГОНЕТКА ПОЛНА · E — НАВЕРХ</u><b><i id="cart"></i></b></div>
+  <div class="cart" id="cartbox" hidden><u>ВАГОНЕТКА ПОЛНА · E — НАВЕРХ</u><b><i id="cart"></i></b></div>
   <div class="gear" id="gearbtn">&#9881;</div>
   <div class="hotbar" id="hotbar"></div>
   <div class="menu" id="menu">
@@ -284,10 +286,17 @@
 
   // ---------- поле плотности ----------
   const NX = 128, NY = 232, NZ = 128, VS = 0.28;   // метров на ячейку
-  const Y0 = -4.0;                                  // мировая Y у первой ячейки
+  const WIN = NY * VS;                              // высота окна в метрах, ~65
   const den = new Uint8Array(NX * NY * NZ);
-  const di = (x, y, z) => (y * NZ + z) * NX + x;
+  // Окно скользит вглубь, а память закольцована: логический слой ly лежит
+  // в текстурном (ly + ROT) % NY. Поэтому спуск не двигает ни байта — он
+  // только дописывает новые слои поверх самых верхних, которые уже не нужны.
+  let Y0 = -4.0;                                    // мировая Y логического слоя 0
+  let ROT = 0;
+  const tyOf = ly => { const t = (ly + ROT) % NY; return t < 0 ? t + NY : t; };
+  const di = (x, ly, z) => (tyOf(ly) * NZ + z) * NX + x;
   const wx = i => (i - NX / 2) * VS, wy = i => Y0 + i * VS, wz = i => (i - NZ / 2) * VS;
+  const lyOf = Y => Math.round((Y - Y0) / VS);
 
   function h3(x, y, z) {
     let n = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(z | 0, 1442695041);
@@ -309,60 +318,134 @@
   // каждая смена копает свой забой — сид меняется при обвале
   let WSEED = 0;
   const hs = (a, b, c) => h3(a + WSEED * 7919, b + WSEED * 104729, c);
-  const ROOMS = [];                                   // чужие подвалы в породе
+
+  // ---------- то, что лежит в породе ----------
+  // Всё считается от глубины, а не хранится списком: шахта уходит на шесть
+  // километров, и держать её целиком в памяти незачем.
+  const ROOM_EVERY = 145;                            // чужой подвал примерно раз в столько метров
+  function roomAt(k) {                               // k-я комната, k >= 0
+    const a = hs(k, 21, 2) * Math.PI * 2, rad = 5 + hs(k, 23, 4) * 9;
+    return { k, x: Math.cos(a) * rad, z: Math.sin(a) * rad,
+             y: 34 + k * ROOM_EVERY + hs(k, 25, 6) * 46,
+             hx: 1.75 + hs(k, 27, 8) * 0.6, hy: 1.30, hz: 1.75 + hs(k, 29, 9) * 0.6 };
+  }
+  const NODE_EVERY = 210;                            // узел пустоты
+  function nodeAt(k) {
+    const a = hs(k, 31, 3) * Math.PI * 2, rad = 4 + hs(k, 33, 5) * 12;
+    return { k, x: Math.cos(a) * rad, z: Math.sin(a) * rad,
+             y: 300 + k * NODE_EVERY + hs(k, 35, 7) * 70, r: 1.5, hit: 0 };
+  }
+  // те, что попадают в окно, держим в списках — по ним ходит керн и рендер
+  const ROOMS = [], NODES = [];
+  function refreshFeatures() {
+    const lo = Y0 - 8, hi = Y0 + WIN + 8;
+    ROOMS.length = 0;
+    for (let k = Math.max(0, Math.floor((lo - 80) / ROOM_EVERY)); ; k++) {
+      const r = roomAt(k); if (r.y > hi + ROOM_EVERY) break;
+      if (r.y > lo && r.y < hi) ROOMS.push(r);
+      if (k > 60 && r.y > hi) break;
+    }
+    const keep = {};
+    for (const n of NODES) keep[n.k] = n.hit;
+    NODES.length = 0;
+    for (let k = Math.max(0, Math.floor((lo - 380) / NODE_EVERY)); ; k++) {
+      const n = nodeAt(k); if (n.y > hi + NODE_EVERY) break;
+      if (n.y > lo && n.y < hi) { n.hit = keep[n.k] || 0; NODES.push(n); }
+      if (k > 60 && n.y > hi) break;
+    }
+  }
+
+  // ---------- удары ----------
+  // Выкопанное хранится не ячейками, а ударами: четыре числа вместо тысячи
+  // байт. Когда слой уезжает из окна и потом возвращается, удары по нему
+  // просто переигрываются заново.
+  const CUTB = new Map();                            // ключ — этаж по 8 м
+  const CUT_H = 8;
+  function noteCut(X, Y, Z, R) {
+    const a = Math.floor((Y - R) / CUT_H), b = Math.floor((Y + R) / CUT_H);
+    for (let k = a; k <= b; k++) {
+      let arr = CUTB.get(k); if (!arr) CUTB.set(k, arr = []);
+      arr.push(X, Y, Z, R);
+    }
+  }
+  function replayCuts(ly) {
+    const Y = wy(ly), k0 = Math.floor((Y - 0.6) / CUT_H), k1 = Math.floor((Y + 0.6) / CUT_H);
+    for (let k = k0; k <= k1; k++) {
+      const arr = CUTB.get(k); if (!arr) continue;
+      for (let i = 0; i < arr.length; i += 4) {
+        const X = arr[i], CY = arr[i+1], Z = arr[i+2], R = arr[i+3];
+        if (Math.abs(CY - Y) > R) continue;
+        cutSlice(ly, X, CY, Z, R);
+      }
+    }
+  }
+  function cutSlice(ly, X, CY, Z, R) {
+    const Y = wy(ly);
+    const x0 = Math.max(0, Math.floor((X - R) / VS + NX / 2)), x1 = Math.min(NX - 1, Math.ceil((X + R) / VS + NX / 2));
+    const z0 = Math.max(0, Math.floor((Z - R) / VS + NZ / 2)), z1 = Math.min(NZ - 1, Math.ceil((Z + R) / VS + NZ / 2));
+    for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
+      const dist = Math.hypot(wx(x) - X, Y - CY, wz(z) - Z);
+      const cut = 1 - Math.min(1, Math.max(0, (R - dist) / (R * 0.55)));
+      const idx = di(x, ly, z);
+      const nv = Math.min(den[idx], Math.round(255 * cut));
+      den[idx] = nv;
+    }
+  }
+
+  // ---------- генерация одного слоя ----------
+  function genSlice(ly) {
+    const Y = wy(ly);
+    const base = tyOf(ly) * NZ * NX;
+    // сплошная порода, дом наверху, ничего выше перекрытия
+    if (Y < CEIL - 0.55) { den.fill(0, base, base + NZ * NX); }
+    else if (Y < 0) {
+      for (let z = 0; z < NZ; z++) {
+        const Z = wz(z), inZ = Math.abs(Z) < RH;
+        for (let x = 0; x < NX; x++)
+          den[base + z * NX + x] = (inZ && Math.abs(wx(x)) < RW) ? 0 : 255;
+      }
+    } else {
+      den.fill(255, base, base + NZ * NX);
+    }
+    // начатая яма в полу подвала
+    if (Y > -0.2 && Y < 3.4) {
+      for (let z = 0; z < NZ; z++) { const Z = wz(z);
+        for (let x = 0; x < NX; x++) { const X = wx(x);
+          const rad = 1.55 - Y * 0.24 + (vn(X * .7, Y * .5, Z * .7) - .5) * .5;
+          if (Math.hypot(X, Z) < rad) den[base + z * NX + x] = 0;
+        } }
+    }
+    // природные пустоты: по одной на каждые несколько метров, вразнобой
+    if (Y > 6) {
+      const c0 = Math.floor((Y - 4) / 5), c1 = Math.floor((Y + 4) / 5);
+      for (let c = c0; c <= c1; c++) {
+        if (hs(c, 41, 9) > 0.42) continue;
+        const cx = (hs(c, 1, 2) - .5) * 26, cz = (hs(c, 3, 4) - .5) * 26;
+        const cy = c * 5 + hs(c, 5, 6) * 5, rr = 1.1 + hs(c, 7, 8) * 2.2;
+        if (Math.abs(Y - cy) > rr) continue;
+        const rad = Math.sqrt(rr * rr - (Y - cy) * (Y - cy));
+        const x0 = Math.max(0, Math.floor((cx - rad) / VS + NX / 2)), x1 = Math.min(NX - 1, Math.ceil((cx + rad) / VS + NX / 2));
+        const z0 = Math.max(0, Math.floor((cz - rad) / VS + NZ / 2)), z1 = Math.min(NZ - 1, Math.ceil((cz + rad) / VS + NZ / 2));
+        for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++)
+          if (Math.hypot(wx(x) - cx, wz(z) - cz) < rad) den[base + z * NX + x] = 0;
+      }
+    }
+    // чужие подвалы
+    for (let k = Math.max(0, Math.floor((Y - 90) / ROOM_EVERY)); k <= Math.floor((Y + 90) / ROOM_EVERY) + 1; k++) {
+      const r = roomAt(k);
+      if (Math.abs(Y - r.y) >= r.hy) continue;
+      const x0 = Math.max(0, Math.floor((r.x - r.hx) / VS + NX / 2)), x1 = Math.min(NX - 1, Math.ceil((r.x + r.hx) / VS + NX / 2));
+      const z0 = Math.max(0, Math.floor((r.z - r.hz) / VS + NZ / 2)), z1 = Math.min(NZ - 1, Math.ceil((r.z + r.hz) / VS + NZ / 2));
+      for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++)
+        if (Math.abs(wx(x) - r.x) < r.hx && Math.abs(wz(z) - r.z) < r.hz)
+          den[base + z * NX + x] = 0;
+    }
+    replayCuts(ly);
+  }
 
   function genWorld() {
-    for (let y = 0; y < NY; y++) {
-      const Y = wy(y);
-      for (let z = 0; z < NZ; z++) {
-        const Z = wz(z);
-        for (let x = 0; x < NX; x++) {
-          const X = wx(x);
-          let d;
-          if (Y < 0 && Y > CEIL && Math.abs(X) < RW && Math.abs(Z) < RH) d = 0;    // воздух в комнате
-          else if (Y < CEIL - 0.55) d = 0;                                          // выше перекрытия — ничего
-          else d = 255;
-          den[di(x, y, z)] = d;
-        }
-      }
-    }
-    // начатая яма в полу
-    for (let y = 0; y < NY; y++) {
-      const Y = wy(y); if (Y < -0.2 || Y > 3.4) continue;
-      for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) {
-        const X = wx(x), Z = wz(z);
-        const rad = 1.55 - Y * 0.24 + (vn(X * .7, Y * .5, Z * .7) - .5) * .5;
-        if (Math.hypot(X, Z) < rad) den[di(x, y, z)] = 0;
-      }
-    }
-    // редкие пустоты глубже
-    for (let k = 0; k < 26; k++) {
-      const cxk = (hs(k, 1, 2) - .5) * 24, czk = (hs(k, 3, 4) - .5) * 24, cyk = 8 + hs(k, 5, 6) * 36;
-      const rr = 1.1 + hs(k, 7, 8) * 1.7;
-      for (let y = 0; y < NY; y++) { const Y = wy(y); if (Math.abs(Y - cyk) > rr + 1) continue;
-        for (let z = 0; z < NZ; z++) { const Z = wz(z); if (Math.abs(Z - czk) > rr + 1) continue;
-          for (let x = 0; x < NX; x++) { const X = wx(x);
-            if (Math.hypot(X - cxk, Y - cyk, Z - czk) < rr) den[di(x, y, z)] = 0;
-          } } }
-    }
-    // карманы: комнаты, которых под землёй быть не должно
-    ROOMS.length = 0;
-    for (let k = 0; k < 2; k++) {
-      const a = hs(k, 21, 2) * Math.PI * 2, rad = 6 + hs(k, 23, 4) * 7;
-      ROOMS.push({
-        x: Math.cos(a) * rad, z: Math.sin(a) * rad,
-        y: 13 + k * 12 + hs(k, 25, 6) * 7,
-        hx: 1.75 + hs(k, 27, 8) * 0.5, hy: 1.28, hz: 1.75 + hs(k, 29, 9) * 0.5
-      });
-    }
-    for (const r of ROOMS) {
-      for (let y = 0; y < NY; y++) { const Y = wy(y); if (Math.abs(Y - r.y) > r.hy + .4) continue;
-        for (let z = 0; z < NZ; z++) { const Z = wz(z); if (Math.abs(Z - r.z) > r.hz + .4) continue;
-          for (let x = 0; x < NX; x++) { const X = wx(x);
-            if (Math.abs(X - r.x) < r.hx && Math.abs(Y - r.y) < r.hy && Math.abs(Z - r.z) < r.hz)
-              den[di(x, y, z)] = 0;
-          } } }
-    }
+    for (let ly = 0; ly < NY; ly++) genSlice(ly);
+    refreshFeatures();
   }
   genWorld();
 
@@ -390,28 +473,60 @@
   uploadWorld();
 
   // выгрызаем шар мягкой кистью
-  function carve(X, Y, Z, R) {
-    const x0 = Math.max(0, Math.floor((X - R) / VS + NX / 2)), x1 = Math.min(NX - 1, Math.ceil((X + R) / VS + NX / 2));
-    const y0 = Math.max(0, Math.floor((Y - R - Y0) / VS)), y1 = Math.min(NY - 1, Math.ceil((Y + R - Y0) / VS));
-    const z0 = Math.max(0, Math.floor((Z - R) / VS + NZ / 2)), z1 = Math.min(NZ - 1, Math.ceil((Z + R) / VS + NZ / 2));
-    if (x1 < x0 || y1 < y0 || z1 < z0) return;
-    const w = x1 - x0 + 1, h = y1 - y0 + 1, d = z1 - z0 + 1;
-    const buf = new Uint8Array(w * d * h);
-    for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
-      const dist = Math.hypot(wx(x) - X, wy(y) - Y, wz(z) - Z);
-      const cut = 1 - Math.min(1, Math.max(0, (R - dist) / (R * 0.55)));
-      const nv = Math.min(den[di(x, y, z)], Math.round(255 * cut));
-      den[di(x, y, z)] = nv;
-      buf[((y - y0) * d + (z - z0)) * w + (x - x0)] = nv;
-    }
+  // один слой из памяти — в текстуру
+  function pushSlice(ly) {
+    const t = tyOf(ly);
     gl.bindTexture(gl.TEXTURE_3D, tex);
-    gl.texSubImage3D(gl.TEXTURE_3D, 0, x0, z0, y0, w, d, h, gl.RED, gl.UNSIGNED_BYTE, buf);
+    gl.texSubImage3D(gl.TEXTURE_3D, 0, 0, 0, t, NX, NZ, 1, gl.RED, gl.UNSIGNED_BYTE,
+                     den.subarray(t * NZ * NX, (t + 1) * NZ * NX));
+  }
+  function carve(X, Y, Z, R, remember) {
+    if (remember !== false) noteCut(X, Y, Z, R);
+    const ly0 = Math.max(0, Math.floor((Y - R - Y0) / VS)), ly1 = Math.min(NY - 1, Math.ceil((Y + R - Y0) / VS));
+    if (ly1 < ly0) return;
+    for (let ly = ly0; ly <= ly1; ly++) {
+      cutSlice(ly, X, Y, Z, R);
+      pushSlice(ly);
+    }
   }
   const solidAt = (X, Y, Z) => {
-    const x = Math.round(X / VS + NX / 2), y = Math.round((Y - Y0) / VS), z = Math.round(Z / VS + NZ / 2);
-    if (x < 0 || y < 0 || z < 0 || x >= NX || y >= NY || z >= NZ) return Y > Y0;
-    return den[di(x, y, z)] > 120;
+    const x = Math.round(X / VS + NX / 2), ly = lyOf(Y), z = Math.round(Z / VS + NZ / 2);
+    if (x < 0 || ly < 0 || z < 0 || x >= NX || ly >= NY || z >= NZ) return Y > Y0;
+    return den[di(x, ly, z)] > 120;
   };
+
+  // ---------- окно едет за игроком ----------
+  // Пока он в середине, ничего не происходит. Как только подходит к краю,
+  // окно доезжает так, чтобы он снова оказался посередине.
+  let slabDirty = true;
+  function slideTo(Y) {
+    const want = Y - WIN * 0.5;
+    let n = Math.round((want - Y0) / VS);
+    if (n === 0) return false;
+    if (Math.abs(n) >= NY) {                        // прыжок дальше окна — всё заново
+      Y0 += n * VS; ROT = 0;
+      genWorld(); uploadWorld(); slabDirty = true;
+      return true;
+    }
+    if (n > 0) {                                    // вниз: снизу дописываем новые слои
+      for (let i = 0; i < n; i++) {
+        Y0 += VS; ROT = (ROT + 1) % NY;
+        genSlice(NY - 1); pushSlice(NY - 1);
+      }
+    } else {                                        // вверх: сверху
+      for (let i = 0; i < -n; i++) {
+        Y0 -= VS; ROT = (ROT - 1 + NY) % NY;
+        genSlice(0); pushSlice(0);
+      }
+    }
+    refreshFeatures(); slabDirty = true;
+    return true;
+  }
+  function windowTick() {
+    const Y = P.y - EYE * 0.5;
+    const mid = Y0 + WIN * 0.5;
+    if (Math.abs(Y - mid) > WIN * 0.16) slideTo(Y);
+  }
 
   // ---------- шейдер ----------
   const VSH = `#version 300 es
@@ -427,16 +542,20 @@
   uniform vec4 uNode;
   uniform vec4 uPoint;
   uniform vec3 uRoomC, uRoomH;
+  uniform float uSlab;
   uniform float uTide, uShift, uDark;
 
-  vec3 toTex(vec3 w){
+  // окно скользит вглубь, а текстура закольцована: логический слой + uSlab
+  vec3 toTex(vec3 w, out float ly){
+    ly = ((w.y-uY0)/uVS + 0.5)/uN.y;
     return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
                  (w.z/uVS + uN.z*0.5 + 0.5)/uN.z,
-                 ((w.y-uY0)/uVS + 0.5)/uN.y );
+                 fract(ly + uSlab) );
   }
   float dens(vec3 w){
-    vec3 t = toTex(w);
-    if(any(lessThan(t,vec3(0.0))) || any(greaterThan(t,vec3(1.0)))) return w.y>uY0 ? 1.0 : 0.0;
+    float ly; vec3 t = toTex(w, ly);
+    if(t.x < 0.0 || t.x > 1.0 || t.y < 0.0 || t.y > 1.0 || ly < 0.0 || ly > 1.0)
+      return w.y > uY0 ? 1.0 : 0.0;
     return texture(uDen, t).r;
   }
   float h31(vec3 p){ return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453); }
@@ -482,7 +601,7 @@
   // порода слоями; в подвале — бетон и балки
   vec3 rockColor(vec3 w, out float rough, out float oreAmt, out float emis){
     rough = 1.0; oreAmt = 0.0; emis = 0.0;
-    float warp = (fbm(w*0.22)-0.5)*2.4;
+    float warp = (fbm(w*0.22)-0.5)*2.4 + (fbm(w*0.02)-0.5)*w.y*0.06;
     float d = w.y + warp;
     vec3 c;
     if(w.y < -0.06){                                  // подвал
@@ -500,30 +619,49 @@
       emis = win;
       c = mix(c, vec3(1.0,0.86,0.62), win);
     }
-    else if(d < 1.0)  c = vec3(0.30,0.21,0.12);       // рыхлая земля
-    else if(d < 4.0){                                  // тёплая глина, местами мокрая
+    // девять пластов на шесть километров; границы размыты фбм-искажением d
+    else if(d < 3.0)  c = vec3(0.30,0.21,0.12);       // рыхлая земля
+    else if(d < 12.0){                                 // тёплая глина, местами мокрая
       c = vec3(0.44,0.28,0.15);
       float wet = smoothstep(0.52,0.68,fbm(w*0.85+vec3(9.0)));
       c = mix(c, c*0.52, wet);
       rough = mix(1.0, 0.14, wet);
     }
-    else if(d < 9.0)  c = vec3(0.44,0.35,0.28);       // суглинок
-    else if(d < 20.0) c = vec3(0.40,0.38,0.39);       // камень
-    else              c = vec3(0.30,0.27,0.35);       // гранит
-    if(w.y > 26.0){
-      float wr = fbm(w*0.32+vec3(613.0));
-      float wb = fbm(w*0.09+vec3(211.0));
-      if(wr > 0.735 && wb > 0.58){
-        float a = smoothstep(0.735,0.80,wr);
-        c = mix(c, vec3(0.42,0.14,0.62), a);
-        oreAmt = max(oreAmt, a*0.4);
-      }
+    else if(d < 40.0)   c = vec3(0.44,0.35,0.28);      // суглинок
+    else if(d < 150.0){                                // известняк, светлый и слоистый
+      float lam = smoothstep(0.42,0.58,fract(d*0.34));
+      c = mix(vec3(0.56,0.53,0.46), vec3(0.44,0.42,0.38), lam);
+      rough = 0.86;
     }
+    else if(d < 500.0){                                // сланец, тёмный и плитчатый
+      float lam = smoothstep(0.34,0.66,fract(d*0.9));
+      c = mix(vec3(0.24,0.25,0.27), vec3(0.17,0.18,0.21), lam);
+      rough = 0.52;
+    }
+    else if(d < 1200.0) c = vec3(0.34,0.30,0.38);      // гранит
+    else if(d < 2600.0){                               // базальт: почти чёрный, но стеклянный
+      c = vec3(0.11,0.11,0.13);
+      rough = 0.22;
+    }
+    else if(d < 4200.0){                               // рудное тело, тёплое и ржавое
+      c = mix(vec3(0.34,0.17,0.12), vec3(0.22,0.13,0.11), smoothstep(0.4,0.6,fbm(w*0.5)));
+      rough = 0.60;
+    }
+    else {                                             // последнее: холодное и почти белое
+      c = mix(vec3(0.62,0.64,0.70), vec3(0.44,0.47,0.56), smoothstep(0.4,0.62,fbm(w*0.7)));
+      rough = 0.30;
+    }
+
+    // жилы: своя руда на каждой трети пути
     float ov = fbm(w*0.5+vec3(31.0));
     float ob = fbm(w*0.14+vec3(77.0));
     if(w.y>0.4 && ov>0.60 && ob>0.52){
       oreAmt = smoothstep(0.60,0.72,ov);
-      c = mix(c, vec3(0.20,0.62,0.70), oreAmt);
+      vec3 oc = w.y < 700.0  ? vec3(0.20,0.62,0.70)     // медь
+              : w.y < 2600.0 ? vec3(0.42,0.14,0.62)     // фиолет
+              : w.y < 4600.0 ? vec3(0.72,0.50,0.14)     // золото
+                             : vec3(0.86,0.90,0.98);    // белое
+      c = mix(c, oc, oreAmt);
     }
     c *= 0.84+0.34*h31(floor(w*3.0));
 
@@ -665,8 +803,8 @@
       col += vec3(1.0,0.76,0.42) * acc;
     }
 
-    float fogD = mix(0.013, 0.095, clamp((w.y-2.0)/34.0,0.0,1.0));
-    vec3 fogC = mix(vec3(0.09,0.06,0.05), vec3(0.020,0.016,0.026), clamp((w.y-1.0)/16.0,0.0,1.0));
+    float fogD = mix(0.013, 0.105, clamp((w.y-2.0)/240.0,0.0,1.0));
+    vec3 fogC = mix(vec3(0.09,0.06,0.05), vec3(0.016,0.014,0.023), clamp((w.y-1.0)/60.0,0.0,1.0));
     col = mix(col, fogC, 1.0-exp(-d*fogD));
     col *= 1.0 - 0.72*pow(length(uv*vec2(1.0,1.15)),1.9);
     col += (h31(vec3(gl_FragCoord.xy, floor(uTime*24.0)))-0.5)*0.02*uGrain;
@@ -720,7 +858,7 @@
   const U = n => gl.getUniformLocation(prog, n);
   gl.uniform1i(U("uDen"), 0); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D, tex);
   gl.uniform3f(U("uN"), NX, NY, NZ);
-  gl.uniform1f(U("uVS"), VS); gl.uniform1f(U("uY0"), Y0);
+  gl.uniform1f(U("uVS"), VS);
   gl.uniform3f(U("uWin"), 4.4, -2.15, 0.0);
 
   // ---------- игрок ----------
@@ -800,7 +938,7 @@
     bind: { fwd:"KeyW", back:"KeyS", left:"KeyA", right:"KeyD", jump:"Space", up:"KeyE",
             run:"ShiftLeft", dig:"Mouse0", look:"KeyQ", menu:"Escape", inv:"Tab" },
     sens: 26, invY: false, fov: 75, headbob: true, shake: true, grain: true,
-    quality: 1, bright: 100, vol: 70, sfx: 100,
+    quality: 1, bright: 100, vol: 70, sfx: 100, ui: 100, res: 3,
     goods: [0,1,2,3], skills: [0,1,3], pas: [1,1,1,1,1,1,1,1], slot: 0
   };
   let SET;
@@ -824,19 +962,22 @@
                   crew: l => Math.round(140 * Math.pow(1.5, l)),
                   cart: l => Math.round(70 * Math.pow(1.48, l - 1)) };
   // осколки переживают обвал и множат всё, что смена наживает заново
-  const shardsFor = d => Math.floor(Math.pow(Math.max(0, d - 14) / 7, 1.2));
+  const shardsFor = d => Math.floor(Math.pow(Math.max(0, d - 40) / 26, 1.15));
   const shardMul = () => 1 + SAV.shards * 0.09;
-  const capOf  = () => Math.round((60 + SAV.cart * 55) * shardMul());
+  // чем глубже, тем ценнее порода: иначе спуск не окупается
+  const oreMul = () => 1 + Math.pow(Math.max(0, P.y) / 55, 0.88);
+  const capOf  = () => Math.round((60 + SAV.cart * 62) * shardMul());
   const lampR  = () => 1 + SAV.lamp * 0.34;
   const powOf  = () => (1 + (SAV.pick - 1) * 0.55) * shardMul();
 
-  const FARQ = [26, 42, 62], SCALEQ = [0.62, 0.82, 1.0];
+  const FARQ = [26, 42, 62], RESQ = [0.50, 0.62, 0.75, 1.0, 1.25];
+  const uiS = () => (SET.ui || 100) / 100;
   function applySet() {
     gl.uniform1f(U("uFov"), 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62);
     gl.uniform1f(U("uFar"), FARQ[SET.quality]);
     gl.uniform1f(U("uGrain"), SET.grain ? 1 : 0);
     gl.uniform1f(U("uBright"), SET.bright / 100);
-    cv.__scale = SCALEQ[SET.quality];
+    cv.__scale = RESQ[SET.res] || 1;
     gl.uniform1f(U("uLampR"), lampR());
   }
 
@@ -910,8 +1051,121 @@
       : [[0, t[0]], [.22, t[1]], [.6, t[2]], [1, "#191420"]];
   }
 
+  // ---------- керн ----------
+  // Колонка породы слева: и глубиномер, и разрез шахты. Метка — всегда ты.
+  const STRATA = [
+    { to:   1, c:[ 77, 54, 32] },   // рыхлая земля
+    { to:   4, c:[112, 71, 31] },   // глина
+    { to:   9, c:[112, 89, 71] },   // суглинок
+    { to:  20, c:[102, 97, 99] },   // камень
+    { to: 1e9, c:[ 77, 69, 89] }    // гранит
+  ];
+  function strataAt(y) {
+    if (y < 0) return [58, 40, 30];
+    for (const b of STRATA) if (y < b.to) return b.c;
+    return STRATA[STRATA.length - 1].c;
+  }
+  const coreSpan = () => 30 + Math.min(170, Math.pow(Math.max(0, P.y), 0.62) * 2.4);
+
+  function drawCore(g, W, H) {
+    const u = uiS();
+    const w = Math.max(15, Math.min(26, W * 0.031)) * u;
+    const x = Math.max(11, W * 0.017) * u;
+    const y0 = Math.max(26, H * 0.075), y1 = H - Math.max(70, H * 0.155) * u;
+    const hgt = y1 - y0;
+    if (hgt < 90) return;
+    const me = Math.max(0, P.y - EYE * 0.5);
+    const span = coreSpan();
+    const top = me - span * 0.5, bot = me + span * 0.5;
+    const yOf = d => y0 + (d - top) / (bot - top) * hgt;
+
+    g.save();
+    // подложка
+    g.fillStyle = "rgba(6,5,9,.60)";
+    g.beginPath(); g.roundRect(x - 4, y0 - 5, w + 8, hgt + 10, 6); g.fill();
+
+    // порода полосами
+    const step = Math.max(0.35, span / hgt * 2);
+    for (let d = top; d < bot; d += step) {
+      if (d < -1) continue;
+      const c = strataAt(d);
+      const yy = yOf(d), hh = Math.ceil(yOf(d + step) - yy) + 1;
+      g.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+      g.fillRect(x, Math.max(y0, yy), w, hh);
+    }
+    // жилы: там же, где они в породе
+    for (let d = Math.floor(top); d < bot; d += 1) {
+      if (d < 1) continue;
+      const h = h3(d | 0, 7, 3);
+      if (h < 0.72) continue;
+      g.globalAlpha = 0.55;
+      g.fillStyle = "#2f9fae";
+      g.fillRect(x + (h3(d | 0, 11, 5) * w * 0.6), yOf(d + 0.5), w * 0.30, 1.6);
+      g.globalAlpha = 1;
+    }
+    // тёмный пласт — не порода, а разрыв
+    if (DARK0 > 0 && bot > DARK0 && top < DARK0 + 12) {
+      const a = Math.max(y0, yOf(DARK0)), b = Math.min(y1, yOf(DARK0 + 12));
+      g.fillStyle = "#07060a"; g.fillRect(x, a, w, b - a);
+      g.strokeStyle = "rgba(126,116,148,.42)"; g.lineWidth = 1; g.setLineDash([3, 4]);
+      g.strokeRect(x + .5, a + .5, w - 1, Math.max(1, b - a - 1));
+      g.setLineDash([]);
+    }
+    // комнаты, до которых ты дошёл
+    for (const r of ROOMS) {
+      if (r.y < top || r.y > bot) continue;
+      if (Math.hypot(r.x - P.x, r.z - P.z) > 26) continue;
+      g.strokeStyle = "rgba(255,193,77,.75)"; g.lineWidth = 1;
+      g.strokeRect(x + 2.5, yOf(r.y - r.hy) + .5, w - 5, Math.max(2, yOf(r.y + r.hy) - yOf(r.y - r.hy)));
+    }
+    // край подвала — там, где кончается дом
+    if (top < 0 && bot > 0) {
+      g.strokeStyle = "rgba(255,193,77,.30)"; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, yOf(0)); g.lineTo(x + w, yOf(0)); g.stroke();
+    }
+    // рамка
+    g.strokeStyle = "rgba(255,255,255,.12)"; g.lineWidth = 1;
+    g.strokeRect(x + .5, y0 + .5, w - 1, hgt - 1);
+
+    // ты
+    const my = yOf(me);
+    g.fillStyle = "#ffc14d";
+    g.fillRect(x - 2, my - 1, w + 4, 2);
+    g.beginPath(); g.moveTo(x + w + 3, my); g.lineTo(x + w + 10, my - 4.5);
+    g.lineTo(x + w + 10, my + 4.5); g.closePath(); g.fill();
+
+    // глубина — рядом с меткой, крупно и один раз
+    const dep = Math.round(depthLag);
+    g.textAlign = "left"; g.textBaseline = "alphabetic";
+    g.shadowColor = "rgba(0,0,0,.9)"; g.shadowBlur = 8;
+    g.font = "600 " + Math.round(Math.min(34, W * 0.030) * u) + "px ui-monospace,monospace";
+    g.fillStyle = "#fff";
+    g.fillText(String(dep), x + w + 15, my + Math.min(10, W * 0.010));
+    const dw = g.measureText(String(dep)).width;
+    g.font = Math.round(Math.min(15, W * 0.013) * u) + "px ui-monospace,monospace";
+    g.fillStyle = "rgba(185,176,204,.9)";
+    g.fillText("М", x + w + 18 + dw, my + Math.min(10, W * 0.010));
+    g.shadowBlur = 0;
+
+    // руда — тонкая шкала по правому краю, у самого большого пальца
+    const cap = capOf(), k = Math.min(1, cart / cap);
+    const rw = Math.max(3, W * 0.005) * u, rx = W - Math.max(12, W * 0.019) * u - rw;
+    g.fillStyle = "rgba(255,255,255,.08)";
+    g.fillRect(rx, y0, rw, hgt);
+    g.fillStyle = k > .95 ? "#ffc14d" : k > .65 ? "#9fd6ee" : "rgba(159,214,238,.62)";
+    g.fillRect(rx, y1 - hgt * k, rw, hgt * k);
+    if (k > .95) {
+      g.textAlign = "right"; g.font = "600 " + Math.round(Math.min(11, W*0.011)) + "px ui-monospace,monospace";
+      g.shadowColor = "rgba(0,0,0,.9)"; g.shadowBlur = 6;
+      g.fillStyle = "#ffc14d";
+      g.fillText("ПОЛНА", rx - 6, y0 + 10);
+      g.shadowBlur = 0;
+    }
+    g.restore();
+  }
+
   function drawTool(g, W, H, sw, kind) {
-    const px = n => n * (W / 900);
+    const px = n => n * (W / 900) * 0.70;              // инструмент занимает угол, а не кадр
     // sw идёт от 1 (контакт) к 0 (покой). f — путь обратно, и он неравномерный:
     // от удара инструмент отскакивает резко, а доводится в занос медленно.
     const f = Math.pow(1 - sw, 0.62);
@@ -919,15 +1173,15 @@
 
     // две позы: занос (f=1) и точка удара (f=0)
     const bx = Math.sin(bob) * px(10), by = Math.abs(Math.cos(bob)) * px(13);
-    const hxA = W * 0.455, hyA = H * 0.700;            // головка в ударе — у прицела, чуть ниже
-    const hxB = W * 0.520, hyB = H * 0.120;            // в покое кирка стоит почти отвесно
-    const gxA = W * 0.905, gyA = H * 0.285;            // хват в ударе — уходит вверх и вправо
-    const gxB = W * 0.605, gyB = H + px(55);           // хват в покое — снизу, перед собой
+    const hxA = W * 0.560, hyA = H * 0.790;            // головка в ударе — ушла к прицелу вниз
+    const hxB = W * 0.800, hyB = H * 0.545;            // в покое — в правом нижнем углу, наклонена
+    const gxA = W * 1.075, gyA = H * 0.905;            // хват в ударе — подан вперёд
+    const gxB = W * 1.030, gyB = H * 1.165;            // хват в покое — за углом кадра
 
     // траектория головки — дуга, а не отрезок: на полпути её выносит вправо
-    const arc = Math.sin(f * Math.PI) * px(78);
+    const arc = Math.sin(f * Math.PI) * px(52);
     const hx = hxA + (hxB - hxA) * f + arc + bx * .5 + (Math.random() - .5) * px(7) * kick;
-    const hy = hyA + (hyB - hyA) * f - Math.sin(f * Math.PI) * px(46) + by * .5
+    const hy = hyA + (hyB - hyA) * f - Math.sin(f * Math.PI) * px(30) + by * .5
              + (Math.random() - .5) * px(7) * kick;
     const gx = gxA + (gxB - gxA) * f - bx;
     const gy = gyA + (gyB - gyA) * f + by;
@@ -1359,7 +1613,10 @@
     row(gm, "Тряска от удара", "", toggle("shake"));
 
     const vd = document.getElementById("p-vid"); vd.innerHTML = "";
-    row(vd, "Качество", "влияет на дальность видимости и чёткость", choice("quality", ["НИЗКОЕ","СРЕДНЕЕ","ВЫСОКОЕ"]));
+    row(vd, "Качество", "дальность видимости и мягкость света", choice("quality", ["НИЗКОЕ","СРЕДНЕЕ","ВЫСОКОЕ"]));
+    row(vd, "Разрешение", "во сколько раз картинка считается мельче экрана",
+        choice("res", ["50%","62%","75%","100%","125%"]));
+    row(vd, "Масштаб интерфейса", "керн, пояс, прицел и подписи", slider("ui", 60, 160, "%"));
     row(vd, "Яркость", "", slider("bright", 60, 160, "%"));
     row(vd, "Зерно плёнки", "", toggle("grain"));
 
@@ -1565,7 +1822,8 @@
     saveGame();
 
     WSEED++;                                          // новая смена — новый забой
-    genWorld(); uploadWorld(); seedNodes(); seedNotes();
+    CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
+    genWorld(); uploadWorld(); seedNotes();
     cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
     dread = 0; evCool = 0; hush = 0; tear = 0; faceT = 0; liar = 0; lights = 0;
     lampOut = 0; knockAt = 0; cnt = -1; shake = 0;
@@ -1641,14 +1899,14 @@
     if (mode !== "dig") return;
     retPos = { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch };
     mode = "lift"; liftDir = 1;
-    liftEnd = performance.now() + (900 + Math.max(0, P.y) * 100);   // тем дольше, чем глубже
+    liftEnd = performance.now() + Math.min(9000, 900 + Math.pow(Math.max(0, P.y), 0.62) * 105);
     liftMsg.textContent = "ПОДЪЁМ";
     liftEl.classList.add("on");
     if (document.pointerLockElement === cv) document.exitPointerLock();
   }
   function goDown() {
     mode = "lift"; liftDir = -1;
-    liftEnd = performance.now() + (600 + Math.max(0, retPos ? retPos.y : 0) * 70);
+    liftEnd = performance.now() + Math.min(7000, 600 + Math.pow(Math.max(0, retPos ? retPos.y : 0), 0.62) * 78);
     liftMsg.textContent = "СПУСК";
     hubEl.classList.remove("on");
     liftEl.classList.add("on");
@@ -1666,21 +1924,14 @@
     } else {
       if (retPos) { P.x = retPos.x; P.y = retPos.y; P.z = retPos.z;
                     P.yaw = retPos.yaw; P.pitch = retPos.pitch; P.vy = 0; }
+      slideTo(P.y - EYE * 0.5);
       mode = "dig";
     }
   }
 
 
   // ---------- то, чего нет ----------
-  const NODES = [];
-  function seedNodes() {
-    NODES.length = 0;
-    for (let i = 0; i < 3; i++) NODES.push({
-      x: (hs(i, 11, 3) - .5) * 22, z: (hs(i, 13, 5) - .5) * 22,
-      y: 24 + hs(i, 17, 7) * 24, r: 1.5, hit: 0
-    });
-  }
-  seedNodes();
+  function seedNodes() { refreshFeatures(); }
   let blackOre = 0, nodeBreaks = 0, fallEnd = 0, fallSave = null;
 
   function nodeNear(x, y, z) {
@@ -1701,21 +1952,21 @@
   const DIARY = [
     { y: 3.5, k: "ЛИСТОК · ПОНЕДЕЛЬНИК", t:
       "Начал с пола в подвале. Жена не спрашивает, зачем.\nЭто хуже, чем если бы спрашивала.\n\nЗа день ушёл на два метра. Земля мягкая, пахнет погребом." },
-    { y: 8, k: "ЛИСТОК · ЧЕТВЁРТЫЙ ДЕНЬ", t:
+    { y: 26, k: "ЛИСТОК · ЧЕТВЁРТЫЙ ДЕНЬ", t:
       "Понял одну вещь: вниз идти легче, чем вбок.\nВниз тебе помогает вес. Вбок — только ты сам.\n\nПоэтому все, кто копал до меня, ушли вниз.\nПоэтому вбок никто и не смотрел." },
-    { y: 13, k: "ЛИСТОК · БЕЗ ДАТЫ", t:
+    { y: 74, k: "ЛИСТОК · БЕЗ ДАТЫ", t:
       "Пробил стену и попал в комнату.\nКирпич, известь, доски над головой. Подвал.\n\nНад ним нет дома. Я проверял сверху — там глина и глина.\nЗначит, дом был раньше, а земля пришла потом.\n\nИли подвал вырыли уже здесь. Не знаю, что хуже." },
-    { y: 18, k: "ЛИСТОК · СЧЁТ", t:
+    { y: 150, k: "ЛИСТОК · СЧЁТ", t:
       "Взял привычку считать бригаду перед подъёмом.\nСегодня посчитал два раза, вышло одинаково.\nЗначит, всё в порядке.\n\nНе понимаю, почему меня это не успокоило." },
-    { y: 23, k: "ЛИСТОК · ПРО ФОНАРЬ", t:
+    { y: 300, k: "ЛИСТОК · ПРО ФОНАРЬ", t:
       "Фонарь показывает не то, что есть, а то, что отражает.\nЭто очевидно, но здесь начинает мешать.\n\nЕсть места, где он светит и ничего не возвращается.\nЯ туда больше не свечу. Не потому что страшно.\nПотому что не хочется знать, сколько там до дна." },
-    { y: 28, k: "ЛИСТОК · ВТОРАЯ КОМНАТА", t:
+    { y: 560, k: "ЛИСТОК · ВТОРАЯ КОМНАТА", t:
       "Ещё одна. Такая же, только глубже.\nПланировка та же самая. Мох в тех же углах.\n\nЯ стоял в ней и ждал, что услышу сверху шаги.\nНе услышал. Долго ждал." },
-    { y: 33, k: "ЛИСТОК · ТИШИНА", t:
+    { y: 980, k: "ЛИСТОК · ТИШИНА", t:
       "Здесь тихо не так, как наверху.\nНаверху тишина — это когда никто не шумит.\nЗдесь тишина — это когда звук не доходит.\n\nРазница в том, что во втором случае кто-то может шуметь." },
-    { y: 38, k: "ЛИСТОК · РИТМ", t:
+    { y: 1700, k: "ЛИСТОК · РИТМ", t:
       "Слышал, как надо мной кто-то бьёт киркой.\nРовно, спокойно, с моим темпом.\nОстановился — он остановился.\n\nПотом сообразил, что надо мной только моя же шахта." },
-    { y: 43, k: "ЛИСТОК · ПОСЛЕДНИЙ", t:
+    { y: 2900, k: "ЛИСТОК · ПОСЛЕДНИЙ", t:
       "Если ты это читаешь, значит, свод всё-таки сошёл.\nНе бойся, это не конец, это просто конец смены.\n\nЗабери осколки, они переживают обвал. Всё остальное — нет.\nИ не ищи меня внизу. Я уже наверху, начинаю заново.\n\nТебя зовут так же, как меня." }
   ];
   let NOTEPOS = [];
@@ -1724,8 +1975,13 @@
     NOTEPOS = [];
     for (let i = 0; i < DIARY.length; i++) {
       if (SAV.notes[i]) continue;                       // поднятое обратно не ложится
-      if (i === 2 && ROOMS[0]) { const r = ROOMS[0]; NOTEPOS.push({ i, x: r.x + r.hx*0.5, y: r.y + r.hy - 0.35, z: r.z - r.hz*0.5 }); continue; }
-      if (i === 5 && ROOMS[1]) { const r = ROOMS[1]; NOTEPOS.push({ i, x: r.x - r.hx*0.5, y: r.y + r.hy - 0.35, z: r.z + r.hz*0.5 }); continue; }
+      // две записки лежат в чужих подвалах, а не в породе
+      if (i === 2 || i === 5) {
+        const r = roomAt(i === 2 ? 0 : 3);
+        NOTEPOS.push({ i, x: r.x + r.hx * (i === 2 ? .5 : -.5), y: r.y + r.hy - 0.35,
+                       z: r.z + r.hz * (i === 2 ? -.5 : .5) });
+        continue;
+      }
       const a = hs(i, 41, 3) * Math.PI * 2, rad = 0.4 + hs(i, 43, 5) * 2.4;
       NOTEPOS.push({ i, x: Math.cos(a) * rad, y: DIARY[i].y + hs(i, 45, 7) * 2.2, z: Math.sin(a) * rad });
     }
@@ -1761,7 +2017,7 @@
   // ---------- космическое ----------
   // Не события и не твари. Свойства места: они просто есть там, где ты оказался.
   let DARK0 = 0;                                     // начало тёмного пласта
-  function seedCosmic() { DARK0 = 25.5 + hs(3, 61, 11) * 2; }
+  function seedCosmic() { DARK0 = 1700 + hs(3, 61, 11) * 260; }
   seedCosmic();
   const inDark = y => y > DARK0 && y < DARK0 + 12;
 
@@ -1774,14 +2030,14 @@
     return Math.sin(Math.min(1, Math.max(0, 1 - left)) * Math.PI);
   }
   function tideTick(dt) {
-    if (P.y < 12 || tideEnd) return;
+    if (P.y < 380 || tideEnd) return;
     tideNext -= dt;
     if (tideNext > 0) return;
     tideNext = 55 + Math.random() * 95;
     tideEnd = performance.now() + 3000;
   }
   // смещение: включается плавно, порога нет
-  const shiftAmt = () => Math.min(1, Math.max(0, (P.y - 14) / 10));
+  const shiftAmt = () => Math.min(1, Math.max(0, (P.y - 620) / 780));
 
   // крупа: после Точки на границе света висят одиночные искры
   let grit = [], gritNext = 0, sawPoint = false;
@@ -1894,15 +2150,15 @@
   const fired = {};
 
   const EVENTS = [
-    { id:"knock",  at: 6,  go(){ knockAt = performance.now() + 620; } },
-    { id:"hush",   at: 12, go(){ hush = 8; } },
-    { id:"tear",   at: 18, go(){ tear = 3; } },
-    { id:"lamp",   at: 24, go(){ lampOut = 5; } },
-    { id:"liar",   at: 30, go(){ liar = 2; } },
-    { id:"face",   at: 34, go(){ faceT = 2; } },
-    { id:"count",  at: 38, go(){ cnt = 9; cntAt = P.y; } },
-    { id:"lights", at: 44, go(){ lights = 3.2; } },
-    { id:"point",  at: 40, go(){ spawnPoint(); } }
+    { id:"knock",  at:   12, go(){ knockAt = performance.now() + 620; } },
+    { id:"hush",   at:   34, go(){ hush = 8; } },
+    { id:"tear",   at:   70, go(){ tear = 3; } },
+    { id:"lamp",   at:  130, go(){ lampOut = 5; } },
+    { id:"liar",   at:  230, go(){ liar = 2; } },
+    { id:"face",   at:  420, go(){ faceT = 2; } },
+    { id:"count",  at:  760, go(){ cnt = 9; cntAt = P.y; } },
+    { id:"lights", at: 1250, go(){ lights = 3.2; } },
+    { id:"point",  at: 2600, go(){ spawnPoint(); } }
   ];
 
   function dreadTick(dt) {
@@ -2074,11 +2330,19 @@
   };
 
   function resize() {
-    const dpr = Math.min(devicePixelRatio || 1, isTouch ? 1.4 : 1.8) * (cv.__scale || 1);
-    const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
-    if (cv.width !== w) { cv.width = w; cv.height = h; fx.width = w; fx.height = h; }
-    gl.viewport(0, 0, cv.width, cv.height);
-    gl.uniform2f(U("uRes"), cv.width, cv.height);
+    const base = Math.min(devicePixelRatio || 1, isTouch ? 1.4 : 1.8);
+    const gw = Math.max(160, Math.round(cv.clientWidth * base * (cv.__scale || 1)));
+    const gh = Math.max(120, Math.round(cv.clientHeight * base * (cv.__scale || 1)));
+    if (cv.width !== gw || cv.height !== gh) {
+      cv.width = gw; cv.height = gh;
+      gl.viewport(0, 0, gw, gh);
+      gl.uniform2f(U("uRes"), gw, gh);
+    }
+    const fw = Math.max(160, Math.round(fx.clientWidth * base));
+    const fh = Math.max(120, Math.round(fx.clientHeight * base));
+    if (fx.width !== fw || fx.height !== fh) { fx.width = fw; fx.height = fh; }
+    const g = document.getElementById("game");
+    if (g.style.getPropertyValue("--uis") !== String(uiS())) g.style.setProperty("--uis", uiS());
   }
 
   let last = performance.now();
@@ -2096,7 +2360,8 @@
       requestAnimationFrame(frame);
       return;
     }
-    if (SAV.crew) { cart = Math.min(capOf(), cart + SAV.crew * 0.9 * dt);
+    windowTick();
+    if (SAV.crew) { cart = Math.min(capOf(), cart + SAV.crew * 0.42 * oreMul() * dt);
       cartEl.style.width = (cart / capOf() * 100) + "%";
       cartBox.classList.toggle("show", cart > capOf() * .65); }
 
@@ -2130,7 +2395,7 @@
     if (blocked(P.x, ny, P.z)) { if (P.vy > 0) { P.ground = true; while (!blocked(P.x, P.y + 0.02, P.z) && P.y < ny) P.y += 0.02; } P.vy = 0; }
     else P.y = ny;
     if (down("jump") && P.ground) { P.vy = -7.2; }
-    if (P.y > 46) { P.x = 0; P.z = 3; P.y = -.02; P.vy = 0; }
+    if (P.y > 6200) { P.y = 6200; P.vy = 0; }        // дно есть, но до него ещё идти
 
     beltTick(dt);
     noteTick();
@@ -2155,7 +2420,8 @@
           thud(false, .30);
           if (nd.hit === 1) nodeBreaks++;
           if (nodeBreaks >= 2 && !fired.nodrop) { fired.nodrop = 1; startFall(); }
-        } else if (t[1] > 0 && !dk) cart = Math.min(capOf(), cart + (2 + Math.random() * 3 * powOf()) * (buff.ore > 0 ? 5 : 1));
+        } else if (t[1] > 0 && !dk) cart = Math.min(capOf(),
+          cart + (2 + Math.random() * 3 * powOf()) * oreMul() * (buff.ore > 0 ? 5 : 1));
         oreEl.textContent = fmt(cart) + " / " + capOf();
         oreEl.classList.add("hot"); oreHot = 1.4;
         cartEl.style.width = (cart / capOf() * 100) + "%";
@@ -2166,7 +2432,7 @@
     dreadTick(dt); countTick();
     tideTick(dt); gritTick(dt);
     if (!sawPoint && PT && ptDist() < 18) { sawPoint = true; SAV.seen.cosmic = 1; saveGame(); }
-    if (!SAV.seen.cosmic && (inDark(P.y) || P.y > 20)) { SAV.seen.cosmic = 1; saveGame(); }
+    if (!SAV.seen.cosmic && (inDark(P.y) || P.y > 300)) { SAV.seen.cosmic = 1; saveGame(); }
     if (hush > 0) hush -= dt;
     if (lampOut > 0) {
       lampOut -= dt + (digging ? dt * 1.6 : 0);      // раздувается кликами
@@ -2199,11 +2465,16 @@
     const rm = activeRoom();
     if (rm) { gl.uniform3f(U("uRoomC"), rm.x, rm.y, rm.z); gl.uniform3f(U("uRoomH"), rm.hx, rm.hy, rm.hz); }
     else gl.uniform3f(U("uRoomH"), 0, 0, 0);
+    if (slabDirty) {
+      gl.uniform1f(U("uY0"), Y0);
+      gl.uniform1f(U("uSlab"), ROT / NY);
+      slabDirty = false;
+    }
     gl.uniform1f(U("uTide"), tideAmt());
     gl.uniform1f(U("uShift"), shiftAmt());
     gl.uniform1f(U("uDark"), DARK0);
-    gl.uniform1f(U("uDrain"), buff.warm > 0 ? 0 : Math.max(0, Math.min(.92, (P.y - 10) / 46)));
-    gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 7) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
+    gl.uniform1f(U("uDrain"), buff.warm > 0 ? 0 : Math.max(0, Math.min(.94, Math.pow(Math.max(0, P.y - 8) / 900, 0.55))));
+    gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 9) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     // накладной слой
@@ -2217,6 +2488,7 @@
       fxc.fillRect(p2.x, p2.y, p2.s, p2.s);
     }
     fxc.globalAlpha = 1;
+    drawCore(fxc, fx.width, fx.height);
     drawGrit(fxc);
     drawDread(fxc, fx.width, fx.height, dt);
     const ta = tideAmt();
