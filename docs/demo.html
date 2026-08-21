@@ -205,7 +205,9 @@
     color:var(--lamp);border:1px solid #8a6520;border-radius:11px;background:#241b12;cursor:pointer}
   .hub-go small{display:block;font-size:8.5px;letter-spacing:.16em;color:#6f6788;margin-top:6px}
   .game.void .hud,.game.void .hotbar,.game.void .cross,.game.void .toolname,
-  .game.void .gear,.game.void .cart,.game.void .hint{opacity:0 !important;transition:opacity .35s}
+  .game.void .gear,.game.void .cart,.game.void .hint,
+  .game.void .fs,.game.void .tbtns,.game.void .stick,.game.void .dig,
+  .game.void .haz{opacity:0 !important;pointer-events:none;transition:opacity .35s}
   .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;text-align:center;font-size:13px;color:var(--ink2);background:#0b0910}
 
   .keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 4px}
@@ -1049,7 +1051,11 @@
 
   // ---------- звук ----------
   let AC = null;
-  function audioOn() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state === "suspended") AC.resume(); }
+  function audioOn() {
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (AC && AC.state === "suspended") AC.resume();
+    droneOn();
+  }
   function thud(hard, pitch) {
     if (!AC) return;
     const n = AC.sampleRate * 0.16, buf = AC.createBuffer(1, n, AC.sampleRate), ch = buf.getChannelData(0);
@@ -1059,6 +1065,120 @@
     f.frequency.value = (hard ? 1500 : 420) * pitch; f.Q.value = hard ? 1.6 : 0.8;
     const g = AC.createGain(); g.gain.value = (hush > 0 ? 0 : 1) * (hard ? .3 : .38) * (SET.vol/100) * (SET.sfx/100);
     src.connect(f); f.connect(g); g.connect(AC.destination); src.start();
+  }
+
+  // ---------- звук глубины ----------
+  // Порода звучит по-своему, шаг слышен, и чем ниже, тем ровнее гудит вокруг.
+  const ROCK_SND = [
+    { to:   3, f: 320, q: 0.7, d: 4.6 },             // земля: глухо и коротко
+    { to:  12, f: 380, q: 0.9, d: 4.0 },             // глина
+    { to:  40, f: 520, q: 1.1, d: 3.4 },             // суглинок
+    { to: 150, f: 760, q: 1.6, d: 2.8 },             // известняк
+    { to: 500, f: 980, q: 2.2, d: 2.4 },             // сланец: звонкая плитка
+    { to:1200, f: 640, q: 1.4, d: 3.0 },             // гранит
+    { to:2600, f:1420, q: 3.2, d: 1.9 },             // базальт: почти стекло
+    { to:4200, f: 880, q: 1.8, d: 2.6 },             // рудное тело
+    { to: 1e9, f:1800, q: 4.0, d: 1.6 }              // последнее
+  ];
+  const rockSnd = y => { for (const r of ROCK_SND) if (y < r.to) return r; return ROCK_SND[8]; };
+
+  function hitRock(y, hard) {
+    if (!AC || hush > 0) return;
+    const r = rockSnd(Math.max(0, y));
+    const n = AC.sampleRate * 0.19, buf = AC.createBuffer(1, n, AC.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, r.d);
+    const src = AC.createBufferSource(); src.buffer = buf;
+    const f2 = AC.createBiquadFilter(); f2.type = "bandpass";
+    f2.frequency.value = r.f * (0.86 + Math.random() * 0.28); f2.Q.value = r.q;
+    const g = AC.createGain();
+    g.gain.value = (hard ? 0.34 : 0.30) * (SET.vol / 100) * (SET.sfx / 100);
+    src.connect(f2); f2.connect(g); g.connect(AC.destination); src.start();
+    // у твёрдой породы есть ещё и звон
+    if (r.q > 1.5) {
+      const o = AC.createOscillator(), og = AC.createGain();
+      o.type = "triangle"; o.frequency.value = r.f * 2.1 * (0.95 + Math.random() * 0.1);
+      og.gain.setValueAtTime(0.055 * (SET.vol/100) * (SET.sfx/100), AC.currentTime);
+      og.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 0.22);
+      o.connect(og); og.connect(AC.destination); o.start(); o.stop(AC.currentTime + 0.24);
+    }
+  }
+
+  // шаг: короткий шорох, ритм от скорости
+  let stepPhase = 0;
+  function stepTick(dt, moving, running) {
+    if (!AC || !moving || !P.ground) { return; }
+    stepPhase += dt * (running ? 2.6 : 1.75);
+    if (stepPhase < 1) return;
+    stepPhase = 0;
+    if (hush > 0) return;
+    const n = AC.sampleRate * 0.1, buf = AC.createBuffer(1, n, AC.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 6);
+    const src = AC.createBufferSource(); src.buffer = buf;
+    const f2 = AC.createBiquadFilter(); f2.type = "lowpass"; f2.frequency.value = 900 + Math.random() * 300;
+    const g = AC.createGain(); g.gain.value = 0.12 * (SET.vol / 100) * (SET.sfx / 100);
+    src.connect(f2); f2.connect(g); g.connect(AC.destination); src.start();
+  }
+
+  // ровный гул: чем глубже, тем он ниже и заметнее. Это и есть «давит».
+  let droneG = null, droneF = null;
+  function droneOn() {
+    if (!AC || droneG) return;
+    const len = AC.sampleRate * 2, buf = AC.createBuffer(1, len, AC.sampleRate), ch = buf.getChannelData(0);
+    let v = 0;
+    for (let i = 0; i < len; i++) { v = v * 0.994 + (Math.random() * 2 - 1) * 0.006; ch[i] = v * 6; }
+    const src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
+    droneF = AC.createBiquadFilter(); droneF.type = "lowpass"; droneF.frequency.value = 140;
+    droneG = AC.createGain(); droneG.gain.value = 0;
+    src.connect(droneF); droneF.connect(droneG); droneG.connect(AC.destination);
+    src.start();
+  }
+  function droneTick() {
+    if (!droneG) return;
+    const deep = Math.max(0, P.y);
+    const want = hush > 0 ? 0
+      : Math.min(0.30, Math.pow(deep / 2600, 0.7) * 0.30) * (SET.vol / 100);
+    droneG.gain.value += (want - droneG.gain.value) * 0.04;
+    droneF.frequency.value = 150 - Math.min(95, deep / 70);
+  }
+
+  // капель: редкая, всегда неожиданная
+  let dripAt = 12 + Math.random() * 20;
+  function dripTick(dt) {
+    if (!AC || hush > 0) return;
+    dripAt -= dt;
+    if (dripAt > 0) return;
+    dripAt = 14 + Math.random() * 34;
+    if (P.y < 4) return;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(1100 + Math.random() * 500, AC.currentTime);
+    o.frequency.exponentialRampToValueAtTime(430, AC.currentTime + 0.09);
+    g.gain.setValueAtTime(0.10 * (SET.vol/100) * (SET.sfx/100), AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 0.20);
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + 0.22);
+  }
+
+  // клеть: трос и мотор, пока едешь
+  let liftG = null;
+  function liftSound(on) {
+    if (!AC) return;
+    if (on && !liftG) {
+      const o = AC.createOscillator(), o2 = AC.createOscillator();
+      liftG = AC.createGain(); liftG.gain.value = 0;
+      o.type = "sawtooth"; o.frequency.value = 62;
+      o2.type = "square"; o2.frequency.value = 31;
+      const f2 = AC.createBiquadFilter(); f2.type = "lowpass"; f2.frequency.value = 260;
+      o.connect(f2); o2.connect(f2); f2.connect(liftG); liftG.connect(AC.destination);
+      o.start(); o2.start();
+      liftG.gain.linearRampToValueAtTime(0.10 * (SET.vol/100) * (SET.sfx/100), AC.currentTime + 0.5);
+      liftG.__osc = [o, o2];
+    } else if (!on && liftG) {
+      const g = liftG; liftG = null;
+      try {
+        g.gain.linearRampToValueAtTime(0.0001, AC.currentTime + 0.4);
+        g.__osc.forEach(o => o.stop(AC.currentTime + 0.5));
+      } catch (e) {}
+    }
   }
 
   // ---------- эффекты ----------
@@ -1090,7 +1210,7 @@
   const SKEY = "zaboy.save.v2", SKEY_OLD = "zaboy.save.v1";
   const SDEF = { bank: 0, shards: 0, pick: 1, lamp: 1, crew: 0, cart: 1, best: 0,
                  seen: {}, notes: {}, log: [], shift: 0, men: [],
-                 mine: "", at: null, load: 0, v: 2 };
+                 mine: "", at: null, load: 0, off: 0, seenAt: 0, v: 2 };
   let SAV;
   // v2 хранит ещё и саму шахту. Старое сохранение переносим, чтобы прогресс не пропал.
   try {
@@ -1124,10 +1244,11 @@
   const PRICE = { pick: l => Math.round(40 * Math.pow(1.42, l - 1)),
                   lamp: l => Math.round(90 * Math.pow(1.55, l - 1)),
                   crew: l => Math.round(140 * Math.pow(1.52, l)),
-                  cart: l => Math.round(70 * Math.pow(1.48, l - 1)) };
+                  cart: l => Math.round(70 * Math.pow(1.48, l - 1)),
+                  off:  l => Math.round(320 * Math.pow(1.85, l)) };
   // осколки переживают обвал и множат всё, что смена наживает заново
   const shardsFor = d => Math.floor(Math.pow(Math.max(0, d - 40) / 26, 1.15));
-  const shardMul = () => 1 + SAV.shards * 0.09;
+  const shardMul = () => 1 + Math.pow(Math.max(0, SAV.shards), 0.62) * 0.35;
   // чем глубже, тем ценнее порода: иначе спуск не окупается
   const oreMul = () => 1 + Math.pow(Math.max(0, P.y) / 55, 0.88);
   const capOf  = () => Math.round((60 + SAV.cart * 62) * shardMul());
@@ -1891,6 +2012,7 @@
     { k:"pick", n:"КИРКА",   d:() => `ур. ${SAV.pick} · ${(powOf()*100|0)}% силы` },
     { k:"lamp", n:"ФОНАРЬ",  d:() => `ур. ${SAV.lamp} · видно на ${(lampR()*3.4).toFixed(1)} м` },
     { k:"cart", n:"ВАГОНЕТКА", d:() => `ур. ${SAV.cart} · вмещает ${capOf()}` },
+    { k:"off",  n:"НАРЯД",   d:() => `${Math.round(offShare()*100)}% выработки · до ${offHours()} ч без тебя` },
     { k:"crew", n:"НАНЯТЬ", d:() => SAV.men.length
         ? `${SAV.men.length} чел. · в забое мест ${menCap()}`
         : "пока копаешь один" }
@@ -1903,8 +2025,16 @@
     hBank.textContent = fmt(SAV.bank);
     hDepth.textContent = "НА " + Math.max(0, Math.round(retPos ? retPos.y : 0)) + " М";
     hubRows.innerHTML = "";
+    const off = offlineNote();
+    if (off) {
+      const o = document.createElement("div");
+      o.className = "hrow max";
+      o.innerHTML = `<span class="n">БЕЗ ТЕБЯ</span><span class="p">+${fmt(off)}</span>` +
+                    `<span class="s">бригада работала, пока тебя не было</span>`;
+      hubRows.append(o);
+    }
     for (const r of ROWS) {
-      const lvl = SAV[r.k], cost = PRICE[r.k](lvl), can = SAV.bank >= cost;
+      const lvl = SAV[r.k] | 0, cost = PRICE[r.k](lvl), can = SAV.bank >= cost;
       const d = document.createElement("div");
       d.className = "hrow" + (can ? " can" : "");
       d.innerHTML = `<span class="n">${r.n}</span><span class="p">${fmt(cost)}</span>` +
@@ -2097,7 +2227,7 @@
       const got = !!SAV.notes[i];
       d.className = "hrow" + (got ? " can" : " max");
       d.innerHTML = `<span class="n">${got ? n.k.replace("ЛИСТОК · ", "") : "· · · · ·"}</span>` +
-                    `<span class="p">${Math.round(n.y)} м</span>` +
+                    `<span class="p">${got ? Math.round(SAV.notes[i]) : Math.round(n.y)} м</span>` +
                     `<span class="s">${got ? n.t.split("\n")[0] : "не найден"}</span>`;
       if (got) d.onclick = () => { hubEl.classList.remove("on"); openNote(i);
         noteEl.onclick = () => { noteEl.classList.remove("on"); noteEl.onclick = closeNote;
@@ -2221,6 +2351,112 @@
     thud(false, 0.30 + Math.random() * 0.05);
   }
 
+  // ---------- дно ----------
+  // Игру нельзя проиграть, и выиграть её тоже нельзя. Её можно только закончить,
+  // и это оказывается сменой караула.
+  const BOTTOM = 6000;
+  let endT = 0, endPhase = 0;
+  function bottomTick() {
+    if (SAV.seen.end || endT) return;
+    if (P.y < BOTTOM) return;
+    SAV.seen.end = 1; saveGame();
+    endT = performance.now(); endPhase = 0;
+    mode = "end";
+    document.getElementById("game").classList.add("void");
+    if (document.pointerLockElement === cv) document.exitPointerLock();
+    rumble();
+  }
+  function endTick() {
+    const t = (performance.now() - endT) / 1000;
+    if (t > 30) {                                   // всё, следующая смена
+      document.getElementById("game").classList.remove("void");
+      SAV.shift = (SAV.shift || 0) + 1;
+      SAV.log = SAV.log || [];
+      SAV.log.push({ n: SAV.shift, d: Math.round(SAV.best), s: shardsFor(SAV.best),
+                     c: SAV.men.length, end: 1 });
+      SAV.shards += shardsFor(SAV.best);
+      SAV.bank = 0; SAV.pick = 1; SAV.lamp = 1; SAV.cart = 1; SAV.crew = 0;
+      SAV.best = 0; SAV.men = []; SAV.notes = {}; SAV.seen = { end: 1, cosmic: SAV.seen.cosmic };
+      saveGame();
+      WSEED++; CUTS.length = 0; CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
+      genWorld(); uploadWorld(); seedNotes(); seedCosmic();
+      cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
+      for (const k in fired) delete fired[k];
+      P.x = 0; P.y = -0.02; P.z = 3.2; P.vy = 0; P.yaw = Math.PI; P.pitch = -0.40;
+      endT = 0; mode = "dig"; applySet();
+    }
+  }
+  // На дне стоит человек. Ты знаешь это лицо: оно было во всех бликах.
+  function drawEnd(g, W, H) {
+    const t = (performance.now() - endT) / 1000;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+
+    // 0-9 c: из темноты проступает фигура
+    if (t < 13) {
+      const k = Math.min(1, Math.max(0, (t - 1.4) / 5)) * Math.min(1, (13 - t) / 2.2);
+      const cx = W / 2, base = H * 0.86, hh = H * 0.52;
+      g.globalAlpha = k * 0.9;
+      g.fillStyle = "#191622";
+      g.beginPath();
+      g.ellipse(cx, base - hh * 0.86, hh * 0.115, hh * 0.135, 0, 0, 7);   // голова
+      g.fill();
+      g.beginPath();
+      g.moveTo(cx - hh * 0.20, base);
+      g.quadraticCurveTo(cx - hh * 0.19, base - hh * 0.60, cx - hh * 0.10, base - hh * 0.70);
+      g.lineTo(cx + hh * 0.10, base - hh * 0.70);
+      g.quadraticCurveTo(cx + hh * 0.19, base - hh * 0.60, cx + hh * 0.20, base);
+      g.closePath(); g.fill();
+      // лампа на каске — единственный свет, и он смотрит на тебя
+      const lk = k * (0.55 + 0.45 * Math.sin(t * 1.7));
+      const lg = g.createRadialGradient(cx, base - hh * 0.93, 0, cx, base - hh * 0.93, hh * 0.5);
+      lg.addColorStop(0, `rgba(255,214,150,${lk * 0.5})`);
+      lg.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = lg;
+      g.fillRect(cx - hh * 0.5, base - hh * 1.45, hh, hh);
+      g.globalAlpha = 1;
+    }
+    // 13-22 c: две строки, без объяснений
+    const lines = [
+      [13.5, 19.5, "СМЕНА ЗАКОНЧЕНА", 0.40, "#efe8f6", 0.052],
+      [15.2, 20.5, "твой дневник ушёл в архив", 0.475, "#8d84a6", 0.024],
+      [21.0, 28.5, "ЗАБОЙ ПРИНЯЛ", 0.44, "#ffc14d", 0.040],
+      [22.6, 29.0, "смена " + ((SAV.shift || 0) + 1), 0.51, "#6b637f", 0.023]
+    ];
+    g.textAlign = "center";
+    for (const [a, b2, txt, y, col, sz] of lines) {
+      if (t < a || t > b2) continue;
+      g.globalAlpha = Math.min(1, (t - a) / 1.2) * Math.min(1, (b2 - t) / 1.2);
+      g.fillStyle = col;
+      g.font = (sz > 0.03 ? "600 " : "") + Math.round(H * sz) + "px ui-monospace,monospace";
+      g.fillText(txt, W / 2, H * y);
+      g.globalAlpha = 1;
+    }
+  }
+
+  // ---------- пока тебя нет ----------
+  // Бригада работает и без тебя, но недолго и не в полную силу.
+  // Это отдельная ветка: сколько процентов и сколько часов — покупается.
+  const offShare = () => Math.min(1, 0.40 + (SAV.off || 0) * 0.12);
+  const offHours = () => Math.min(24, 4 + (SAV.off || 0) * 2.5);
+  let offGot = 0;
+  function offlineCatchUp() {
+    const now = Date.now(), was = SAV.seenAt || now;
+    SAV.seenAt = now;
+    const hrs = Math.min(offHours(), (now - was) / 3600000);
+    if (hrs < 0.05 || !SAV.men.length) { saveGame(); return; }
+    const perSec = SAV.men.length * 0.42 * (1 + Math.pow(Math.max(0, SAV.best) / 55, 0.88)) * 0.25;
+    const got = Math.round(perSec * hrs * 3600 * offShare());
+    if (got < 1) { saveGame(); return; }
+    SAV.bank += got; offGot = got;
+    saveGame();
+  }
+  function offlineNote() {
+    if (!offGot) return "";
+    const t = offGot; offGot = 0;
+    return t;
+  }
+
   // ---------- обвал ----------
   // Проиграть нельзя. Можно только закончить смену — и это единственный способ идти дальше.
   let caveEnd = 0, caveGain = 0, caveDepth = 0, armed = false;
@@ -2317,12 +2553,14 @@
     liftEnd = performance.now() + Math.min(9000, 900 + Math.pow(Math.max(0, P.y), 0.62) * 105);
     liftMsg.textContent = "ПОДЪЁМ";
     liftEl.classList.add("on");
+    liftSound(true);
     if (document.pointerLockElement === cv) document.exitPointerLock();
   }
   function goDown() {
     mode = "lift"; liftDir = -1;
     liftEnd = performance.now() + Math.min(7000, 600 + Math.pow(Math.max(0, retPos ? retPos.y : 0), 0.62) * 78);
     liftMsg.textContent = "СПУСК";
+    liftSound(true);
     hubEl.classList.remove("on");
     liftEl.classList.add("on");
   }
@@ -2331,6 +2569,7 @@
   function liftTick() {
     if (performance.now() < liftEnd) return;
     liftEl.classList.remove("on");
+    liftSound(false);
     if (liftDir > 0) {
       SAV.bank += Math.round(cart); cart = 0;          // руду сдаём наверху
       saveGame(true);
@@ -2372,22 +2611,46 @@
   const DIARY = [
     { y: 3.5, k: "ЛИСТОК · ПОНЕДЕЛЬНИК", t:
       "Начал с пола в подвале. Жена не спрашивает, зачем.\nЭто хуже, чем если бы спрашивала.\n\nЗа день ушёл на два метра. Земля мягкая, пахнет погребом." },
-    { y: 26, k: "ЛИСТОК · ЧЕТВЁРТЫЙ ДЕНЬ", t:
+    { y: 9, k: "ЛИСТОК · ЧЕТВЁРТЫЙ ДЕНЬ", t:
       "Понял одну вещь: вниз идти легче, чем вбок.\nВниз тебе помогает вес. Вбок — только ты сам.\n\nПоэтому все, кто копал до меня, ушли вниз.\nПоэтому вбок никто и не смотрел." },
-    { y: 74, k: "ЛИСТОК · БЕЗ ДАТЫ", t:
+    { y: 26, k: "ЛИСТОК · ПРО ГЛИНУ", t:
+      "Глина держит форму. Выкопал — так и осталось.\nЭто приятно: видно, что сделал.\n\nНиже начнётся камень, и он держать не будет.\nТам всё придётся крепить, а крепить я не умею." },
+    { y: 48, k: "ЛИСТОК · ПЕРВЫЙ НАЁМ", t:
+      "Взял человека. Зовут Толя, откатчик.\nСпросил, откуда он про меня узнал. Сказал — по объявлению.\n\nЯ объявления не давал." },
+    { y: 74, k: "ЛИСТОК · КОМНАТА", t:
       "Пробил стену и попал в комнату.\nКирпич, известь, доски над головой. Подвал.\n\nНад ним нет дома. Я проверял сверху — там глина и глина.\nЗначит, дом был раньше, а земля пришла потом.\n\nИли подвал вырыли уже здесь. Не знаю, что хуже." },
-    { y: 150, k: "ЛИСТОК · СЧЁТ", t:
+    { y: 112, k: "ЛИСТОК · СЧЁТ", t:
       "Взял привычку считать бригаду перед подъёмом.\nСегодня посчитал два раза, вышло одинаково.\nЗначит, всё в порядке.\n\nНе понимаю, почему меня это не успокоило." },
-    { y: 300, k: "ЛИСТОК · ПРО ФОНАРЬ", t:
+    { y: 150, k: "ЛИСТОК · ИЗВЕСТНЯК", t:
+      "Пошёл светлый камень, слоями, как страницы.\nВ нём попадаются ракушки. Мелкие, целые.\n\nЗначит, здесь было море. Сто пятьдесят метров назад было море,\nи оно нас не спрашивало." },
+    { y: 215, k: "ЛИСТОК · ПРО ФОНАРЬ", t:
       "Фонарь показывает не то, что есть, а то, что отражает.\nЭто очевидно, но здесь начинает мешать.\n\nЕсть места, где он светит и ничего не возвращается.\nЯ туда больше не свечу. Не потому что страшно.\nПотому что не хочется знать, сколько там до дна." },
-    { y: 560, k: "ЛИСТОК · ВТОРАЯ КОМНАТА", t:
+    { y: 300, k: "ЛИСТОК · ВОДА", t:
+      "Первый раз пришла вода. Услышал раньше, чем увидел:\nсначала шум, потом уже мокро.\n\nВсе вышли. Все, я считал.\nПотом считал ещё раз, уже наверху, и опять сошлось.\n\nПишу это, чтобы потом верить себе." },
+    { y: 420, k: "ЛИСТОК · ВТОРАЯ КОМНАТА", t:
       "Ещё одна. Такая же, только глубже.\nПланировка та же самая. Мох в тех же углах.\n\nЯ стоял в ней и ждал, что услышу сверху шаги.\nНе услышал. Долго ждал." },
-    { y: 980, k: "ЛИСТОК · ТИШИНА", t:
+    { y: 560, k: "ЛИСТОК · ТИШИНА", t:
       "Здесь тихо не так, как наверху.\nНаверху тишина — это когда никто не шумит.\nЗдесь тишина — это когда звук не доходит.\n\nРазница в том, что во втором случае кто-то может шуметь." },
-    { y: 1700, k: "ЛИСТОК · РИТМ", t:
+    { y: 720, k: "ЛИСТОК · СЛАНЕЦ", t:
+      "Камень колется плитками, ровно, будто его резали.\nБьёшь — и он отходит целыми пластинами.\n\nСеня сказал: как будто кто-то уже начинал и бросил.\nЯ сказал, что это порода такая. Он согласился слишком быстро." },
+    { y: 980, k: "ЛИСТОК · РИТМ", t:
       "Слышал, как надо мной кто-то бьёт киркой.\nРовно, спокойно, с моим темпом.\nОстановился — он остановился.\n\nПотом сообразил, что надо мной только моя же шахта." },
-    { y: 2900, k: "ЛИСТОК · ПОСЛЕДНИЙ", t:
-      "Если ты это читаешь, значит, свод всё-таки сошёл.\nНе бойся, это не конец, это просто конец смены.\n\nЗабери осколки, они переживают обвал. Всё остальное — нет.\nИ не ищи меня внизу. Я уже наверху, начинаю заново.\n\nТебя зовут так же, как меня." }
+    { y: 1300, k: "ЛИСТОК · ПРО ВЕС", t:
+      "Над нами километр камня. Я посчитал, сколько это.\nПотом стёр и больше не считаю.\n\nЛучше думать, что над головой просто потолок.\nПотолок — это когда знаешь, что он выдержит." },
+    { y: 1700, k: "ЛИСТОК · ГРАНИТ КОНЧИЛСЯ", t:
+      "Пошло чёрное. Не тёмное — чёрное.\nФонарь светит, а не возвращается ничего.\n\nКирка входит легко, как в воздух, и не отдаёт в руку.\nЯ бью и не слышу удара.\n\nПройдём этот пласт быстро. Двенадцать метров, я померил.\nПотом снова будет камень. Наверное." },
+    { y: 2100, k: "ЛИСТОК · ПОСЛЕ ПЛАСТА", t:
+      "Прошли. Дальше опять нормальная порода, всё как надо.\n\nНо на схеме между «до» и «после» ничего не нарисовано.\nПустое место. Я эти двенадцать метров прошёл ногами,\nа на бумаге их нет." },
+    { y: 2900, k: "ЛИСТОК · ТОЧКА", t:
+      "Есть место, куда сворачивает свет.\n\nСвернул — и всё. Обратно оттуда не выходит ничего.\nЯ шёл к ней двадцать минут и не подошёл ни на шаг:\nрасстояние остаётся то же самое, сколько ни иди.\n\nЧасы наверху говорят, что меня не было полтора часа." },
+    { y: 3600, k: "ЛИСТОК · ПРО ЛЮДЕЙ", t:
+      "Сегодня не поднялся Клим. Крепильщик, второй год.\n\nЯ не пишу, как это было. Напишу только, что имя надо помнить,\nпотому что больше его помнить некому:\nв конторе он числится сменой, а не человеком.\n\nКлим. Крепильщик." },
+    { y: 4300, k: "ЛИСТОК · ЖЕЛЕЗО", t:
+      "Порода тёплая. Не в переносном смысле — рукой тепло.\nРжавая, тяжёлая, красная на изломе.\n\nНаверху сказали бы, что это руда и что нам повезло.\nНаверху много чего говорят." },
+    { y: 5100, k: "ЛИСТОК · БЕЛОЕ", t:
+      "Последний пласт светлый. Почти белый.\nПосле стольких лет темноты глазам больно.\n\nСмешно: чем ближе ко дну, тем светлее.\nЯ был уверен, что будет наоборот." },
+    { y: 5900, k: "ЛИСТОК · ПОСЛЕДНИЙ", t:
+      "Если ты это читаешь, значит, ты почти дошёл.\n\nВнизу тебя ждёт не находка. Внизу стоит человек,\nи ты узнаешь его лицо, потому что оно было во всех бликах,\nво всех отражениях и в каждом кадре, который дрогнул.\n\nНе бойся. Это не конец, это просто конец смены.\nЗабери осколки, они переживают обвал. Всё остальное — нет.\n\nТебя зовут так же, как меня." }
   ];
   let NOTEPOS = [];
   SAV.notes = SAV.notes || {};
@@ -2395,11 +2658,12 @@
     NOTEPOS = [];
     for (let i = 0; i < DIARY.length; i++) {
       if (SAV.notes[i]) continue;                       // поднятое обратно не ложится
-      // две записки лежат в чужих подвалах, а не в породе
-      if (i === 2 || i === 5) {
-        const r = roomAt(i === 2 ? 0 : 3);
-        NOTEPOS.push({ i, x: r.x + r.hx * (i === 2 ? .5 : -.5), y: r.y + r.hy - 0.35,
-                       z: r.z + r.hz * (i === 2 ? -.5 : .5) });
+      // часть записок лежит в чужих подвалах, а не в породе
+      const ROOMNOTE = { 4: 0, 9: 3, 14: 11, 20: 40 };
+      if (ROOMNOTE[i] !== undefined) {
+        const r = roomAt(ROOMNOTE[i]);
+        NOTEPOS.push({ i, x: r.x + r.hx * (i % 2 ? .5 : -.5), y: r.y + r.hy - 0.35,
+                       z: r.z + r.hz * (i % 2 ? -.5 : .5) });
         continue;
       }
       const a = hs(i, 41, 3) * Math.PI * 2, rad = 0.4 + hs(i, 43, 5) * 2.4;
@@ -2429,7 +2693,8 @@
       if (Math.hypot(n.x - P.x, n.y - (P.y - EYE * 0.5), n.z - P.z) > 1.6) continue;
       if (solidAt(n.x, n.y, n.z)) continue;             // ещё в породе — не видно
       NOTEPOS.splice(k, 1);
-      SAV.notes[n.i] = 1; saveGame();
+      SAV.notes[n.i] = Math.max(1, Math.round(n.y));   // архив покажет, где именно нашлась
+      saveGame();
       openNote(n.i);
       return;
     }
@@ -2776,6 +3041,7 @@
       if (mode === "lift") liftTick();
       if (mode === "fall") { fallTick(); drawFall(fxc, fx.width, fx.height); }
       if (mode === "cave") { caveTick(); drawCave(fxc, fx.width, fx.height); }
+      if (mode === "end")  { endTick();  drawEnd(fxc, fx.width, fx.height); }
       if (mode === "note") fxc.clearRect(0, 0, fx.width, fx.height);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       requestAnimationFrame(frame);
@@ -2817,7 +3083,7 @@
     if (blocked(P.x, ny, P.z)) { if (P.vy > 0) { P.ground = true; while (!blocked(P.x, P.y + 0.02, P.z) && P.y < ny) P.y += 0.02; } P.vy = 0; }
     else P.y = ny;
     if (down("jump") && P.ground) { P.vy = -7.2; }
-    if (P.y > 6200) { P.y = 6200; P.vy = 0; }        // дно есть, но до него ещё идти
+    if (P.y > BOTTOM + 40) { P.y = BOTTOM + 40; P.vy = 0; }   // ниже дна не бывает
 
     beltTick(dt);
     noteTick();
@@ -2832,7 +3098,7 @@
         carve(t[0], t[1], t[2], (0.40 + powOf() * 0.13) * (buff.dmg > 0 ? 1.5 : 1) * (buff.soft > 0 ? 1.35 : 1));
         const deep = t[1] > 9;
         if (!dk) {                                   // в тёмном пласте кирка не встречает ничего
-          thud(deep, .8 + Math.random() * .5);
+          hitRock(t[1], deep);
           shake = deep ? 7 : 5;
           spawnChips(t[1] < 0 ? "#9a9088" : t[1] < 4 ? "#6d4d2f" : "#8a8290");
         }
@@ -2852,7 +3118,9 @@
     }
     shake = Math.max(0, shake - dt * 34);
     dreadTick(dt); countTick();
+    bottomTick();
     tideTick(dt); gritTick(dt); hazTick(dt); hazSound(dt);
+    stepTick(dt, !!(fw || st), down("run")); dripTick(dt); droneTick();
     if (!sawPoint && PT && ptDist() < 18) { sawPoint = true; SAV.seen.cosmic = 1; saveGame(); }
     if (!SAV.seen.cosmic && (inDark(P.y) || P.y > 300)) { SAV.seen.cosmic = 1; saveGame(); }
     if (hush > 0) hush -= dt;
@@ -2928,8 +3196,12 @@
 
     requestAnimationFrame(frame);
   }
-  addEventListener("pagehide", () => saveGame(true));
-  addEventListener("visibilitychange", () => { if (document.hidden) saveGame(true); });
+  offlineCatchUp();
+  addEventListener("pagehide", () => { SAV.seenAt = Date.now(); saveGame(true); });
+  addEventListener("visibilitychange", () => {
+    if (document.hidden) { SAV.seenAt = Date.now(); saveGame(true); }
+    else offlineCatchUp();
+  });
 
   requestAnimationFrame(frame);
 })();
