@@ -1,4 +1,7 @@
 <title>Забой: прототип</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08070c">
+<meta name="mobile-web-app-capable" content="yes">
 
 <style>
   :root{
@@ -58,7 +61,12 @@
   .toolname{position:absolute;left:50%;bottom:74px;transform:translateX(-50%) scale(var(--uis,1));font-size:11px;letter-spacing:.22em;
     color:rgba(255,193,77,.92);text-shadow:0 1px 8px #000;pointer-events:none;opacity:0;transition:opacity .35s}
   .toolname.show{opacity:1}
-  @media (max-width:759px){ .toolname{bottom:150px} .hotbar{left:14px;bottom:74px} .stat{bottom:74px} .clock{bottom:78px} }
+  @media (max-width:759px){
+    .toolname{bottom:186px}
+    .hotbar{left:50%;bottom:132px}
+    .hint{bottom:210px;font-size:10px;padding:0 22px}
+    .haz{top:11%}
+  }
   .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;font-size:11px;letter-spacing:.14em;
     color:rgba(255,255,255,.66);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .8s}
   .hint.gone{opacity:0}
@@ -70,7 +78,19 @@
     display:flex;align-items:center;justify-content:center;font-size:12px;letter-spacing:.12em;color:var(--lamp);
     border:1px solid rgba(255,193,77,.55);background:rgba(40,28,14,.4);backdrop-filter:blur(4px)}
   .dig.on{background:rgba(255,193,77,.3)}
-  @media (min-width:760px){ .stick,.dig{display:none} }
+  .tbtns{position:absolute;right:20px;bottom:124px;display:flex;flex-direction:column;gap:9px;
+    transform:scale(var(--uis,1));transform-origin:bottom right}
+  .tbtns b{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:400;color:#cfc7dd;border:1px solid rgba(255,255,255,.16);
+    background:rgba(12,9,17,.5);backdrop-filter:blur(4px)}
+  .tbtns b:active{background:rgba(255,193,77,.24);color:var(--lamp)}
+  .fs{position:absolute;right:12px;top:50px;width:30px;height:30px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;color:#cfc7dd;
+    background:rgba(12,9,17,.5);border:1px solid rgba(255,255,255,.12);cursor:pointer}
+  @media (min-width:760px){ .stick,.dig,.tbtns{display:none} }
+  /* во весь экран: игра перестаёт быть картинкой на странице */
+  .game.full{position:fixed;inset:0;width:100vw;max-width:none;height:100vh;max-height:none;
+    margin:0;border:0;border-radius:0;aspect-ratio:auto;z-index:999}
   /* --- хотбар и полосы, как в референсе --- */
   /* пояс всплывает на полторы секунды при смене и уходит */
   .hotbar{position:absolute;left:50%;bottom:20px;transform:translateX(-50%) scale(var(--uis,1));
@@ -155,6 +175,8 @@
   .hub{position:absolute;inset:0;background:#100c14;display:none;flex-direction:column;z-index:23;
     overflow:auto;font-family:var(--mono)}
   .hub.on{display:flex}
+  .hub:has(.plan.on){overflow:hidden}
+  .hub:has(.plan.on) .hub-go{display:none}
   .hub::before{content:"";position:absolute;left:50%;top:-70px;width:340px;height:230px;
     transform:translateX(-50%);pointer-events:none;
     background:radial-gradient(ellipse at center,rgba(255,193,77,.16),transparent 66%)}
@@ -175,6 +197,10 @@
   .hrow.can .p{color:var(--lamp);border-color:#8a6520}
   .hrow.can::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--lamp)}
   .hrow.max .p{color:#5aa9e6;border-color:#2b4a63}
+  .plan{display:none;padding:0 16px 16px;flex:1;min-height:0}
+  .plan.on{display:block}
+  .plan canvas{width:100%;height:100%;min-height:220px;display:block;
+    background:#0a0810;border:1px solid #241d2f;border-radius:10px}
   .hub-go{margin:16px;padding:16px;text-align:center;font-size:12px;letter-spacing:.22em;
     color:var(--lamp);border:1px solid #8a6520;border-radius:11px;background:#241b12;cursor:pointer}
   .hub-go small{display:block;font-size:8.5px;letter-spacing:.16em;color:#6f6788;margin-top:6px}
@@ -229,14 +255,21 @@
   <div class="haz" id="haz"><b>ВОДА</b><u>затапливает</u></div>
   <div class="cross"></div>
   <div class="toolname" id="toolname">КИРКА</div>
-  <div class="hint" id="hint">НАЖМИ, ЧТОБЫ ЗАХВАТИТЬ МЫШЬ · WASD ХОДИТЬ · ЛКМ ДОЛБИТЬ</div>
+  <div class="hint" id="hint"></div>
   <div class="stick" id="stick"><i id="knob"></i></div>
   <div class="dig" id="digbtn">ДОЛБИТЬ</div>
+  <div class="tbtns" id="tbtns">
+    <b id="tjump" title="Прыжок">&#8593;</b>
+    <b id="tbelt" title="Пояс">&#9632;</b>
+    <b id="tup" title="Наверх">E</b>
+  </div>
+  <div class="fs" id="fsbtn" title="Во весь экран">&#9974;</div>
   <div class="lift" id="lift"><span id="liftmsg">ПОДЪЁМ</span></div>
   <div class="hub" id="hub">
     <div class="hub-top"><span class="place">ШТРЕК<em id="konst"></em></span>
       <span class="hore"><b id="hbank">0</b><i>РУДЫ</i></span></div>
     <div class="hub-rows" id="hubrows"></div>
+    <div class="plan" id="planwrap"><canvas id="plan"></canvas></div>
     <div class="hub-go" id="hubgo">СПУСТИТЬСЯ<small id="hubdepth">НА 0 М</small></div>
   </div>
   <div class="fail" id="fail"></div>
@@ -296,6 +329,13 @@
   if (!gl) { failBox.style.display = "flex"; failBox.textContent = "Нужен WebGL 2 — в этом браузере его нет."; return; }
 
   // ---------- поле плотности ----------
+  // сохранение читается ниже, но шахта нужна уже на генерации мира
+  let SAV_MINE = "", SAV_AT = null;
+  try {
+    const j = JSON.parse(localStorage.getItem("zaboy.save.v2") || "{}");
+    SAV_MINE = j.mine || ""; SAV_AT = j.at || null;
+  } catch (e) {}
+
   const NX = 128, NY = 232, NZ = 128, VS = 0.28;   // метров на ячейку
   const WIN = NY * VS;                              // высота окна в метрах, ~65
   const den = new Uint8Array(NX * NY * NZ);
@@ -370,25 +410,68 @@
   // Выкопанное хранится не ячейками, а ударами: четыре числа вместо тысячи
   // байт. Когда слой уезжает из окна и потом возвращается, удары по нему
   // просто переигрываются заново.
-  const CUTB = new Map();                            // ключ — этаж по 8 м
-  const CUT_H = 8;
-  function noteCut(X, Y, Z, R) {
+  const CUTS = [];                                   // плоско: x, y, z, r
+  const CUTB = new Map();                            // этаж по 8 м -> номера ударов
+  const CUT_H = 8, CUT_MAX = 60000;
+  function indexCut(i) {
+    const Y = CUTS[i*4+1], R = CUTS[i*4+3];
     const a = Math.floor((Y - R) / CUT_H), b = Math.floor((Y + R) / CUT_H);
     for (let k = a; k <= b; k++) {
       let arr = CUTB.get(k); if (!arr) CUTB.set(k, arr = []);
-      arr.push(X, Y, Z, R);
+      arr.push(i);
     }
+  }
+  function reindexCuts() {
+    CUTB.clear();
+    for (let i = 0; i < CUTS.length / 4; i++) indexCut(i);
+  }
+  function noteCut(X, Y, Z, R) {
+    if (CUTS.length / 4 >= CUT_MAX) {                // самые старые прореживаем: там уже пусто
+      const keep = [];
+      for (let i = 0; i < CUTS.length; i += 4)
+        if (i >= CUTS.length / 2 || (i / 4) % 2 === 0) keep.push(CUTS[i], CUTS[i+1], CUTS[i+2], CUTS[i+3]);
+      CUTS.length = 0; CUTS.push(...keep); reindexCuts();
+    }
+    CUTS.push(X, Y, Z, R);
+    indexCut(CUTS.length / 4 - 1);
   }
   function replayCuts(ly) {
     const Y = wy(ly), k0 = Math.floor((Y - 0.6) / CUT_H), k1 = Math.floor((Y + 0.6) / CUT_H);
     for (let k = k0; k <= k1; k++) {
       const arr = CUTB.get(k); if (!arr) continue;
-      for (let i = 0; i < arr.length; i += 4) {
-        const X = arr[i], CY = arr[i+1], Z = arr[i+2], R = arr[i+3];
+      for (const i of arr) {
+        const CY = CUTS[i*4+1], R = CUTS[i*4+3];
         if (Math.abs(CY - Y) > R) continue;
-        cutSlice(ly, X, CY, Z, R);
+        cutSlice(ly, CUTS[i*4], CY, CUTS[i*4+2], R);
       }
     }
+  }
+  // шахта уезжает в сохранение как поток ударов: компактно и восстанавливается точно
+  function cutsToText() {
+    const n = CUTS.length / 4, a = new Int16Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      a[i*4]   = Math.max(-32000, Math.min(32000, Math.round(CUTS[i*4]   * 64)));
+      a[i*4+1] = Math.max(-32000, Math.min(32000, Math.round(CUTS[i*4+1] * 4)));
+      a[i*4+2] = Math.max(-32000, Math.min(32000, Math.round(CUTS[i*4+2] * 64)));
+      a[i*4+3] = Math.round(CUTS[i*4+3] * 256);
+    }
+    const b = new Uint8Array(a.buffer);
+    let str = "";
+    for (let i = 0; i < b.length; i += 4096)
+      str += String.fromCharCode.apply(null, b.subarray(i, i + 4096));
+    return btoa(str);
+  }
+  function cutsFromText(t) {
+    CUTS.length = 0;
+    if (!t) { CUTB.clear(); return; }
+    try {
+      const raw = atob(t), b = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) b[i] = raw.charCodeAt(i);
+      const a = new Int16Array(b.buffer);
+      for (let i = 0; i < a.length; i += 4)
+        CUTS.push(a[i] / 64, a[i+1] / 4, a[i+2] / 64, a[i+3] / 256);
+    } catch (e) { CUTS.length = 0; }
+    reindexCuts();
   }
   function cutSlice(ly, X, CY, Z, R) {
     const Y = wy(ly);
@@ -458,6 +541,8 @@
     for (let ly = 0; ly < NY; ly++) genSlice(ly);
     refreshFeatures();
   }
+  // если прошлая смена оставила шахту — переигрываем её удары и встаём, где стояли
+  if (SAV_MINE) { cutsFromText(SAV_MINE); }
   genWorld();
 
   // ближайшая комната — в шейдер уезжает только одна
@@ -878,6 +963,10 @@
 
   // ---------- игрок ----------
   const P = { x: 0, y: -0.02, z: 3.2, vy: 0, yaw: Math.PI, pitch: -0.40, ground: false };
+  if (SAV_AT) {                                     // вернулись туда, где закончили
+    P.x = SAV_AT.x; P.y = SAV_AT.y; P.z = SAV_AT.z;
+    P.yaw = SAV_AT.yaw; P.pitch = SAV_AT.pitch;
+  }
   const EYE = 1.6, RAD = 0.3, TALL = 1.72;
   function blocked(x, y, z) {
     for (const yy of [y - 0.08, y - TALL * .55, y - TALL + 0.1])
@@ -894,6 +983,9 @@
   const hint = document.getElementById("hint");
   const toolEl = document.getElementById("toolname");
   const isTouch = matchMedia("(hover:none)").matches;
+  hint.textContent = isTouch
+    ? "СЛЕВА — ИДТИ · ПРОВЕДИ ПО ЭКРАНУ — СМОТРЕТЬ · ДОЛБИТЬ — КОПАТЬ"
+    : "НАЖМИ, ЧТОБЫ ЗАХВАТИТЬ МЫШЬ · WASD ХОДИТЬ · ЛКМ ДОЛБИТЬ";
   cv.addEventListener("click", () => { if (!isTouch) cv.requestPointerLock(); audioOn(); });
   document.addEventListener("pointerlockchange", () => { if (document.pointerLockElement === cv) hint.classList.add("gone"); });
   document.addEventListener("mousemove", e => {
@@ -915,13 +1007,45 @@
   cv.addEventListener("touchstart", e => { for (const t of e.changedTouches) if (lookId === null) { lookId = t.identifier; lx = t.clientX; ly = t.clientY; }
     hint.classList.add("gone"); audioOn(); e.preventDefault(); }, {passive:false});
   addEventListener("touchmove", e => { for (const t of e.changedTouches) {
-      if (t.identifier === lookId) { P.yaw -= (t.clientX - lx)*.0055; P.pitch = Math.max(-1.5,Math.min(1.5,P.pitch-(t.clientY-ly)*.0055)); lx=t.clientX; ly=t.clientY; }
+      if (t.identifier === lookId) {
+        const k = SET.sens / 4800;
+        P.yaw -= (t.clientX - lx) * k;
+        P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch + (SET.invY ? 1 : -1) * (t.clientY - ly) * k));
+        lx = t.clientX; ly = t.clientY;
+      }
       else if (t.identifier === stickId) { let dx=t.clientX-sx0, dy=t.clientY-sy0; const d=Math.hypot(dx,dy),m=42;
         if(d>m){dx*=m/d;dy*=m/d;} knob.style.transform=`translate(${dx}px,${dy}px)`; moveX=dx/m; moveZ=-dy/m; } }
     e.preventDefault(); }, {passive:false});
   addEventListener("touchend", e => { for (const t of e.changedTouches) {
       if (t.identifier === lookId) lookId = null;
       if (t.identifier === stickId) { stickId = null; moveX = moveZ = 0; knob.style.transform = ""; } } });
+
+  // кнопки под правую руку: прыжок, пояс, клеть
+  const tap = (id, fn) => {
+    const el = document.getElementById(id);
+    el.addEventListener("touchstart", e => { fn(); audioOn(); e.preventDefault(); }, { passive:false });
+    el.addEventListener("click", e => { fn(); audioOn(); e.preventDefault(); });
+  };
+  tap("tjump", () => { if (P.ground) P.vy = -7.2; });
+  tap("tbelt", () => flashBelt());
+  tap("tup",   () => goUp());
+
+  // во весь экран — на телефоне без этого играть нельзя
+  const gameEl = document.getElementById("game");
+  function toggleFull() {
+    const on = !gameEl.classList.contains("full");
+    gameEl.classList.toggle("full", on);
+    try {
+      if (on && gameEl.requestFullscreen) gameEl.requestFullscreen().catch(() => {});
+      else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    } catch (e) {}
+    setTimeout(resize, 60);
+  }
+  tap("fsbtn", toggleFull);
+  document.addEventListener("fullscreenchange", () => {
+    gameEl.classList.toggle("full", !!document.fullscreenElement);
+    setTimeout(resize, 60);
+  });
 
   // ---------- звук ----------
   let AC = null;
@@ -963,19 +1087,39 @@
   const saveSet = () => { try { localStorage.setItem(KEY, JSON.stringify(SET)); } catch (e) {} };
 
   // ---------- прогресс ----------
-  const SKEY = "zaboy.save.v1";
+  const SKEY = "zaboy.save.v2", SKEY_OLD = "zaboy.save.v1";
   const SDEF = { bank: 0, shards: 0, pick: 1, lamp: 1, crew: 0, cart: 1, best: 0,
-                 seen: {}, notes: {}, log: [], shift: 0, men: [] };
+                 seen: {}, notes: {}, log: [], shift: 0, men: [],
+                 mine: "", at: null, load: 0, v: 2 };
   let SAV;
-  try { SAV = Object.assign({}, SDEF, JSON.parse(localStorage.getItem(SKEY) || "{}")); }
-  catch (e) { SAV = Object.assign({}, SDEF); }
+  // v2 хранит ещё и саму шахту. Старое сохранение переносим, чтобы прогресс не пропал.
+  try {
+    const raw = localStorage.getItem(SKEY) || localStorage.getItem(SKEY_OLD) || "{}";
+    SAV = Object.assign({}, SDEF, JSON.parse(raw));
+  } catch (e) { SAV = Object.assign({}, SDEF); }
+  SAV.v = 2;
   SAV.seen = SAV.seen || {}; SAV.notes = SAV.notes || {}; SAV.log = SAV.log || [];
   SAV.men = SAV.men || [];
   // сохранения, где бригада была просто числом, разворачиваем в людей
   while (SAV.men.length < (SAV.crew | 0))
     SAV.men.push({ n: "ПРОХОДЧИК " + (SAV.men.length + 1), t: "проходчик", d: 0, since: 0 });
   SAV.crew = SAV.men.length;
-  const saveGame = () => { try { localStorage.setItem(SKEY, JSON.stringify(SAV)); } catch (e) {} };
+  // геометрию пишем реже прогресса: она тяжелее и меняется медленнее
+  let digSaveAt = 0;
+  function saveGame(withMine) {
+    try {
+      if (withMine) {
+        SAV.mine = cutsToText();
+        SAV.at = { x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2),
+                   yaw: +P.yaw.toFixed(3), pitch: +P.pitch.toFixed(3) };
+        SAV.load = Math.round(cart);
+      }
+      localStorage.setItem(SKEY, JSON.stringify(SAV));
+    } catch (e) {
+      // не влезло — сбрасываем геометрию, прогресс важнее
+      try { delete SAV.mine; localStorage.setItem(SKEY, JSON.stringify(SAV)); } catch (e2) {}
+    }
+  }
 
   const PRICE = { pick: l => Math.round(40 * Math.pow(1.42, l - 1)),
                   lamp: l => Math.round(90 * Math.pow(1.55, l - 1)),
@@ -1091,7 +1235,9 @@
     const u = uiS();
     const w = Math.max(15, Math.min(26, W * 0.031)) * u;
     const x = Math.max(11, W * 0.017) * u;
-    const y0 = Math.max(26, H * 0.075), y1 = H - Math.max(70, H * 0.155) * u;
+    const tall = H > W * 1.2;                        // вертикальный экран — снизу занято пальцами
+    const y0 = Math.max(26, H * (tall ? 0.055 : 0.075));
+    const y1 = H - Math.max(70, H * (tall ? 0.255 : 0.155)) * u;
     const hgt = y1 - y0;
     if (hgt < 90) return;
     const me = Math.max(0, P.y - EYE * 0.5);
@@ -1719,7 +1865,7 @@
 
 
   // ---------- добыча ----------
-  let cart = 0, digCd = 0, oreHot = 0;
+  let cart = SAV.load || 0, digCd = 0, oreHot = 0;
   const oreEl = document.getElementById("ore"), depthEl = document.getElementById("depth"), cartEl = document.getElementById("cart");
   function aim() {
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
@@ -1751,6 +1897,7 @@
   ];
 
   function buildHub() {
+    planWrap.classList.remove("on");
     // К6. Подписи нет, и она никогда не меняется
     document.getElementById("konst").textContent = SAV.seen.cosmic ? "137" : "";
     hBank.textContent = fmt(SAV.bank);
@@ -1788,6 +1935,13 @@
     };
     hubRows.append(cr);
 
+    const pr = document.createElement("div");
+    pr.className = "hrow can";
+    pr.innerHTML = `<span class="n">СХЕМА ШАХТЫ</span><span class="p">${Math.round(SAV.best)} м</span>` +
+                   `<span class="s">разрез: что выкопал и что нашёл</span>`;
+    pr.onclick = () => buildPlan();
+    hubRows.append(pr);
+
     if (SAV.men.length) {
       const mr = document.createElement("div");
       mr.className = "hrow can";
@@ -1810,6 +1964,92 @@
     a.innerHTML = `<span class="n">ОСКОЛКИ</span><span class="p">${SAV.shards}</span>` +
                   `<span class="s">рекорд глубины · ${Math.round(SAV.best)} м</span>`;
     hubRows.append(a);
+  }
+
+  // схема шахты: разрез по глубине. То, что ты выкопал, и то, что тебе попалось.
+  const planEl = document.getElementById("plan"), planWrap = document.getElementById("planwrap");
+  function buildPlan() {
+    hubRows.innerHTML = "";
+    const back = document.createElement("div");
+    back.className = "hrow can";
+    back.innerHTML = `<span class="n">← НАЗАД</span><span class="s">к снаряжению</span>`;
+    back.onclick = () => { planWrap.classList.remove("on"); buildHub(); };
+    hubRows.append(back);
+    planWrap.classList.add("on");
+    drawPlan();
+  }
+  function drawPlan() {
+    const c = planEl, r = c.getBoundingClientRect();
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    c.width = Math.max(200, r.width * dpr); c.height = Math.max(200, r.height * dpr);
+    const g = c.getContext("2d"), W = c.width, H = c.height;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = "#0a0810"; g.fillRect(0, 0, W, H);
+
+    const deep = Math.max(30, SAV.best + 12);
+    const pad = 26 * dpr, y0 = pad, y1 = H - pad;
+    const yOf = d => y0 + d / deep * (y1 - y0);
+    const cx = W * 0.52;
+    const mSc = (W * 0.42) / 26;                     // метры вбок -> пиксели
+
+    // пласты
+    for (let i = 0; i < 220; i++) {
+      const d = deep * i / 220, c2 = strataAt(d);
+      g.fillStyle = `rgba(${c2[0]},${c2[1]},${c2[2]},.30)`;
+      g.fillRect(0, yOf(d), W, (y1 - y0) / 220 + 1);
+    }
+    // тёмный пласт — разрыв
+    if (DARK0 < deep) {
+      g.fillStyle = "#07060a";
+      g.fillRect(0, yOf(DARK0), W, Math.max(2, yOf(Math.min(deep, DARK0 + 12)) - yOf(DARK0)));
+      g.strokeStyle = "rgba(126,116,148,.4)"; g.setLineDash([4 * dpr, 5 * dpr]); g.lineWidth = dpr;
+      g.beginPath(); g.moveTo(0, yOf(DARK0)); g.lineTo(W, yOf(DARK0));
+      g.moveTo(0, yOf(Math.min(deep, DARK0 + 12))); g.lineTo(W, yOf(Math.min(deep, DARK0 + 12)));
+      g.stroke(); g.setLineDash([]);
+    }
+    // выработка: каждый удар — точка. Форма тоннеля видна сама.
+    g.fillStyle = "rgba(255,205,140,.30)";
+    for (let i = 0; i < CUTS.length; i += 4) {
+      const Y = CUTS[i + 1]; if (Y < 0 || Y > deep) continue;
+      const x = cx + CUTS[i] * mSc, rr = Math.max(dpr, CUTS[i + 3] * mSc * 0.9);
+      g.fillRect(x - rr, yOf(Y) - rr * 0.5, rr * 2, Math.max(dpr, rr));
+    }
+    // чужие подвалы, до которых дошёл
+    g.font = (9 * dpr) + "px ui-monospace,monospace"; g.textAlign = "left";
+    for (let k = 0; k < 60; k++) {
+      const rm = roomAt(k); if (rm.y > deep) break;
+      if (rm.y > SAV.best) continue;
+      g.strokeStyle = "rgba(255,193,77,.7)"; g.lineWidth = dpr;
+      g.strokeRect(cx + rm.x * mSc - rm.hx * mSc, yOf(rm.y) - 3 * dpr, rm.hx * 2 * mSc, 6 * dpr);
+      g.fillStyle = "rgba(255,193,77,.6)";
+      g.fillText("комната", cx + rm.x * mSc + rm.hx * mSc + 5 * dpr, yOf(rm.y) + 3 * dpr);
+    }
+    // где стоят люди
+    for (const m of SAV.men) {
+      if (m.d > deep) continue;
+      g.fillStyle = "rgba(180,214,238,.85)";
+      g.beginPath(); g.arc(W * 0.10, yOf(m.d), 3 * dpr, 0, 7); g.fill();
+      g.fillStyle = "rgba(180,214,238,.6)";
+      g.fillText(m.n, W * 0.10 + 7 * dpr, yOf(m.d) + 3 * dpr);
+    }
+    // отметки глубины
+    g.textAlign = "right"; g.fillStyle = "rgba(140,132,164,.75)";
+    const stepM = deep > 3000 ? 1000 : deep > 800 ? 250 : deep > 200 ? 50 : 10;
+    for (let d = 0; d <= deep; d += stepM) {
+      g.strokeStyle = "rgba(255,255,255,.07)"; g.lineWidth = dpr;
+      g.beginPath(); g.moveTo(0, yOf(d)); g.lineTo(W, yOf(d)); g.stroke();
+      g.fillText(d + " м", W - 6 * dpr, yOf(d) - 3 * dpr);
+    }
+    // ты и клеть
+    g.strokeStyle = "rgba(255,255,255,.20)"; g.setLineDash([2 * dpr, 4 * dpr]);
+    g.beginPath(); g.moveTo(cx, y0); g.lineTo(cx, yOf(SAV.best)); g.stroke(); g.setLineDash([]);
+    const here = retPos ? retPos.y : 0;
+    g.fillStyle = "#ffc14d";
+    g.beginPath(); g.moveTo(cx - 6 * dpr, yOf(here) - 5 * dpr);
+    g.lineTo(cx + 6 * dpr, yOf(here) - 5 * dpr); g.lineTo(cx, yOf(here) + 3 * dpr);
+    g.closePath(); g.fill();
+    g.textAlign = "left"; g.fillStyle = "#ffc14d";
+    g.fillText("забой " + Math.round(here) + " м", cx + 9 * dpr, yOf(here) + 3 * dpr);
   }
 
   // бригада: кого ты нанял и на какой глубине он остался
@@ -1996,7 +2236,7 @@
     saveGame();
 
     WSEED++;                                          // новая смена — новый забой
-    CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
+    CUTS.length = 0; CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
     genWorld(); uploadWorld(); seedNotes();
     cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
     dread = 0; evCool = 0; hush = 0; tear = 0; faceT = 0; liar = 0; lights = 0;
@@ -2093,6 +2333,7 @@
     liftEl.classList.remove("on");
     if (liftDir > 0) {
       SAV.bank += Math.round(cart); cart = 0;          // руду сдаём наверху
+      saveGame(true);
       SAV.best = Math.max(SAV.best, Math.round(P.y));
       saveGame(); buildHub(); hubEl.classList.add("on");
       mode = "hub";
@@ -2620,6 +2861,7 @@
       gl.uniform1f(U("uLampR"), lampOut > 0 ? 0.26 : lampR() * heldLight());
     } else gl.uniform1f(U("uLampR"), lampR() * heldLight());
     if (knockAt && performance.now() > knockAt) { knockAt = 0; thud(false, 0.42); }
+    if (now > digSaveAt) { digSaveAt = now + 30000; saveGame(true); }
     if (oreHot > 0 && (oreHot -= dt) <= 0) oreEl.classList.remove("hot");
     if (peek > 0 && (peek -= dt) <= 0) { hotEl.classList.remove("show"); toolEl.classList.remove("show"); }
 
@@ -2686,6 +2928,9 @@
 
     requestAnimationFrame(frame);
   }
+  addEventListener("pagehide", () => saveGame(true));
+  addEventListener("visibilitychange", () => { if (document.hidden) saveGame(true); });
+
   requestAnimationFrame(frame);
 })();
 </script>
