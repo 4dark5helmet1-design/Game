@@ -1,0 +1,558 @@
+<title>Забой: три глубины</title>
+
+<style>
+  :root {
+    --bg:      #0a0810;
+    --line:    #262032;
+    --line-2:  #372f47;
+    --ink:     #ece7f4;
+    --ink-2:   #a79ec0;
+    --ink-3:   #6f6788;
+    --lamp:    #ffc14d;
+    --f-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --f-body: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--f-body); font-size: 17px; line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 72ch; margin: 0 auto; padding: 0 20px 110px; }
+
+  header.top {
+    padding: 56px 20px 40px; text-align: center;
+    border-bottom: 1px solid var(--line); margin-bottom: 10px;
+    background: radial-gradient(ellipse 70% 80% at 50% 0%, rgba(120,190,90,.10), transparent 70%), var(--bg);
+  }
+  header.top .kick {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .3em;
+    text-transform: uppercase; color: var(--lamp); margin: 0 0 14px;
+  }
+  header.top h1 {
+    font-family: var(--f-mono); font-size: clamp(26px, 7vw, 40px); font-weight: 700;
+    letter-spacing: .16em; text-transform: uppercase; margin: 0 0 16px; text-wrap: balance;
+  }
+  header.top p { max-width: 52ch; margin: 0 auto; color: var(--ink-2); font-size: 16px; }
+
+  .lede { margin: 40px 0 6px; color: var(--ink-2); }
+  .lede b { color: var(--ink); font-weight: 700; }
+
+  .step { padding: 50px 0 6px; border-top: 1px solid var(--line); }
+  .step:first-of-type { border-top: 0; padding-top: 34px; }
+  .step-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  .step-d {
+    font-family: var(--f-mono); font-size: 12px; letter-spacing: .16em;
+    color: var(--lamp); border: 1px solid var(--line-2); padding: 3px 9px;
+  }
+  .step h2 {
+    font-family: var(--f-mono); font-size: clamp(18px, 5vw, 24px); font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; margin: 0;
+  }
+  .step > p { color: var(--ink-2); margin: 12px 0; }
+  .step > p strong { color: var(--ink); }
+
+  .note {
+    border-left: 2px solid var(--lamp); padding: 4px 0 4px 16px;
+    margin: 18px 0 0; font-size: 15.5px; color: var(--ink-2);
+  }
+
+  .shot {
+    margin: 26px auto 20px; width: 100%; max-width: 330px;
+    background: #000; border: 1px solid var(--line-2); border-radius: 18px;
+    overflow: hidden; box-shadow: 0 26px 64px rgba(0,0,0,.65), 0 0 0 6px #16131e;
+    position: relative; user-select: none; font-family: var(--f-mono);
+  }
+  .scene { position: relative; line-height: 0; }
+  .scene canvas { width: 100%; display: block; }
+
+  .hud { position: absolute; inset: 14px 12px auto 12px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+  .pill {
+    background: rgba(10,8,14,.55); border: 1px solid rgba(255,255,255,.13);
+    border-radius: 11px; padding: 7px 11px; backdrop-filter: blur(6px); line-height: 1.1;
+  }
+  .pill .big { font-size: 21px; color: #fff; font-variant-numeric: tabular-nums; }
+  .pill .big i { font-style: normal; font-size: 10px; color: #c3bcd2; margin-left: 2px; }
+  .pill .sm { font-size: 12px; color: #e2dcee; font-variant-numeric: tabular-nums; }
+  .pill .lbl { display: block; font-size: 7.5px; letter-spacing: .2em; color: #8f86a4; margin-top: 2px; }
+
+  .cartbar { margin-top: 7px; width: 78px; height: 4px; border-radius: 3px; background: rgba(255,255,255,.16); overflow: hidden; }
+  .cartbar i { display: block; height: 100%; background: #7fc9e8; }
+
+  .belt { position: absolute; right: 12px; bottom: 16px; display: flex; flex-direction: column; gap: 9px; }
+  .belt b {
+    width: 40px; height: 40px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; letter-spacing: .04em;
+    background: rgba(10,8,14,.55); border: 1px solid rgba(255,255,255,.14);
+    color: #8f86a4; backdrop-filter: blur(6px);
+  }
+  .belt b.on { border-color: rgba(255,193,77,.8); color: var(--lamp); box-shadow: 0 0 18px rgba(255,193,77,.3); }
+
+  .bar { display: grid; grid-template-columns: 54px 1fr 54px; gap: 1px; background: var(--line); border-top: 1px solid var(--line); }
+  .bar span {
+    background: #0f0c15; display: flex; align-items: center; justify-content: center;
+    padding: 17px 0; font-size: 15px; color: #6f6788;
+  }
+  .bar .cta {
+    font-size: 11.5px; letter-spacing: .1em; color: var(--lamp);
+    background: linear-gradient(180deg, #2b1f11, #1a1410);
+    box-shadow: inset 0 0 0 1px rgba(255,193,77,.5);
+  }
+  .cap {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .05em;
+    color: var(--ink-3); text-align: center; max-width: 42ch; margin: 0 auto; line-height: 1.55;
+  }
+
+  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 26px 0 8px; }
+  .tool { background: #100d17; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .tool canvas { width: 100%; display: block; }
+  .tool span {
+    display: block; font-family: var(--f-mono); font-size: 10px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink-3); padding: 8px 10px; border-top: 1px solid var(--line);
+  }
+
+  footer.end {
+    border-top: 1px solid var(--line); margin-top: 52px; padding-top: 20px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+</style>
+
+<header class="top">
+  <p class="kick">Забой · как это выглядит</p>
+  <h1>Три глубины</h1>
+  <p>Один и тот же экран на нулевом метре, на сто двадцатом и на полутора тысячах. Игра не меняет жанр — она просто перестаёт быть милой.</p>
+</header>
+
+<div class="wrap">
+
+<p class="lede"><b>Главное, что было упущено:</b> игра начинается на солнце. Трава, дневной свет, тёплая земля, яма во дворе. Именно поэтому темнота потом работает — она не декорация, а то, что пришло на смену чему-то хорошему.</p>
+
+<section class="step">
+  <div class="step-head"><span class="step-d">0 М</span><h2>Двор</h2></div>
+  <p>Открыл игру — и стоишь над свежей ямой в траве. Солнце, тени от краёв, рыхлая земля террасами. Первый удар, второй, третий — и ты уже ниже уровня травы. <strong>Ни меню, ни логотипа, ни туториала</strong> — только строчка «Бей землю» и она гаснет навсегда.</p>
+
+  <figure class="shot">
+    <div class="scene">
+      <canvas data-pit="surface" width="360" height="620"></canvas>
+      <div class="hud">
+        <span class="pill"><span class="big">0<i>М</i></span>
+          <span class="cartbar"><i style="width:8%"></i></span></span>
+        <span class="pill"><span class="sm">120</span><span class="lbl">ЗЕМЛЯ</span></span>
+      </div>
+      <div class="belt"><b>—</b></div>
+    </div>
+    <div class="bar"><span>&#8635;</span><span class="cta">ЛОПАТА +1 · 40</span><span>&#9650;</span></div>
+  </figure>
+  <p class="cap">Ни одной кнопки, которой ещё нельзя пользоваться. Пояс пустой, потому что снаряжения пока нет.</p>
+  <p class="note">Свет здесь — <strong>солнце сверху</strong>, а не фонарь. Дальняя стенка ямы освещена, ближняя в тени, на траве лежат тени от краёв. Через сто метров солнце уйдёт совсем, и заменить его будет нечем.</p>
+</section>
+
+<section class="step">
+  <div class="step-head"><span class="step-d">120 М</span><h2>Известняк</h2></div>
+  <p>Травы над головой уже не видно. Свет только твой — фонарь на каске, поэтому освещено ровно то, во что ты смотришь. Земля кончилась, пошёл камень: холоднее, твёрже, с прожилками руды. Появилась крепь.</p>
+
+  <figure class="shot">
+    <div class="scene">
+      <canvas data-pit="mid" width="360" height="620"></canvas>
+      <div class="hud">
+        <span class="pill"><span class="big">120<i>М</i></span>
+          <span class="cartbar"><i style="width:62%"></i></span></span>
+        <span class="pill"><span class="sm">18.4K</span><span class="lbl">РУДА</span></span>
+      </div>
+      <div class="belt"><b class="on">КУР</b><b class="on">ДИН</b><b>17</b></div>
+    </div>
+    <div class="bar"><span>&#8635;</span><span class="cta">КИРКА +1 · 340</span><span>&#9650;</span></div>
+  </figure>
+  <p class="cap">Полоска под глубиной — вагонетка. Заполнилась на две трети: скоро придётся подниматься.</p>
+</section>
+
+<section class="step">
+  <div class="step-head"><span class="step-d">1500 М</span><h2>Тёплая порода</h2></div>
+  <p>Фонарь достаёт метров на пять, дальше ничего. Крепь чаще — без неё тут не держится. В углу появилось число, которое никто не объяснял, и оно уменьшается.</p>
+
+  <figure class="shot">
+    <div class="scene">
+      <canvas data-pit="deep" width="360" height="620"></canvas>
+      <div class="hud">
+        <span class="pill"><span class="big">1500<i>М</i></span>
+          <span class="cartbar"><i style="width:34%"></i></span></span>
+        <span class="pill"><span class="sm">4.1M</span><span class="lbl">РУДА</span></span>
+      </div>
+      <div class="belt"><b class="on">КУР</b><b class="on">ВСП</b><b>42</b></div>
+    </div>
+    <div class="bar"><span>&#8635;</span><span class="cta">КОПАЙ</span><span>&#9650;</span></div>
+  </figure>
+  <p class="cap">Тот же интерфейс, те же три кнопки. Изменился только свет — и этого достаточно.</p>
+  <p class="note">Обрати внимание: между этими тремя кадрами <strong>не поменялось ни одного элемента интерфейса</strong>. Ни новых панелей, ни новых кнопок. Игра пугает не тем, что добавляет, а тем, что забирает.</p>
+</section>
+
+<section class="step">
+  <div class="step-head"><h2>Инструмент</h2></div>
+  <p>Кирка в кадре — половина ощущения от первого лица. Она не спрайт: металл с бликом и заточенной кромкой, дерево с волокном, обмотка на рукояти, тёплый отсвет от фонаря по верхнему ребру.</p>
+  <div class="tools">
+    <div class="tool"><canvas data-tool="pick" width="360" height="240"></canvas><span>Кирка · ур. 12</span></div>
+    <div class="tool"><canvas data-tool="drill" width="360" height="240"></canvas><span>Отбойник · ур. 60</span></div>
+  </div>
+  <p class="cap">Каждая ступень инструмента выглядит по-своему и звучит по-своему.</p>
+</section>
+
+<footer class="end">Забой · всё на странице отрисовано кодом, без картинок</footer>
+
+</div>
+
+<script>
+(function () {
+  function h2(ix, iy, s) {
+    let n = Math.imul(ix | 0, 374761393) + Math.imul(iy | 0, 668265263) + Math.imul(s | 0, 1442695041);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  }
+  function vnoise(x, y, s) {
+    const ix = Math.floor(x), iy = Math.floor(y);
+    const fx = x - ix, fy = y - iy;
+    const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+    const a = h2(ix, iy, s), b = h2(ix + 1, iy, s), c = h2(ix, iy + 1, s), d = h2(ix + 1, iy + 1, s);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  function fbm(x, y, s, oct) {
+    let f = 0, amp = .5, fr = 1, nrm = 0;
+    for (let i = 0; i < oct; i++) { f += amp * vnoise(x * fr, y * fr, s + i * 37); nrm += amp; amp *= .5; fr *= 2; }
+    return f / nrm;
+  }
+  const cl = (v, a, b) => v < a ? a : v > b ? b : v;
+  const mix = (a, b, t) => a + (b - a) * t;
+
+  // ---------- палитры глубин ----------
+  const LOOK = {
+    surface: {
+      rock: [148, 104, 66], rock2: [104, 70, 44],
+      top:  [126, 168, 74],                       // трава
+      sky:  [150, 178, 120],
+      sun:  [1.0, .92, .74], sunPow: 1.0,
+      lamp: 0, ambient: .42, rings: 7, fogCol: [92, 110, 78], fog: .32
+    },
+    mid: {
+      rock: [126, 108, 96], rock2: [78, 66, 62],
+      top:  [96, 82, 72], sky: [40, 34, 38],
+      sun:  [1.0, .78, .48], sunPow: .25,
+      lamp: 1, ambient: .07, rings: 8, fogCol: [16, 13, 20], fog: .78
+    },
+    deep: {
+      rock: [96, 78, 84], rock2: [50, 40, 50],
+      top:  [52, 42, 52], sky: [16, 12, 18],
+      sun:  [1.0, .74, .46], sunPow: .1,
+      lamp: 1, ambient: .02, rings: 9, fogCol: [9, 7, 12], fog: .94
+    }
+  };
+
+  function renderPit(cv, mode) {
+    const VW = cv.width, VH = cv.height, ctx = cv.getContext("2d");
+    const L = LOOK[mode];
+    const img = ctx.createImageData(VW, VH), D = img.data;
+
+    const cx = VW * 0.5, cy = VH * 0.50;
+    const rx = VW * 0.60, ry = VH * 0.335;
+    const seed = mode === "surface" ? 11 : mode === "mid" ? 29 : 47;
+    const lampX = cx, lampY = cy + ry * .1, lampR = Math.max(VW, VH) * .58;
+
+    for (let y = 0; y < VH; y++) {
+      for (let x = 0; x < VW; x++) {
+        const ex = (x - cx) / rx, ey = (y - cy) / ry;
+        let r = Math.sqrt(ex * ex + ey * ey);
+        const ang = Math.atan2(ey, ex);
+        // край ямы рваный, а не циркулем
+        r *= 1 + (fbm(Math.cos(ang) * 3 + 5, Math.sin(ang) * 3 + 5, seed + 5, 3) - .5) * .2;
+
+        let cr, cg, cb, lum;
+
+        if (r >= 1) {
+          // ---- поверхность вокруг ямы ----
+          const out = cl((r - 1) * 2.2, 0, 1);
+          const n = fbm(x / 26, y / 16, seed + 60, 4);
+          const dirt = 1 - cl(out * 3, 0, 1);          // кайма выброшенной земли
+          const base = [
+            mix(L.rock[0], L.top[0], 1 - dirt), mix(L.rock[1], L.top[1], 1 - dirt), mix(L.rock[2], L.top[2], 1 - dirt)
+          ];
+          const grass = mode === "surface"
+            ? fbm(x / 7, y / 5, seed + 91, 3) * .6 + fbm(x / 2.2, y / 1.8, seed + 93, 2) * .4
+            : 0;
+          const tuft = mode === "surface" ? (grass > .56 ? (grass - .56) * 1.5 : 0) * (1 - cl((1 - (r - 1) * 2.2), 0, 1)) : 0;
+          cr = base[0] * (.72 + n * .5) - tuft * 46;
+          cg = base[1] * (.72 + n * .5) + tuft * 54;
+          cb = base[2] * (.72 + n * .5) - tuft * 24;
+          lum = .74 + n * .22;
+          // тень от края ямы на поверхность
+          const sh = cl(1 - (r - 1) * 5.5, 0, 1) * (mode === "surface" ? .5 : .7);
+          lum *= 1 - sh * .55;
+        } else {
+          // ---- стенки ямы, террасами ----
+          const t = 1 - r;                              // 0 у края, 1 в центре
+          // Уступы рубленые: каждый сектор каждого уступа выкопан на свою глубину.
+          const SEG = 11;
+          const segF = (ang + Math.PI) / (2 * Math.PI) * SEG;
+          const seg = Math.floor(segF);
+          const jag = (h2(seg, Math.floor(t * L.rings), seed + 17) - .5) * .46
+                    + (fbm(ang * 5 + 2, 0, seed + 23, 3) - .5) * .5;
+          const ring = t * L.rings + jag;
+          const rf = ring - Math.floor(ring);
+          const isWall = rf > 0.52;                     // вертикальная стенка уступа
+          const n = fbm(ang * 26 + 40, t * 190, seed, 4) * .68 + fbm(ang * 70, t * 470, seed + 9, 3) * .32;
+
+          // грань уступа — тонкая тёмная линия
+          const edge = Math.abs(rf - 0.52) < 0.04 ? .5 : 1;
+
+          const base = isWall ? L.rock2 : L.rock;
+          cr = base[0] * (.7 + n * .62);
+          cg = base[1] * (.7 + n * .62);
+          cb = base[2] * (.7 + n * .62);
+
+          // солнце сверху: дальняя стенка (верх кадра) освещена, ближняя в тени
+          const facing = -Math.sin(ang);                // 1 = дальняя стенка
+          let sun = cl(.5 + facing * .62, 0, 1);
+          sun = isWall ? sun : sun * .55 + .45;         // горизонтальные площадки ровнее
+          lum = L.ambient + sun * L.sunPow * (1 - t * .55);
+
+          // фонарь на каске
+          if (L.lamp) {
+            const d = Math.hypot(x - lampX, y - lampY) / lampR;
+            const fall = 1 / (1 + 3.1 * d * d);
+            lum += fall * (isWall ? .78 : 1.0) * (.45 + n * .55);
+          }
+
+          lum *= edge;
+          lum *= 1 - cl(t, 0, 1) * .5;                  // вглубь темнее
+
+          // жила руды
+          if (mode !== "surface") {
+            const ov = fbm(ang * 7 + 300, t * 26, seed + 401, 4);
+            const patch = cl((fbm(ang * 2.2 + 700, t * 6, seed + 411, 3) - .55) * 7, 0, 1);
+            const ore = cl((ov - .70) * 8, 0, 1) * patch;
+            if (ore > 0) {
+              cr = mix(cr, 58, ore); cg = mix(cg, 168, ore); cb = mix(cb, 214, ore);
+              lum += ore * .34;
+            }
+          }
+
+          // самая середина — провал вниз
+          const core = cl((0.82 - r) / 0.82, 0, 1);
+          lum *= 1 - core * core * .95;
+        }
+
+        // теплота света к центру
+        const dd = Math.hypot(x - lampX, y - lampY) / lampR;
+        const warm = cl(1 - dd, 0, 1);
+        let R = cr * lum * (1 + warm * .28 * L.sun[0]);
+        let G = cg * lum * (1 + warm * .14 * L.sun[1]);
+        let B = cb * lum * (1 - warm * .10);
+
+        // туман
+        const fg = cl((dd - .5) * 1.35, 0, 1) * L.fog;
+        R = mix(R, L.fogCol[0], fg); G = mix(G, L.fogCol[1], fg); B = mix(B, L.fogCol[2], fg);
+
+        const gr = (h2(x, y, 77) - .5) * 13;
+        const i = (y * VW + x) * 4;
+        D[i] = cl(R + gr, 0, 255); D[i + 1] = cl(G + gr, 0, 255); D[i + 2] = cl(B + gr, 0, 255); D[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    const px = (n) => n * (VW / 360);
+
+    // ---- крепь: кольца по краю уступов ----
+    if (mode !== "surface") {
+      const count = mode === "mid" ? 2 : 3;
+      for (let k = 1; k <= count; k++) {
+        const t = k / (count + 1.15);
+        const rr = 1 - t;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(1, ry / rx);
+        ctx.beginPath();
+        ctx.arc(0, 0, rx * rr, 0, 6.283);
+        ctx.restore();
+        const lw = px(15 * (1 - t * .5));
+        ctx.lineWidth = lw + px(3);
+        ctx.strokeStyle = "rgba(0,0,0,.55)";
+        ctx.stroke();
+        ctx.lineWidth = lw;
+        const gd = ctx.createLinearGradient(0, cy - ry * rr, 0, cy + ry * rr);
+        gd.addColorStop(0, "rgba(96,68,40," + (.95 - t * .3) + ")");
+        gd.addColorStop(.42, "rgba(58,40,24," + (.95 - t * .3) + ")");
+        gd.addColorStop(1, "rgba(24,16,10," + (.95 - t * .3) + ")");
+        ctx.strokeStyle = gd;
+        ctx.stroke();
+        ctx.lineWidth = px(2);
+        ctx.strokeStyle = "rgba(180,138,86,." + Math.round((26 - t * 14)) + ")";
+        ctx.stroke();
+      }
+    }
+
+    // ---- пыль / мошкара в свете ----
+    const N = mode === "surface" ? 70 : 140;
+    for (let i = 0; i < N; i++) {
+      const a = h2(i, 1, 5) * 6.283, d = Math.sqrt(h2(i, 2, 5)) * lampR * .9;
+      const dx = lampX + Math.cos(a) * d, dy = lampY + Math.sin(a) * d * .8;
+      if (dx < 0 || dx > VW || dy < 0 || dy > VH) continue;
+      ctx.fillStyle = mode === "surface"
+        ? "rgba(255,246,210," + (.05 + h2(i, 6, 5) * .18).toFixed(3) + ")"
+        : "rgba(255,228,182," + (.05 + h2(i, 6, 5) * .2).toFixed(3) + ")";
+      ctx.beginPath(); ctx.arc(dx, dy, px(.8 + h2(i, 4, 5) * 1.7), 0, 6.283); ctx.fill();
+    }
+
+    // ---- зона удара ----
+    ctx.strokeStyle = "rgba(255,193,77,.85)";
+    ctx.lineWidth = px(1.8);
+    const zx = cx - px(34), zy = cy + px(6), zs = px(68), le = px(13);
+    [[zx, zy, 1, 1], [zx + zs, zy, -1, 1], [zx, zy + zs * .6, 1, -1], [zx + zs, zy + zs * .6, -1, -1]].forEach(([a, b, sx, sy]) => {
+      ctx.beginPath(); ctx.moveTo(a + sx * le, b); ctx.lineTo(a, b); ctx.lineTo(a, b + sy * le); ctx.stroke();
+    });
+
+    drawTool(ctx, VW, VH, mode === "deep" ? "drill" : "pick", 1);
+
+    // виньетка
+    const vg = ctx.createRadialGradient(cx, cy, VW * .3, cx, cy, VH * .8);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, mode === "surface" ? "rgba(20,18,10,.62)" : "rgba(6,5,9,.9)");
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
+  }
+
+  // ---------- инструмент ----------
+  function drawTool(ctx, VW, VH, kind, scale) {
+    const px = (n) => n * (VW / 360) * scale;
+    const gripX = VW + px(30), gripY = VH + px(26);
+    const headX = VW - px(104), headY = VH - px(118);
+    const ang = Math.atan2(headY - gripY, headX - gripX);
+    const len = Math.hypot(headX - gripX, headY - gripY);
+
+    // тень под инструментом
+    ctx.save();
+    ctx.globalAlpha = .34;
+    ctx.filter = "blur(6px)";
+    ctx.translate(headX + px(8), headY + px(12));
+    ctx.rotate(ang);
+    ctx.fillStyle = "#000";
+    ctx.fillRect(-px(10), -px(14), len, px(28));
+    ctx.restore();
+
+    // рукоять
+    ctx.save();
+    ctx.translate(gripX, gripY);
+    ctx.rotate(ang);
+    const w = px(15);
+    const wg = ctx.createLinearGradient(0, -w, 0, w);
+    wg.addColorStop(0, "#c39a63");
+    wg.addColorStop(.28, "#8f6a3e");
+    wg.addColorStop(.62, "#5d4227");
+    wg.addColorStop(1, "#2b1d10");
+    ctx.fillStyle = wg;
+    ctx.beginPath();
+    ctx.moveTo(0, -w * .92); ctx.lineTo(len, -w * .66);
+    ctx.lineTo(len, w * .66); ctx.lineTo(0, w * .92);
+    ctx.closePath(); ctx.fill();
+    // волокно дерева
+    ctx.globalAlpha = .3;
+    for (let i = 0; i < 16; i++) {
+      const yy = (h2(i, 2, 9) - .5) * w * 1.5;
+      ctx.fillStyle = h2(i, 3, 9) > .5 ? "#e0bd8a" : "#3a2716";
+      ctx.fillRect(px(10) + h2(i, 4, 9) * len * .8, yy, len * (.06 + h2(i, 5, 9) * .16), px(1.4));
+    }
+    ctx.globalAlpha = 1;
+    // обмотка на хвате
+    for (let i = 0; i < 7; i++) {
+      const p = px(6) + i * px(13);
+      ctx.fillStyle = i % 2 ? "#241812" : "#3b2a1c";
+      ctx.fillRect(p, -w * .9, px(9), w * 1.8);
+    }
+    // верхнее ребро ловит свет фонаря
+    ctx.fillStyle = "rgba(255,214,150,.32)";
+    ctx.fillRect(0, -w * .92, len, px(2.4));
+    ctx.restore();
+
+    // голова
+    ctx.save();
+    ctx.translate(headX, headY);
+    ctx.rotate(ang);
+
+    if (kind === "pick") {
+      ctx.rotate(-Math.PI / 2);
+      const mg = ctx.createLinearGradient(0, -px(16), 0, px(16));
+      mg.addColorStop(0, "#efe6d8"); mg.addColorStop(.2, "#a89a8e");
+      mg.addColorStop(.5, "#5e5259"); mg.addColorStop(1, "#221c26");
+      ctx.fillStyle = mg;
+      ctx.beginPath();
+      ctx.moveTo(-px(96), -px(4));         // остриё слева
+      ctx.lineTo(-px(30), -px(13));
+      ctx.lineTo(px(30), -px(13));
+      ctx.lineTo(px(92), -px(9));          // лопатка справа
+      ctx.lineTo(px(92), px(6));
+      ctx.lineTo(px(30), px(13));
+      ctx.lineTo(-px(30), px(13));
+      ctx.lineTo(-px(96), px(2));
+      ctx.closePath(); ctx.fill();
+      // блик по верхней кромке
+      ctx.fillStyle = "rgba(255,255,255,.55)";
+      ctx.beginPath();
+      ctx.moveTo(-px(92), -px(4)); ctx.lineTo(-px(30), -px(11.5));
+      ctx.lineTo(px(30), -px(11.5)); ctx.lineTo(px(88), -px(8));
+      ctx.lineTo(px(88), -px(5.5)); ctx.lineTo(px(30), -px(8.5));
+      ctx.lineTo(-px(30), -px(8.5)); ctx.lineTo(-px(92), -px(1.5));
+      ctx.closePath(); ctx.fill();
+      // заточенные кромки
+      ctx.fillStyle = "rgba(255,248,236,.8)";
+      ctx.beginPath(); ctx.moveTo(-px(96), -px(4)); ctx.lineTo(-px(78), -px(6)); ctx.lineTo(-px(78), px(0)); ctx.closePath(); ctx.fill();
+      ctx.fillRect(px(86), -px(9), px(6), px(15));
+      // проушина
+      ctx.fillStyle = "#191424";
+      ctx.fillRect(-px(16), -px(15), px(32), px(30));
+      ctx.fillStyle = "#3d3550";
+      ctx.fillRect(-px(16), -px(15), px(32), px(4));
+    } else {
+      // отбойник: цилиндр с пикой
+      const bg = ctx.createLinearGradient(0, -px(22), 0, px(22));
+      bg.addColorStop(0, "#d8b56a"); bg.addColorStop(.3, "#9a7a3c");
+      bg.addColorStop(.7, "#4e3d1e"); bg.addColorStop(1, "#241b0e");
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.roundRect(-px(20), -px(22), px(96), px(44), px(10));
+      ctx.fill();
+      // рёбра корпуса
+      for (let i = 0; i < 5; i++) {
+        ctx.fillStyle = i % 2 ? "rgba(0,0,0,.28)" : "rgba(255,235,190,.16)";
+        ctx.fillRect(px(2) + i * px(15), -px(22), px(6), px(44));
+      }
+      // пика
+      const sg = ctx.createLinearGradient(0, -px(9), 0, px(9));
+      sg.addColorStop(0, "#dcd6e8"); sg.addColorStop(.5, "#6d6580"); sg.addColorStop(1, "#241f30");
+      ctx.fillStyle = sg;
+      ctx.beginPath();
+      ctx.moveTo(px(74), -px(9)); ctx.lineTo(px(152), -px(3));
+      ctx.lineTo(px(158), 0); ctx.lineTo(px(152), px(3)); ctx.lineTo(px(74), px(9));
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.5)";
+      ctx.fillRect(px(74), -px(8), px(78), px(2.4));
+    }
+    ctx.restore();
+  }
+
+  document.querySelectorAll("canvas[data-pit]").forEach((cv) => renderPit(cv, cv.dataset.pit));
+
+  // крупные планы инструментов
+  document.querySelectorAll("canvas[data-tool]").forEach((cv) => {
+    const ctx = cv.getContext("2d");
+    const g = ctx.createLinearGradient(0, 0, 0, cv.height);
+    g.addColorStop(0, "#221c2c"); g.addColorStop(1, "#0d0b13");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+    const rg = ctx.createRadialGradient(cv.width * .5, cv.height * .55, 0, cv.width * .5, cv.height * .55, cv.width * .5);
+    rg.addColorStop(0, "rgba(255,193,77,.16)"); rg.addColorStop(1, "rgba(255,193,77,0)");
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.save();
+    ctx.translate(cv.width * .16, cv.height * .52);
+    ctx.scale(.62, .62);
+    ctx.translate(-cv.width * .5, -cv.height * .5);
+    drawTool(ctx, cv.width, cv.height, cv.dataset.tool, 1);
+    ctx.restore();
+  });
+})();
+</script>
