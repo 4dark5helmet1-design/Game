@@ -1,0 +1,530 @@
+<title>Забой: прототип</title>
+
+<style>
+  :root{
+    --lamp:#ffc14d; --ink:#ece7f4; --ink2:#a79ec0; --ink3:#6f6788;
+    --line:#262032; --bg:#08070c;
+    --mono: ui-monospace,"SFMono-Regular","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --body:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-text-size-adjust:100%}
+  .wrap{max-width:70ch;margin:0 auto;padding:0 20px 90px}
+
+  header.top{padding:44px 20px 30px;text-align:center;border-bottom:1px solid var(--line);
+    background:radial-gradient(ellipse 70% 80% at 50% 0%,rgba(255,193,77,.10),transparent 70%),var(--bg)}
+  header.top .kick{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--lamp);margin:0 0 12px}
+  header.top h1{font-family:var(--mono);font-size:clamp(24px,7vw,38px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 14px}
+  header.top p{max-width:52ch;margin:0 auto;color:var(--ink2);font-size:16px}
+
+  /* ---- игра ---- */
+  .game{position:relative;width:100%;max-width:820px;margin:26px auto 14px;aspect-ratio:9/16;
+    max-height:78vh;background:#000;border:1px solid #372f47;border-radius:16px;overflow:hidden;
+    box-shadow:0 26px 64px rgba(0,0,0,.7);touch-action:none;user-select:none;font-family:var(--mono)}
+  @media (min-width:760px){ .game{aspect-ratio:16/10;max-height:none} }
+  .game canvas{width:100%;height:100%;display:block}
+
+  .hud{position:absolute;inset:14px 12px auto 12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+  .pill{background:rgba(10,8,14,.5);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:7px 11px;backdrop-filter:blur(6px);line-height:1.15}
+  .pill .big{font-size:21px;color:#fff;font-variant-numeric:tabular-nums}
+  .pill .big i{font-style:normal;font-size:10px;color:#c3bcd2;margin-left:2px}
+  .pill .sm{font-size:13px;color:#e6e0f0;font-variant-numeric:tabular-nums}
+  .pill .lbl{display:block;font-size:7.5px;letter-spacing:.2em;color:#8f86a4;margin-top:2px}
+
+  .cross{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);pointer-events:none;opacity:.85}
+  .cross i{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 4px rgba(0,0,0,.9)}
+  .cross i:nth-child(1){left:50%;top:0;width:1px;height:7px;margin-left:-.5px}
+  .cross i:nth-child(2){left:50%;bottom:0;width:1px;height:7px;margin-left:-.5px}
+  .cross i:nth-child(3){top:50%;left:0;height:1px;width:7px;margin-top:-.5px}
+  .cross i:nth-child(4){top:50%;right:0;height:1px;width:7px;margin-top:-.5px}
+
+  .hint{position:absolute;left:0;right:0;bottom:96px;text-align:center;font-size:11px;letter-spacing:.14em;
+    color:rgba(255,255,255,.62);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .6s}
+  .hint.gone{opacity:0}
+
+  .stick{position:absolute;left:18px;bottom:18px;width:104px;height:104px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.14);background:rgba(10,8,14,.32);backdrop-filter:blur(4px)}
+  .stick i{position:absolute;left:50%;top:50%;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2)}
+  .dig{position:absolute;right:18px;bottom:24px;width:86px;height:86px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:12px;letter-spacing:.12em;color:var(--lamp);
+    border:1px solid rgba(255,193,77,.55);background:rgba(40,28,14,.4);backdrop-filter:blur(4px)}
+  .dig.on{background:rgba(255,193,77,.28)}
+  @media (min-width:760px){ .stick,.dig{display:none} }
+
+  .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;
+    text-align:center;font-size:13px;color:var(--ink2);background:#0b0910}
+
+  .keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 4px}
+  .keys span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink3);
+    border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+  .keys b{color:var(--ink);font-weight:700}
+
+  h2{font-family:var(--mono);font-size:19px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    margin:44px 0 4px;padding-bottom:11px;border-bottom:1px solid var(--line)}
+  p{margin:14px 0}
+  p strong{color:#fff}
+  ul{margin:0 0 14px;padding-left:1.25em;color:var(--ink2)}
+  li{margin-bottom:7px}
+  li strong{color:var(--ink)}
+  .note{border-left:2px solid var(--lamp);padding:4px 0 4px 16px;color:var(--ink2);font-size:15.5px;margin:18px 0}
+  code{font-family:var(--mono);font-size:.85em;background:#191524;border-radius:4px;padding:1px 6px}
+  footer.end{border-top:1px solid var(--line);margin-top:48px;padding-top:18px;font-family:var(--mono);
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+</style>
+
+<header class="top">
+  <p class="kick">Забой · играбельный прототип</p>
+  <h1>Настоящее первое лицо</h1>
+  <p>Не картинка. Воксельная шахта в реальном 3D: крути головой, ходи, долби породу. Всё считается в браузере на видеокарте.</p>
+</header>
+
+<div class="wrap">
+
+<div class="game" id="game">
+  <canvas id="gl"></canvas>
+  <div class="hud">
+    <span class="pill"><span class="big" id="depth">0<i>М</i></span></span>
+    <span class="pill"><span class="sm" id="ore">0</span><span class="lbl">РУДА</span></span>
+  </div>
+  <div class="cross"><i></i><i></i><i></i><i></i></div>
+  <div class="hint" id="hint">НАЖМИ, ЧТОБЫ ЗАХВАТИТЬ МЫШЬ · WASD ХОДИТЬ · ЛКМ ДОЛБИТЬ</div>
+  <div class="stick" id="stick"><i id="knob"></i></div>
+  <div class="dig" id="digbtn">ДОЛБИТЬ</div>
+  <div class="fail" id="fail"></div>
+</div>
+
+<div class="keys">
+  <span><b>WASD</b> ходить</span><span><b>мышь</b> смотреть</span><span><b>ЛКМ</b> долбить</span>
+  <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span>
+</div>
+<p style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink3);letter-spacing:.05em">
+  На телефоне: левый круг — ходьба, палец по экрану — камера, кнопка справа — долбить.
+</p>
+
+<h2>Что здесь настоящего</h2>
+<ul>
+  <li><strong>Мир воксельный и разрушаемый.</strong> Каждый блок реально существует в памяти. Разбил — его нет, и в дыру видно дальше.</li>
+  <li><strong>Свет — фонарь на каске.</strong> Освещено то, во что смотришь, и ничего больше. С глубиной дневной свет сверху угасает сам собой: на поверхности светло, на тридцати метрах уже нет.</li>
+  <li><strong>Рельеф не нарисован, а посчитан.</strong> Шероховатость камня даёт настоящие блики и тени, поэтому стена не выглядит наклейкой.</li>
+  <li><strong>Порода разная.</strong> Земля, камень, гранит и жилы руды — по цвету и по тому, сколько ударов держат.</li>
+  <li><strong>Туман по глубине.</strong> Чем глубже, тем короче видно.</li>
+</ul>
+
+<div class="note">Это прототип вида и ощущения, а не игра. Тут нет ни штрека, ни бригады, ни экономики, ни ужаса — только то, ради чего всё затевалось: <strong>каково это, стоять в забое и бить киркой</strong>.</div>
+
+<h2>Чем это сделано</h2>
+<p>Одна веб-страница. Никаких движков, никаких библиотек, ничего не скачивается.</p>
+<ul>
+  <li><strong>WebGL 2</strong> — картинка. Мир лежит в трёхмерной текстуре, а луч на каждый пиксель экрана пробегает по сетке блоков и находит, во что упёрся. Так же устроен Minecraft, только у нас без полигонов вообще.</li>
+  <li><strong>GLSL</strong> — язык шейдеров. Тут живут свет, рельеф, туман и цвет породы.</li>
+  <li><strong>JavaScript</strong> — мир, физика, ходьба, удары.</li>
+  <li><strong>CSS</strong> — интерфейс поверх: счётчики, прицел, кнопки.</li>
+</ul>
+<p class="note">Про <strong>Swift и Kotlin</strong>: они бы означали две отдельные игры — одну под iPhone, другую под Android, обе пишутся и чинятся врозь, и ни одна не открывается по ссылке. Веб даёт одну игру на всё сразу, включая компьютер. Когда захотим в сторы — эта же страница заворачивается в приложение без переписывания.</p>
+
+<footer class="end">Забой · прототип · WebGL 2 · без библиотек</footer>
+</div>
+
+<script>
+(function () {
+  const cv = document.getElementById("gl");
+  const gl = cv.getContext("webgl2", { antialias: false, powerPreference: "high-performance" });
+  const failBox = document.getElementById("fail");
+  if (!gl) {
+    failBox.style.display = "flex";
+    failBox.textContent = "Нужен WebGL 2 — в этом браузере его нет. Открой на другом, прототип лёгкий.";
+    return;
+  }
+
+  // ---------- мир ----------
+  const SX = 96, SY = 128, SZ = 96;          // блоков по X, вниз, Z
+  const AIR = 0, DIRT = 1, GRASS = 2, STONE = 3, GRANITE = 4, ORE = 5;
+  const world = new Uint8Array(SX * SY * SZ);
+  const idx = (x, y, z) => (y * SZ + z) * SX + x;
+  const inside = (x, y, z) => x >= 0 && y >= 0 && z >= 0 && x < SX && y < SY && z < SZ;
+  const get = (x, y, z) => inside(x, y, z) ? world[idx(x, y, z)] : (y < 0 ? AIR : STONE);
+
+  function hash3(x, y, z) {
+    let n = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(z | 0, 1442695041);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  }
+  function vn(x, y, z) {
+    const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+    const fx = x - ix, fy = y - iy, fz = z - iz;
+    const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy), w = fz * fz * (3 - 2 * fz);
+    let r = 0;
+    for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) for (let c = 0; c < 2; c++) {
+      const wt = (a ? u : 1 - u) * (b ? v : 1 - v) * (c ? w : 1 - w);
+      r += wt * hash3(ix + a, iy + b, iz + c);
+    }
+    return r;
+  }
+
+  const TOP = 6;                              // сколько блоков дёрна сверху
+  for (let y = 0; y < SY; y++) {
+    for (let z = 0; z < SZ; z++) {
+      for (let x = 0; x < SX; x++) {
+        let m;
+        if (y < 2) m = AIR;
+        else if (y < 3) m = GRASS;
+        else if (y < TOP + 3) m = DIRT;
+        else {
+          m = STONE;
+          if (vn(x / 9, y / 9, z / 9) > 0.63) m = GRANITE;
+          const oa = vn(x / 6.5 + 40, y / 4.5, z / 6.5 + 40);
+          const ob = vn(x / 24 + 90, y / 20, z / 24 + 90);
+          if (oa > 0.70 && ob > 0.58) m = ORE;
+        }
+        world[idx(x, y, z)] = m;
+      }
+    }
+  }
+  // стартовая яма: ступенчатая воронка в центре
+  const CX = SX >> 1, CZ = SZ >> 1;
+  for (let y = 2; y < 26; y++) {
+    const rad = Math.max(2.2, 11 - y * 0.42);
+    for (let z = 0; z < SZ; z++) for (let x = 0; x < SX; x++) {
+      const dx = x - CX + 0.5, dz = z - CZ + 0.5;
+      const d = Math.sqrt(dx * dx + dz * dz) * (1 + (vn(x / 7, y / 30, z / 7) - .5) * .34);
+      if (d < rad) world[idx(x, y, z)] = AIR;
+    }
+  }
+
+  // ---------- текстура мира ----------
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_3D, tex);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+  gl.texImage3D(gl.TEXTURE_3D, 0, gl.R8, SX, SZ, SY, 0, gl.RED, gl.UNSIGNED_BYTE, world);
+
+  function poke(x, y, z, v) {
+    world[idx(x, y, z)] = v;
+    gl.bindTexture(gl.TEXTURE_3D, tex);
+    gl.texSubImage3D(gl.TEXTURE_3D, 0, x, z, y, 1, 1, 1, gl.RED, gl.UNSIGNED_BYTE, new Uint8Array([v]));
+  }
+
+  // ---------- шейдеры ----------
+  const VS = `#version 300 es
+  in vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }`;
+
+  const FS = `#version 300 es
+  precision highp float; precision highp sampler3D;
+  out vec4 outColor;
+  uniform vec2  uRes;
+  uniform vec3  uCam;
+  uniform mat3  uRot;
+  uniform sampler3D uWorld;
+  uniform vec3  uSize;
+  uniform float uTime;
+
+  float mat(ivec3 c){
+    if(c.x<0||c.y<0||c.z<0||c.x>=int(uSize.x)||c.y>=int(uSize.y)||c.z>=int(uSize.z)) return 0.0;
+    return texelFetch(uWorld, ivec3(c.x,c.z,c.y), 0).r * 255.0;
+  }
+  float h31(vec3 p){ return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453); }
+  float n3(vec3 p){
+    vec3 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+    float a=mix(mix(mix(h31(i+vec3(0,0,0)),h31(i+vec3(1,0,0)),f.x),
+                    mix(h31(i+vec3(0,1,0)),h31(i+vec3(1,1,0)),f.x),f.y),
+                mix(mix(h31(i+vec3(0,0,1)),h31(i+vec3(1,0,1)),f.x),
+                    mix(h31(i+vec3(0,1,1)),h31(i+vec3(1,1,1)),f.x),f.y),f.z);
+    return a;
+  }
+  float fbm(vec3 p){ return n3(p)*0.55 + n3(p*2.03)*0.28 + n3(p*4.11)*0.17; }
+
+  vec3 albedo(float m, vec3 wp){
+    vec3 c;
+    if(m<1.5)      c = vec3(0.44,0.30,0.19);            // земля
+    else if(m<2.5) c = vec3(0.26,0.46,0.16)*(0.82+0.42*n3(wp*0.7)); // дёрн
+    else if(m<3.5) c = vec3(0.40,0.36,0.36);            // камень
+    else if(m<4.5) c = vec3(0.29,0.27,0.34);            // гранит
+    else           c = vec3(0.16,0.42,0.50);            // руда
+    float v = 0.80 + 0.40*h31(floor(wp));
+    return c*v;
+  }
+
+  void main(){
+    vec2 uv = (gl_FragCoord.xy - 0.5*uRes)/uRes.y;
+    vec3 rd = normalize(uRot * vec3(uv, 1.05));
+    vec3 ro = uCam;
+
+    ivec3 cell = ivec3(floor(ro));
+    vec3 srd = sign(rd);
+    vec3 dd  = abs(1.0/max(abs(rd),vec3(1e-5)));
+    vec3 sd  = (srd*(vec3(cell)-ro) + srd*0.5 + 0.5)*dd;
+    vec3 nrm = vec3(0.0);
+    float m = 0.0, dist = 0.0;
+    bool hit=false;
+
+    for(int i=0;i<220;i++){
+      float mm = mat(cell);
+      if(mm>0.5){ hit=true; m=mm; break; }
+      if(sd.x<sd.y && sd.x<sd.z){ dist=sd.x; sd.x+=dd.x; cell.x+=int(srd.x); nrm=vec3(-srd.x,0,0); }
+      else if(sd.y<sd.z){        dist=sd.y; sd.y+=dd.y; cell.y+=int(srd.y); nrm=vec3(0,-srd.y,0); }
+      else {                     dist=sd.z; sd.z+=dd.z; cell.z+=int(srd.z); nrm=vec3(0,0,-srd.z); }
+      if(dist>90.0) break;
+      if(cell.y<-2) break;
+    }
+
+    vec3 sky = mix(vec3(0.28,0.36,0.44), vec3(0.55,0.66,0.62), clamp(rd.y*1.4+0.4,0.0,1.0));
+    if(!hit){ outColor=vec4(sky,1.0); return; }
+
+    vec3 wp = ro + rd*dist;
+
+    // рельеф: шероховатость даёт настоящие блики
+    float e = 0.14;
+    float hC = fbm(wp*3.1), hX = fbm((wp+vec3(e,0,0))*3.1), hY = fbm((wp+vec3(0,e,0))*3.1), hZ = fbm((wp+vec3(0,0,e))*3.1);
+    vec3 bump = vec3(hX-hC, hY-hC, hZ-hC)/e;
+    vec3 N = normalize(nrm - (bump - nrm*dot(bump,nrm))*0.55);
+
+    // фонарь на каске
+    vec3 L = uCam - wp; float ld = length(L); L/=ld;
+    float lamp = max(dot(N,L),0.0) / (1.0 + 0.055*ld*ld);
+    float beam = 1.0 - smoothstep(0.12, 0.78, length(uv));
+    lamp *= 0.30 + 1.05*beam;
+
+    // дневной свет сверху, гаснет с глубиной
+    float day = exp(-max(wp.y-2.0,0.0)*0.14);
+    float sun = max(dot(N, normalize(vec3(0.35,-1.0,0.22))),0.0);
+    float skyAmb = 0.5 + 0.5*(-N.y);
+    vec3 dayCol = vec3(1.05,0.98,0.84)*sun*day*1.5 + vec3(0.30,0.40,0.50)*day*skyAmb*0.26;
+
+    // край блока темнее — блоки читаются как объём
+    vec3 fp = fract(wp);
+    vec3 ec = abs(fp-0.5);
+    float edge = max(max(ec.x,ec.y),ec.z);
+    float crease = 1.0 - smoothstep(0.42,0.5,edge)*0.55;
+
+    vec3 col = albedo(m, wp) * (dayCol + vec3(1.0,0.80,0.52)*lamp*1.35 + 0.018);
+    col *= crease;
+    col *= 0.66 + 0.68*hC;
+
+    if(m>4.5) col += vec3(0.07,0.30,0.40)*lamp*1.1;   // руда переливается
+
+    // туман: с глубиной видно короче
+    float fogD = mix(0.0030, 0.090, clamp((wp.y-5.0)/40.0,0.0,1.0));
+    vec3 fogCol = mix(vec3(0.44,0.52,0.52), vec3(0.024,0.018,0.032), clamp((wp.y-2.0)/13.0,0.0,1.0));
+    col = mix(col, fogCol, 1.0-exp(-dist*fogD));
+
+    // виньетка и зерно
+    float vig = 1.0 - 0.55*pow(length(uv*vec2(1.0,1.25)),2.2);
+    col *= vig;
+    col += (h31(vec3(gl_FragCoord.xy, floor(uTime*24.0)))-0.5)*0.022;
+
+    col = pow(max(col,0.0), vec3(0.4545));
+    outColor = vec4(col,1.0);
+  }`;
+
+  function sh(type, src) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  let prog;
+  try {
+    prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  } catch (e) {
+    failBox.style.display = "flex";
+    failBox.textContent = "Шейдер не собрался: " + e.message;
+    return;
+  }
+  gl.useProgram(prog);
+  const vb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, "p");
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = n => gl.getUniformLocation(prog, n);
+  gl.uniform1i(U("uWorld"), 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_3D, tex);
+  gl.uniform3f(U("uSize"), SX, SY, SZ);
+
+  // ---------- игрок ----------
+  // y растёт ВНИЗ: P.y — ноги, голова на EYE выше, то есть на P.y - EYE
+  const P = { x: CX + .5, y: 2.0, z: CZ + 15.5, vy: 0, yaw: Math.PI, pitch: -0.34, ground: false };
+  const EYE = 1.62, RAD = 0.3, TALL = 1.72;
+
+  function solid(x, y, z) { return get(Math.floor(x), Math.floor(y), Math.floor(z)) !== AIR; }
+  function blocked(x, y, z) {
+    for (const yy of [y - 0.06, y - TALL * 0.55, y - TALL + 0.06]) {
+      if (solid(x - RAD, yy, z - RAD) || solid(x + RAD, yy, z - RAD) ||
+          solid(x - RAD, yy, z + RAD) || solid(x + RAD, yy, z + RAD)) return true;
+    }
+    return false;
+  }
+
+  const keys = {};
+  addEventListener("keydown", e => {
+    keys[e.code] = true;
+    if (["KeyW","KeyA","KeyS","KeyD","Space"].includes(e.code) && document.pointerLockElement === cv) e.preventDefault();
+  });
+  addEventListener("keyup", e => keys[e.code] = false);
+
+  const hint = document.getElementById("hint");
+  cv.addEventListener("click", () => { if (!isTouch) cv.requestPointerLock(); });
+  document.addEventListener("pointerlockchange", () => {
+    if (document.pointerLockElement === cv) hint.classList.add("gone");
+  });
+  document.addEventListener("mousemove", e => {
+    if (document.pointerLockElement !== cv) return;
+    P.yaw -= e.movementX * 0.0026;
+    P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch - e.movementY * 0.0026));
+  });
+  let digging = false;
+  cv.addEventListener("mousedown", e => { if (e.button === 0) digging = true; });
+  addEventListener("mouseup", () => digging = false);
+
+  // --- телефон ---
+  const isTouch = matchMedia("(hover:none)").matches;
+  const stick = document.getElementById("stick"), knob = document.getElementById("knob");
+  const digbtn = document.getElementById("digbtn");
+  let moveX = 0, moveZ = 0;
+  let lookId = null, lastLX = 0, lastLY = 0, stickId = null, sx0 = 0, sy0 = 0;
+
+  function stickStart(e) {
+    const t = e.changedTouches[0]; stickId = t.identifier;
+    const r = stick.getBoundingClientRect(); sx0 = r.left + r.width / 2; sy0 = r.top + r.height / 2;
+    e.preventDefault();
+  }
+  stick.addEventListener("touchstart", stickStart, { passive: false });
+  digbtn.addEventListener("touchstart", e => { digging = true; digbtn.classList.add("on"); e.preventDefault(); }, { passive: false });
+  digbtn.addEventListener("touchend", e => { digging = false; digbtn.classList.remove("on"); e.preventDefault(); }, { passive: false });
+
+  cv.addEventListener("touchstart", e => {
+    for (const t of e.changedTouches) if (lookId === null) { lookId = t.identifier; lastLX = t.clientX; lastLY = t.clientY; }
+    hint.classList.add("gone");
+    e.preventDefault();
+  }, { passive: false });
+  addEventListener("touchmove", e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === lookId) {
+        P.yaw -= (t.clientX - lastLX) * 0.0055;
+        P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch - (t.clientY - lastLY) * 0.0055));
+        lastLX = t.clientX; lastLY = t.clientY;
+      } else if (t.identifier === stickId) {
+        let dx = t.clientX - sx0, dy = t.clientY - sy0;
+        const d = Math.hypot(dx, dy), max = 42;
+        if (d > max) { dx *= max / d; dy *= max / d; }
+        knob.style.transform = `translate(${dx}px,${dy}px)`;
+        moveX = dx / max; moveZ = -dy / max;
+      }
+    }
+    e.preventDefault();
+  }, { passive: false });
+  addEventListener("touchend", e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === lookId) lookId = null;
+      if (t.identifier === stickId) { stickId = null; moveX = moveZ = 0; knob.style.transform = ""; }
+    }
+  });
+
+  // ---------- добыча ----------
+  const hpOf = m => m === GRASS ? 4 : m === DIRT ? 6 : m === STONE ? 16 : m === GRANITE ? 44 : 12;
+  let target = null, targetHp = 0, ore = 0, digCd = 0;
+
+  function pick() {
+    const cy2 = Math.cos(P.pitch), sy2 = Math.sin(P.pitch);
+    const dir = [Math.sin(P.yaw) * cy2, -sy2, Math.cos(P.yaw) * cy2];
+    let x = P.x, y = P.y - EYE, z = P.z;
+    for (let i = 0; i < 220; i++) {
+      x += dir[0] * 0.045; y += dir[1] * 0.045; z += dir[2] * 0.045;
+      const cx2 = Math.floor(x), cy3 = Math.floor(y), cz2 = Math.floor(z);
+      if (!inside(cx2, cy3, cz2)) return null;
+      if (get(cx2, cy3, cz2) !== AIR) return [cx2, cy3, cz2];
+    }
+    return null;
+  }
+
+  const depthEl = document.getElementById("depth"), oreEl = document.getElementById("ore");
+
+  // ---------- цикл ----------
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, isTouch ? 1.5 : 2);
+    const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    gl.viewport(0, 0, cv.width, cv.height);
+    gl.uniform2f(U("uRes"), cv.width, cv.height);
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    resize();
+
+    // движение
+    let fwd = moveZ, str = moveX;
+    if (keys.KeyW) fwd += 1; if (keys.KeyS) fwd -= 1;
+    if (keys.KeyD) str += 1; if (keys.KeyA) str -= 1;
+    const len = Math.hypot(fwd, str) || 1;
+    const spd = (keys.ShiftLeft ? 7.2 : 4.2) * dt;
+    const sn = Math.sin(P.yaw), cs = Math.cos(P.yaw);
+    const dx = (sn * fwd / len + cs * str / len) * spd;
+    const dz = (cs * fwd / len - sn * str / len) * spd;
+
+    if (fwd || str) {
+      if (!blocked(P.x + dx, P.y, P.z)) P.x += dx;
+      if (!blocked(P.x, P.y, P.z + dz)) P.z += dz;
+    }
+
+    // гравитация: +vy — падение вниз
+    P.vy += 24 * dt;
+    const ny = P.y + P.vy * dt;
+    P.ground = false;
+    if (blocked(P.x, ny, P.z)) {
+      if (P.vy > 0) { P.y = Math.floor(ny); P.ground = true; }
+      P.vy = 0;
+    } else P.y = ny;
+    if (keys.Space && P.ground) { P.vy = -7.6; P.ground = false; }
+    if (P.y > SY + 30) { P.x = CX + .5; P.z = CZ + 15.5; P.y = 2; P.vy = 0; }
+
+    // долбёжка
+    digCd -= dt;
+    if (digging && digCd <= 0) {
+      digCd = 0.11;
+      const t = pick();
+      if (t) {
+        const key = t.join(",");
+        if (!target || target !== key) { target = key; targetHp = hpOf(get(t[0], t[1], t[2])); }
+        targetHp -= 3;
+        if (targetHp <= 0) {
+          const m = get(t[0], t[1], t[2]);
+          poke(t[0], t[1], t[2], AIR);
+          ore += m === ORE ? 40 : m === GRANITE ? 6 : 2;
+          target = null;
+          oreEl.textContent = ore >= 1000 ? (ore / 1000).toFixed(1) + "K" : ore;
+        }
+      }
+    }
+
+    const depth = Math.max(0, Math.round(P.y - 2));
+    depthEl.innerHTML = depth + "<i>М</i>";
+
+    // камера
+    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
+    const cyw = Math.cos(P.yaw), syw = Math.sin(P.yaw);
+    // столбцы матрицы: вправо, вверх, вперёд. Мир с осью Y вниз, поэтому «вверх» = -Y.
+    const R  = [cyw, 0, -syw];
+    const F  = [syw * cp, -sp, cyw * cp];
+    const Uv = [-syw * sp, -cp, -cyw * sp];
+    gl.uniformMatrix3fv(U("uRot"), false, new Float32Array([R[0],R[1],R[2], Uv[0],Uv[1],Uv[2], F[0],F[1],F[2]]));
+    gl.uniform3f(U("uCam"), P.x, P.y - EYE, P.z);
+    gl.uniform1f(U("uTime"), now / 1000);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
