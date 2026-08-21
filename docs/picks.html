@@ -1,0 +1,279 @@
+<title>Забой: кирки</title>
+
+<style>
+  :root{
+    --bg:#0a0810; --panel:#141019; --line:#241d2f; --line2:#372c47;
+    --ink:#ece7f4; --ink2:#a79ec0; --ink3:#6f6788; --lamp:#ffc14d;
+    --mono: ui-monospace,"SFMono-Regular","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --body:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-text-size-adjust:100%}
+  .wrap{max-width:78ch;margin:0 auto;padding:0 18px 100px}
+
+  header.top{padding:52px 20px 34px;text-align:center;border-bottom:1px solid var(--line);
+    background:radial-gradient(ellipse 70% 80% at 50% 0%,rgba(140,60,200,.14),transparent 70%),var(--bg)}
+  header.top .kick{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--lamp);margin:0 0 12px}
+  header.top h1{font-family:var(--mono);font-size:clamp(25px,7vw,40px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 14px}
+  header.top p{max-width:54ch;margin:0 auto;color:var(--ink2);font-size:16px}
+
+  .lede{margin:36px 0 10px;color:var(--ink2)}
+  .lede b{color:var(--ink);font-weight:700}
+
+  .row{display:grid;grid-template-columns:58px 1fr;gap:10px;margin:12px 0;align-items:stretch}
+  .tier{border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:22px;font-weight:700;color:#17121c}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:9px}
+  .card{background:var(--panel);border:1px solid var(--line2);border-radius:11px;overflow:hidden;
+    display:flex;flex-direction:column;align-items:center;padding-bottom:9px;position:relative}
+  .card canvas{width:100%;display:block}
+  .card b{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;font-weight:700;margin-top:-2px}
+  .card i{font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--ink3);font-style:normal;margin-top:3px}
+
+  h2{font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    margin:46px 0 4px;padding-bottom:11px;border-bottom:1px solid var(--line)}
+  p{margin:14px 0}
+  ul{margin:0 0 14px;padding-left:1.25em;color:var(--ink2)}
+  li{margin-bottom:7px}
+  li strong{color:var(--ink)}
+  .note{border-left:2px solid #a06cd5;padding:4px 0 4px 16px;color:var(--ink2);font-size:15.5px;margin:18px 0}
+  .ramp{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:16px 0}
+  .ramp i{flex:1;height:34px}
+  footer.end{border-top:1px solid var(--line);margin-top:50px;padding-top:18px;font-family:var(--mono);
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+</style>
+
+<header class="top">
+  <p class="kick">Забой · инструменты</p>
+  <h1>Кирки</h1>
+  <p>Четырнадцать штук по четырём уровням. Чем глубже добыт материал, тем сильнее он уходит в фиолетовый — цвет, которого в нормальной породе не бывает.</p>
+</header>
+
+<div class="wrap">
+
+<p class="lede"><b>Почему именно фиолетовый.</b> В палитре игры есть служебный цвет «нечто»: он не встречается в породе никогда, и если появился на экране — значит появилось что-то ещё. Пустив верхние кирки в этот цвет, мы получаем бесплатный сюжет: <b>чем лучше твой инструмент, тем больше он сделан из того, чего быть не должно.</b> Игрок сам, добровольно, берёт эту штуку в руки и радуется цифрам.</p>
+
+<div class="ramp" id="ramp"></div>
+
+<div id="tiers"></div>
+
+<h2>Как это работает в игре</h2>
+<ul>
+  <li><strong>C — то, что можно купить.</strong> Обычное железо, обычные деньги. Никаких сюрпризов.</li>
+  <li><strong>B — то, что надо найти.</strong> Материал добывается только на глубине, купить нельзя.</li>
+  <li><strong>A — то, что уже странно.</strong> Магма, кость, кристалл. Работают лучше, но у каждой есть цена: греется, тупится, светится в темноте и выдаёт тебя.</li>
+  <li><strong>S — то, чего быть не должно.</strong> Три штуки на всю игру. Каждая находится один раз и не покупается ни за что.</li>
+</ul>
+
+<p class="note">И одна идея, которую стоит обсудить: <strong>у S-кирок не должно быть описания.</strong> У всех остальных в штреке написано, сколько урона и сколько стоит. У этих трёх — пустая строка. Игра знает, что они делают, и не говорит.</p>
+
+<h2>Что дальше</h2>
+<p>Это первый лист, чтобы было от чего отталкиваться. Скажи, какие нравятся, какие переделать, каких не хватает — нарисую следующий заход. Формы, число зубьев, изгиб, свечение, рукояти — всё меняется.</p>
+
+<footer class="end">Забой · лист инструментов · отрисовано кодом</footer>
+</div>
+
+<script>
+(function () {
+  // ---------- перечень ----------
+  const TIERS = [
+    { t: "C", col: "#5aa9e6", label: "покупные",
+      picks: [
+        { n:"Ржавая",     mat:["#8d6a4a","#5e4230","#3a281b"], rim:"#b89268", sh:"classic", hd:"wood", glow:0 },
+        { n:"Стальная",   mat:["#e7e2ec","#9a94a6","#3f3a4b"], rim:"#ffffff", sh:"classic", hd:"wood", glow:0 },
+        { n:"Медная",     mat:["#f0b077","#c07c3e","#6b4220"], rim:"#ffd7a8", sh:"classic", hd:"wood", glow:0 },
+        { n:"Закалённая", mat:["#b9c2cc","#6d7683","#2e343d"], rim:"#e6f0fa", sh:"fork",    hd:"dark", glow:0 }
+      ]},
+    { t: "B", col: "#f2c14e", label: "находки",
+      picks: [
+        { n:"Кобальтовая", mat:["#8fd4f5","#3f8fc4","#17456b"], rim:"#d5f2ff", sh:"crescent", hd:"dark", glow:.18 },
+        { n:"Титановая",   mat:["#f2f0f6","#a7a3b4","#4a4658"], rim:"#ffffff", sh:"crescent", hd:"dark", glow:.1 },
+        { n:"Золотая",     mat:["#ffdf8a","#d5a026","#7a5410"], rim:"#fff3c4", sh:"fork",     hd:"wood", glow:.14 },
+        { n:"Обсидиан",    mat:["#5a4d70","#2b2338","#100b18"], rim:"#a08cc4", sh:"shard",    hd:"dark", glow:.12 }
+      ]},
+    { t: "A", col: "#f08a3c", label: "глубинные",
+      picks: [
+        { n:"Магмовая",   mat:["#ffb057","#c9451c","#4a1408"], rim:"#ffd39a", sh:"crescent", hd:"dark", glow:.55, gcol:"#ff6a1e" },
+        { n:"Костяная",   mat:["#efe6d2","#b8a888","#5f5443"], rim:"#fff8e8", sh:"fork",     hd:"bone", glow:.16, gcol:"#c8b48c" },
+        { n:"Кристалл",   mat:["#c9a6f0","#8256bd","#3b1f63"], rim:"#e8d5ff", sh:"shard",    hd:"dark", glow:.5,  gcol:"#9a5ce0" }
+      ]},
+    { t: "S", col: "#e8556d", label: "не должно существовать",
+      picks: [
+        { n:"Аметист",  mat:["#dcb8ff","#9a5ce0","#431d78"], rim:"#f3e4ff", sh:"crescent", hd:"void", glow:.7,  gcol:"#a86cf0" },
+        { n:"Бездна",   mat:["#a878e8","#6b2f8f","#25093f"], rim:"#d9b6ff", sh:"wing",     hd:"void", glow:.85, gcol:"#8a2fd0" },
+        { n:"Нечто",    mat:["#c9a0ff","#4e1478","#120320"], rim:"#efd8ff", sh:"wing",     hd:"void", glow:1,   gcol:"#6b2f8f", wrong:true }
+      ]}
+  ];
+
+  function h(x, y) {
+    let n = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  }
+
+  // ---------- рисование одной кирки ----------
+  function drawPick(cv, s) {
+    const W = cv.width, H = cv.height, g = cv.getContext("2d");
+    const px = n => n * (W / 300);
+    const cx = W * .5, top = H * .30;
+    g.clearRect(0, 0, W, H);
+
+    // подложка-свечение
+    if (s.glow > 0) {
+      const rg = g.createRadialGradient(cx, H * .42, 0, cx, H * .42, W * .52);
+      rg.addColorStop(0, hexA(s.gcol || s.mat[0], .30 * s.glow));
+      rg.addColorStop(1, hexA(s.gcol || s.mat[0], 0));
+      g.fillStyle = rg; g.fillRect(0, 0, W, H);
+    }
+
+    // ---- рукоять ----
+    const hy0 = top + px(6), hy1 = H - px(26), hw = px(11);
+    const hgs = { wood: [["#c99a63"], ["#8a6238"], ["#4a3320"]],
+                  dark: [["#6e6a7a"], ["#3c3846"], ["#191722"]],
+                  bone: [["#f0e7d4"], ["#c0b193"], ["#6a604d"]],
+                  void: [["#8a63b8"], ["#43206b"], ["#170a26"]] }[s.hd];
+    const wg = g.createLinearGradient(cx - hw, 0, cx + hw, 0);
+    wg.addColorStop(0, hgs[0][0]); wg.addColorStop(.42, hgs[1][0]); wg.addColorStop(1, hgs[2][0]);
+    g.fillStyle = wg;
+    g.beginPath(); g.moveTo(cx - hw, hy0); g.lineTo(cx + hw, hy0);
+    g.lineTo(cx + hw * .78, hy1); g.lineTo(cx - hw * .78, hy1); g.closePath(); g.fill();
+    // текстура рукояти
+    g.globalAlpha = .22;
+    for (let i = 0; i < 16; i++) {
+      g.fillStyle = h(i, 3) > .5 ? "#ffffff" : "#000000";
+      g.fillRect(cx - hw + h(i, 1) * hw * 1.7, hy0 + h(i, 2) * (hy1 - hy0), px(2), px(9 + h(i, 4) * 16));
+    }
+    g.globalAlpha = 1;
+    // обмотка
+    for (let i = 0; i < 4; i++) {
+      const y = hy0 + (hy1 - hy0) * (.42 + i * .1);
+      g.fillStyle = i % 2 ? "#241a12" : "#3a2a1c";
+      if (s.hd === "void") g.fillStyle = i % 2 ? "#1c0c2e" : "#341a52";
+      g.fillRect(cx - hw * .96, y, hw * 1.92, px(8));
+    }
+    // навершие
+    g.fillStyle = hgs[2][0];
+    g.beginPath(); g.ellipse(cx, hy1, hw * .95, px(7), 0, 0, 6.283); g.fill();
+
+    // ---- голова ----
+    // Форма считается отдельно для каждой стороны: у простых кирок
+    // слева остриё, справа лопатка — именно это и делает силуэт узнаваемым.
+    for (const side of [1, -1]) {
+      g.save(); g.translate(cx, top); g.scale(side, 1);
+      const L = px(100), T = px(14);
+      const hp = new Path2D();
+
+      if (s.sh === "classic") {
+        if (side > 0) {                       // остриё
+          hp.moveTo(0, -T);
+          hp.quadraticCurveTo(L * .58, -T - px(9), L, -T - px(12));
+          hp.lineTo(L * .99, -T + px(1));
+          hp.quadraticCurveTo(L * .55, px(3), 0, T);
+        } else {                              // лопатка
+          hp.moveTo(0, -T);
+          hp.quadraticCurveTo(L * .5, -T - px(5), L * .74, -T - px(6));
+          hp.lineTo(L * .80, px(9));
+          hp.quadraticCurveTo(L * .46, px(7), 0, T);
+        }
+      } else if (s.sh === "fork") {
+        hp.moveTo(0, -T);
+        hp.quadraticCurveTo(L * .46, -T - px(15), L * .99, -px(38));
+        hp.lineTo(L * .84, -px(24));
+        hp.lineTo(L * .95, -px(2));
+        hp.lineTo(L * .70, -px(13));
+        hp.quadraticCurveTo(L * .42, px(4), 0, T);
+      } else if (s.sh === "crescent") {
+        hp.moveTo(0, -T);
+        hp.quadraticCurveTo(L * .64, -T - px(24), L * 1.02, -px(46));
+        hp.lineTo(L * .86, -px(27));
+        hp.quadraticCurveTo(L * .52, px(5), 0, T);
+      } else if (s.sh === "shard") {
+        hp.moveTo(0, -T);
+        hp.lineTo(L * .34, -px(24)); g.lineTo(L * .50, -px(15));
+        hp.lineTo(L * .99, -px(40)); g.lineTo(L * .82, -px(13));
+        hp.lineTo(L * .94, px(2));  g.lineTo(L * .40, px(4));
+        hp.lineTo(0, T);
+      } else {                                 // wing
+        hp.moveTo(0, -T);
+        hp.quadraticCurveTo(L * .34, -T - px(34), L * .62, -px(64));
+        hp.lineTo(L * .62, -px(38));
+        hp.quadraticCurveTo(L * .86, -px(50), L * 1.04, -px(24));
+        hp.lineTo(L * .82, -px(20));
+        hp.quadraticCurveTo(L * .96, -px(2), L * .74, px(12));
+        hp.lineTo(L * .48, -px(6));
+        hp.quadraticCurveTo(L * .28, px(8), 0, T);
+      }
+      hp.closePath();
+
+      const mg = g.createLinearGradient(0, -px(56), 0, px(14));
+      mg.addColorStop(0, s.mat[0]); mg.addColorStop(.48, s.mat[1]); mg.addColorStop(1, s.mat[2]);
+      g.fillStyle = mg; g.fill(hp);
+
+      g.save(); g.clip(hp);
+      // блик вдоль верхней кромки
+      g.fillStyle = hexA(s.rim, .42);
+      g.beginPath();
+      g.moveTo(0, -T); g.quadraticCurveTo(L * .55, -T - px(40), L * 1.1, -px(70));
+      g.lineTo(L * 1.1, -px(52)); g.quadraticCurveTo(L * .5, -T - px(10), 0, -T + px(6));
+      g.closePath(); g.fill();
+      // тень снизу — толщина металла
+      g.fillStyle = "rgba(0,0,0,.42)";
+      g.fillRect(0, px(2), L * 1.15, px(16));
+      if (s.glow > .3) {
+        const eg = g.createLinearGradient(0, 0, L, -px(30));
+        eg.addColorStop(0, hexA(s.gcol, 0)); eg.addColorStop(1, hexA(s.gcol, .6 * s.glow));
+        g.fillStyle = eg; g.fillRect(0, -px(80), L * 1.2, px(110));
+      }
+      g.restore();
+
+      g.strokeStyle = hexA(s.rim, .22); g.lineWidth = px(1.3); g.stroke(hp);
+      g.restore();
+    }
+
+    // проушина
+    g.fillStyle = s.hd === "void" ? "#1b0a2c" : "#1a1622";
+    g.beginPath(); g.roundRect(cx - px(16), top - px(19), px(32), px(38), px(6)); g.fill();
+    g.fillStyle = hexA(s.rim, .3);
+    g.fillRect(cx - px(16), top - px(19), px(32), px(4));
+
+    // «нечто»: край подрагивает, как битый сигнал
+    if (s.wrong) {
+      for (let i = 0; i < 5; i++) {
+        const y = top - px(60) + h(i, 9) * px(120);
+        const sl = g.getImageData(0, y, W, px(5) | 0);
+        g.putImageData(sl, (h(i, 11) - .5) * px(22), y);
+      }
+    }
+  }
+
+  function hexA(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+  }
+
+  // ---------- сборка страницы ----------
+  const ramp = document.getElementById("ramp");
+  ["#8d6a4a","#b9c2cc","#8fd4f5","#ffdf8a","#ffb057","#c9a6f0","#a878e8","#6b2f8f"].forEach(c => {
+    const i = document.createElement("i"); i.style.background = c; ramp.append(i);
+  });
+
+  const host = document.getElementById("tiers");
+  for (const T of TIERS) {
+    const row = document.createElement("div"); row.className = "row";
+    const tier = document.createElement("div"); tier.className = "tier";
+    tier.style.background = T.col; tier.textContent = T.t;
+    const cards = document.createElement("div"); cards.className = "cards";
+    for (const s of T.picks) {
+      const c = document.createElement("div"); c.className = "card";
+      c.style.borderColor = hexA(T.col, .38);
+      c.style.boxShadow = "inset 0 0 26px " + hexA(s.gcol || T.col, .12);
+      const cv = document.createElement("canvas"); cv.width = 300; cv.height = 300;
+      const nm = document.createElement("b"); nm.textContent = s.n; nm.style.color = T.col;
+      const lb = document.createElement("i"); lb.textContent = T.label;
+      c.append(cv, nm, lb); cards.append(c);
+      drawPick(cv, s);
+    }
+    row.append(tier, cards); host.append(row);
+  }
+})();
+</script>
