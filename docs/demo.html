@@ -98,6 +98,15 @@
   .opt .sw.on{background:#3a2a12;border-color:rgba(255,193,77,.6)}
   .opt .sw.on::after{left:22px;background:var(--lamp)}
   .opt .val{font-size:11px;color:#8f86a4;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
+  .inv .isec{grid-column:1/-1;margin:8px 0 2px}
+  .inv .isec b{font-size:10px;letter-spacing:.2em;color:#ffc14d}
+  .inv .isec small{display:block;font-size:9px;color:#6f6788;letter-spacing:.04em;margin-top:3px}
+  .inv .iwrap{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:7px}
+  .inv .it small{display:block;font-size:8.5px;color:#6f6788;letter-spacing:.06em;margin-top:2px}
+  .inv .it.fix{opacity:.75;cursor:default}
+  .inv .it.pas{cursor:default;justify-content:space-between}
+  .inv .it.pas u{font-size:9.5px;color:#8f86a4;text-decoration:none;letter-spacing:.08em}
+  .slot.sk{border-radius:50%}
   .inv{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:7px}
   .inv .it{border:1px solid var(--line2);border-radius:9px;background:#121019;padding:8px;
     display:flex;gap:8px;align-items:center;cursor:pointer}
@@ -169,7 +178,7 @@
 
 <div class="keys">
   <span><b>WASD</b> ходить</span><span><b>мышь</b> смотреть</span><span><b>ЛКМ</b> долбить</span>
-  <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span><span><b>1–8</b> пояс</span><span><b>Tab</b> инвентарь</span><span><b>Esc</b> настройки</span>
+  <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span><span><b>1–4</b> предметы</span><span><b>5–7</b> скиллы</span><span><b>Tab</b> инвентарь</span><span><b>Esc</b> настройки</span>
 </div>
 
 <h2>Что изменилось</h2>
@@ -182,6 +191,9 @@
   <li><strong>Пыль в луче.</strong> Свет из окошка и от лампочки виден в воздухе — это то, что делает подвал обжитым, а не пустым.</li>
   <li><strong>Мокрая глина.</strong> Влажные пятна темнее и отражают свет, сухая порода — нет.</li>
   <li><strong>Осколки, тряска и звук.</strong> Каждый удар выбивает крошку, дёргает камеру и звучит по-разному в зависимости от породы.</li>
+  <li><strong>Кирка — мультитул.</strong> Она одна на всю игру и лежит в первой ячейке намертво. Никаких семи инструментов: качается только она, и её ступени и есть прогресс.</li>
+  <li><strong>Пояс разделён.</strong> Слева четыре квадрата — предметы (кирка, фонарь и два на выбор), справа три круга — активные скиллы с кулдаунами. Клавиши 1–4 и 5–7.</li>
+  <li><strong>Пассивные ячеек не занимают.</strong> Они всегда работают, их только качают — поэтому у них нет минусов. Размены живут там, где есть выбор: на предметах и скиллах.</li>
   <li><strong>На экране постоянно живёт одно число — глубина.</strong> Пояс всплывает на полторы секунды при смене предмета и уходит. Руда подсвечивается, когда меняется, и гаснет. Вагонетка появляется, только когда почти полна. Что у тебя в руках, видно по рукам.</li>
   <li><strong>Настройки, которые не сбрасываются.</strong> Esc — меню: переназначение любой клавиши, чувствительность мыши и инверсия, поле зрения, покачивание, тряска, качество и дальность видимости, яркость, зерно, громкость. Всё пишется в браузер и переживает перезаход.</li>
   <li><strong>Инвентарь</strong> — Tab. Нажал на предмет, и он лёг в выбранную ячейку пояса.</li>
@@ -587,13 +599,12 @@
             run:"ShiftLeft", dig:"Mouse0", look:"KeyQ", menu:"Escape", inv:"Tab" },
     sens: 26, invY: false, fov: 75, headbob: true, shake: true, grain: true,
     quality: 1, bright: 100, vol: 70, sfx: 100,
-    hot: [1, 0, 2, 4, 5, 6, 3, 7], slot: 1
+    goods: [0,1,2,3], skills: [0,1,3], pas: [1,1,1,1,1,1,1,1], slot: 0
   };
   let SET;
   try { SET = Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || "{}")); }
   catch (e) { SET = Object.assign({}, DEF); }
   SET.bind = Object.assign({}, DEF.bind, SET.bind || {});
-  if (!Array.isArray(SET.hot) || SET.hot.length !== 8) SET.hot = DEF.hot.slice();
   const saveSet = () => { try { localStorage.setItem(KEY, JSON.stringify(SET)); } catch (e) {} };
 
   const FARQ = [26, 42, 62], SCALEQ = [0.62, 0.82, 1.0];
@@ -826,14 +837,29 @@
   }
 
 
-  // ---------- предметы пояса ----------
-  // Первые семь — инструменты, дальше вещи. Иконки рисуются тут же.
-  const ITEMS = TOOLS.map((t, i) => ({ name: t.name, tool: i, ico: t.key }))
-    .concat([
-      { name: "ДИНАМИТ",  ico: "dyn"    }, { name: "ВСПЫШКА", ico: "flare" },
-      { name: "ЗАЙКА",    ico: "bunny"  }, { name: "ПЕЧЕНЬКА", ico: "cookie" },
-      { name: "КУБИК",    ico: "rubik"  }, { name: "САЛЮТ",   ico: "salute" }
-    ]);
+  // ---------- пояс: четыре предмета и три скилла ----------
+  // Кирка — мультитул: она одна на всю игру, и качается только она.
+  const GOODS = [
+    { name:"КИРКА",     ico:"pick",   fix:true },
+    { name:"ФОНАРЬ",    ico:"lamp"  },
+    { name:"ДИНАМИТ",   ico:"dyn"   },
+    { name:"ВЕРЁВКА",   ico:"rope"  },
+    { name:"САЛЮТ",     ico:"salute"},
+    { name:"ПЕЧЕНЬКА",  ico:"cookie"},
+    { name:"ЗЕРКАЛЬЦЕ", ico:"mirror"}
+  ];
+  const SKILLS = [
+    { name:"КУРАЖ",       ico:"fist"  }, { name:"ВСПЫШКА",   ico:"flare" },
+    { name:"ЖАДНЫЙ ГЛАЗ", ico:"eye"   }, { name:"ЗАЙКА",     ico:"bunny" },
+    { name:"КУБИК",       ico:"rubik" }, { name:"HELLO KITTY", ico:"kitty" },
+    { name:"R2D2",        ico:"r2"    }, { name:"ДОДОКО",    ico:"dodo"  }
+  ];
+  const PASSIVE = [
+    ["Ранец","вместимость вагонетки"], ["Наколенники","шаг не сбивает ритм"],
+    ["Респиратор","трещины видно сквозь пыль"], ["Компас","на схеме видно, где ты был"],
+    ["Отвес","до следующего пласта"], ["Счётчик","прочность блока цифрой"],
+    ["Рукавицы","урон на удержании"], ["Оберег","страхует первого копателя"]
+  ];
 
   function icon(g, S, k) {
     const q = (a, b, c) => { const t = g.createLinearGradient(0, S * .1, 0, S * .9);
@@ -875,8 +901,68 @@
         g.beginPath(); g.moveTo(S*.5+Math.cos(a)*S*.14, S*.36+Math.sin(a)*S*.14);
         g.lineTo(S*.5+Math.cos(a)*S*.32, S*.36+Math.sin(a)*S*.32); g.stroke(); }
       g.fillStyle = "#8d6a3e"; g.fillRect(S*.47, S*.48, S*.06, S*.40);
+    } else if (k === "lamp") {
+      const gg = g.createRadialGradient(S*.5,S*.44,0,S*.5,S*.44,S*.42);
+      gg.addColorStop(0,"rgba(255,210,130,.55)"); gg.addColorStop(1,"rgba(255,210,130,0)");
+      g.fillStyle=gg; g.fillRect(0,0,S,S);
+      g.fillStyle="#2a2333"; g.fillRect(S*.34,S*.20,S*.32,S*.08);
+      g.fillStyle=q("#fff3d0","#e0b45c","#7d5a18");
+      g.beginPath(); g.roundRect(S*.34,S*.28,S*.32,S*.42,S*.07); g.fill();
+      g.fillStyle="rgba(255,255,255,.45)"; g.fillRect(S*.38,S*.32,S*.06,S*.34);
+      g.fillStyle="#2a2333"; g.fillRect(S*.32,S*.70,S*.36,S*.09);
+    } else if (k === "rope") {
+      g.strokeStyle="#b98a4e"; g.lineWidth=S*.09;
+      for(let i=0;i<3;i++){ g.beginPath(); g.arc(S*.5,S*.5,S*(.14+i*.10),0,6.283); g.stroke(); }
+      g.strokeStyle="rgba(0,0,0,.3)"; g.lineWidth=S*.03;
+      for(let i=0;i<12;i++){ const a=i/12*6.283; g.beginPath();
+        g.moveTo(S*.5+Math.cos(a)*S*.10,S*.5+Math.sin(a)*S*.10);
+        g.lineTo(S*.5+Math.cos(a)*S*.38,S*.5+Math.sin(a)*S*.38); g.stroke(); }
+    } else if (k === "mirror") {
+      g.fillStyle=q("#e9f2ff","#9aa8bd","#3d4453");
+      g.beginPath(); g.ellipse(S*.5,S*.44,S*.24,S*.28,0,0,6.283); g.fill();
+      g.fillStyle="rgba(255,255,255,.6)";
+      g.beginPath(); g.ellipse(S*.43,S*.36,S*.08,S*.12,-.4,0,6.283); g.fill();
+      g.fillStyle="#8d6a3e"; g.fillRect(S*.45,S*.70,S*.10,S*.20);
+    } else if (k === "fist") {
+      g.fillStyle=q("#f7c98c","#c07a2e","#5c3410");
+      g.beginPath(); g.roundRect(S*.24,S*.34,S*.52,S*.40,S*.10); g.fill();
+      for(let i=0;i<4;i++){ g.beginPath(); g.roundRect(S*.26+i*S*.12,S*.26,S*.10,S*.16,S*.05); g.fill(); }
+      g.strokeStyle="rgba(255,210,140,.6)"; g.lineWidth=S*.04;
+      for(let i=0;i<6;i++){ const a=i/6*6.283; g.beginPath();
+        g.moveTo(S*.5+Math.cos(a)*S*.32,S*.5+Math.sin(a)*S*.32);
+        g.lineTo(S*.5+Math.cos(a)*S*.44,S*.5+Math.sin(a)*S*.44); g.stroke(); }
+    } else if (k === "eye") {
+      g.fillStyle="#efe9f6"; g.beginPath(); g.ellipse(S*.5,S*.5,S*.34,S*.21,0,0,6.283); g.fill();
+      g.fillStyle=q("#ffe08c","#d5a026","#6d4a10");
+      g.beginPath(); g.arc(S*.5,S*.5,S*.15,0,6.283); g.fill();
+      g.fillStyle="#1a1522"; g.beginPath(); g.arc(S*.5,S*.5,S*.07,0,6.283); g.fill();
+    } else if (k === "kitty") {
+      g.fillStyle=q("#ffffff","#eee6ee","#b0a8b8");
+      g.beginPath(); g.moveTo(S*.26,S*.38); g.lineTo(S*.34,S*.20); g.lineTo(S*.43,S*.36); g.fill();
+      g.beginPath(); g.moveTo(S*.74,S*.38); g.lineTo(S*.66,S*.20); g.lineTo(S*.57,S*.36); g.fill();
+      g.beginPath(); g.ellipse(S*.5,S*.56,S*.28,S*.23,0,0,6.283); g.fill();
+      g.fillStyle="#2a2030";
+      g.beginPath(); g.arc(S*.40,S*.54,S*.032,0,6.283); g.fill();
+      g.beginPath(); g.arc(S*.60,S*.54,S*.032,0,6.283); g.fill();
+      g.fillStyle="#f0c24a"; g.beginPath(); g.arc(S*.5,S*.62,S*.028,0,6.283); g.fill();
+      g.fillStyle="#e0455f"; g.beginPath(); g.ellipse(S*.71,S*.36,S*.07,S*.05,-.3,0,6.283); g.fill();
+    } else if (k === "r2") {
+      g.fillStyle=q("#f0f2f6","#b8bcc6","#5c606a");
+      g.beginPath(); g.arc(S*.5,S*.38,S*.20,Math.PI,0); g.fill();
+      g.beginPath(); g.roundRect(S*.30,S*.38,S*.40,S*.42,S*.05); g.fill();
+      g.fillStyle="#2f7fc4"; g.fillRect(S*.34,S*.46,S*.32,S*.06); g.fillRect(S*.34,S*.62,S*.10,S*.10);
+      g.fillStyle="#4fd0e8"; g.beginPath(); g.arc(S*.44,S*.32,S*.03,0,6.283); g.fill();
+    } else if (k === "dodo") {
+      g.fillStyle=q("#ffd0a0","#e8763c","#8a3410");
+      g.beginPath(); g.ellipse(S*.5,S*.54,S*.26,S*.24,0,0,6.283); g.fill();
+      g.fillStyle="#ffe9d2"; g.beginPath(); g.ellipse(S*.5,S*.60,S*.15,S*.13,0,0,6.283); g.fill();
+      g.fillStyle="#2a2030";
+      g.beginPath(); g.ellipse(S*.42,S*.48,S*.038,S*.05,0,0,6.283); g.fill();
+      g.beginPath(); g.ellipse(S*.58,S*.48,S*.038,S*.05,0,0,6.283); g.fill();
+      g.fillStyle="#ffd8a0"; g.beginPath();
+      g.moveTo(S*.44,S*.30); g.lineTo(S*.5,S*.16); g.lineTo(S*.56,S*.30); g.fill();
     } else {
-      // инструмент: силуэт в миниатюре
+      // кирка: силуэт в миниатюре
       const mm = { shovel:["#efe6d8","#8a8496"], pick:["#f0e8dc","#5a5260"], maul:["#8d8798","#37313f"],
                    sledge:["#b6b0c6","#2b2438"], hammer:["#d9b66c","#4d3c1d"],
                    auger:["#b9b2c6","#3d3750"], lance:["#cfd6dc","#454c56"] }[k] || ["#cfc7dd","#4a4458"];
@@ -898,33 +984,42 @@
   // ---------- хотбар ----------
   const hotEl = document.getElementById("hotbar");
   const cartBox = document.getElementById("cartbox");
+  if (!Array.isArray(SET.goods) || SET.goods.length !== 4) SET.goods = [0, 1, 2, 3];
+  if (!Array.isArray(SET.skills) || SET.skills.length !== 3) SET.skills = [0, 1, 3];
+  SET.goods[0] = 0;                       // кирка всегда в первой ячейке
+  if (SET.slot > 6) SET.slot = 0;
+
+  const atSlot = i => i < 4 ? GOODS[SET.goods[i]] : SKILLS[SET.skills[i - 4]];
+
   function buildHot() {
     hotEl.innerHTML = "";
-    SET.hot.forEach((it, i) => {
+    for (let i = 0; i < 7; i++) {
+      if (i === 4) { const gap = document.createElement("div");
+        gap.style.width = "14px"; hotEl.append(gap); }
+      const it = atSlot(i);
       const d = document.createElement("div");
-      d.className = "slot" + (i === SET.slot ? " on" : "");
+      d.className = "slot" + (i === SET.slot ? " on" : "") + (i >= 4 ? " sk" : "");
       const c = document.createElement("canvas"); c.width = c.height = 64;
-      icon(c.getContext("2d"), 64, ITEMS[it].ico);
+      icon(c.getContext("2d"), 64, it.ico);
       const u = document.createElement("u"); u.textContent = i + 1;
       d.append(c, u);
       d.onclick = () => pickSlot(i);
       hotEl.append(d);
-    });
+    }
   }
   function pickSlot(i) {
     SET.slot = i; saveSet();
-    const it = ITEMS[SET.hot[i]];
-    if (it.tool !== undefined) { tool = it.tool; toolEl.textContent = it.name; }
-    else toolEl.textContent = it.name;
-    [...hotEl.children].forEach((c, k) => c.classList.toggle("on", k === i));
+    toolEl.textContent = atSlot(i).name;
+    [...hotEl.querySelectorAll(".slot")].forEach((c, k) => c.classList.toggle("on", k === i));
     flashBelt();
   }
-  // Пояс и подпись инструмента живут по 1.6 секунды после смены.
+
+  // Пояс и подпись живут по 1.6 секунды после смены.
   let peek = 0;
   function flashBelt() { peek = 1.6; hotEl.classList.add("show"); toolEl.classList.add("show"); }
   addEventListener("wheel", e => {
     if (menu.classList.contains("open")) return;
-    pickSlot((SET.slot + (e.deltaY > 0 ? 1 : 7)) % 8);
+    pickSlot((SET.slot + (e.deltaY > 0 ? 1 : 6)) % 7);
   }, { passive: true });
 
   // ---------- меню ----------
@@ -1007,14 +1102,54 @@
     row(sd, "Эффекты", "", slider("sfx", 0, 100, "%"));
 
     const ig = document.getElementById("invgrid"); ig.innerHTML = "";
-    ITEMS.forEach((it, i) => {
-      const d = document.createElement("div"); d.className = "it";
+    const sec = (title, hint) => {
+      const h = document.createElement("div"); h.className = "isec";
+      h.innerHTML = `<b>${title}</b><small>${hint}</small>`; ig.append(h);
+      const w = document.createElement("div"); w.className = "iwrap"; ig.append(w); return w;
+    };
+
+    const wg = sec("ПРЕДМЕТЫ", "четыре ячейки · первая всегда кирка");
+    GOODS.forEach((it, i) => {
+      const d = document.createElement("div");
+      const used = SET.goods.indexOf(i);
+      d.className = "it" + (used >= 0 ? " act" : "") + (it.fix ? " fix" : "");
       const c = document.createElement("canvas"); c.width = c.height = 60;
       icon(c.getContext("2d"), 60, it.ico);
-      const sp = document.createElement("span"); sp.textContent = it.name;
+      const sp = document.createElement("span");
+      sp.innerHTML = it.name + (it.fix ? "<small>мультитул</small>" : used >= 0 ? `<small>ячейка ${used+1}</small>` : "");
       d.append(c, sp);
-      d.onclick = () => { SET.hot[SET.slot] = i; saveSet(); buildHot(); pickSlot(SET.slot); };
-      ig.append(d);
+      if (!it.fix) d.onclick = () => {
+        const t = SET.slot >= 1 && SET.slot <= 3 ? SET.slot : 1;
+        SET.goods[t] = i; saveSet(); buildHot(); buildUI(); pickSlot(t);
+      };
+      wg.append(d);
+    });
+
+    const ws = sec("СКИЛЛЫ", "три ячейки · кулдаун у каждого свой");
+    SKILLS.forEach((it, i) => {
+      const d = document.createElement("div");
+      const used = SET.skills.indexOf(i);
+      d.className = "it" + (used >= 0 ? " act" : "");
+      const c = document.createElement("canvas"); c.width = c.height = 60;
+      icon(c.getContext("2d"), 60, it.ico);
+      const sp = document.createElement("span");
+      sp.innerHTML = it.name + (used >= 0 ? `<small>ячейка ${used+5}</small>` : "");
+      d.append(c, sp);
+      d.onclick = () => {
+        const t = SET.slot >= 4 ? SET.slot - 4 : 0;
+        SET.skills[t] = i; saveSet(); buildHot(); buildUI(); pickSlot(t + 4);
+      };
+      ws.append(d);
+    });
+
+    const wp = sec("ПАССИВНЫЕ", "ячеек не занимают · работают всегда · только качаются");
+    PASSIVE.forEach(([n, d2], i) => {
+      const d = document.createElement("div"); d.className = "it pas";
+      const lv = (SET.pas && SET.pas[i]) || 1;
+      const sp = document.createElement("span");
+      sp.innerHTML = `${n}<small>${d2}</small>`;
+      const b = document.createElement("u"); b.textContent = "ур. " + lv;
+      d.append(sp, b); wp.append(d);
     });
   }
 
@@ -1031,7 +1166,7 @@
       document.querySelector('.tabs b[data-p="inv"]').click();
     }
     const n = parseInt(e.key, 10);
-    if (n >= 1 && n <= 8) pickSlot(n - 1);
+    if (n >= 1 && n <= 7) pickSlot(n - 1);
   });
 
   buildUI(); buildHot(); applySet(); pickSlot(SET.slot);
