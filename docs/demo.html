@@ -362,7 +362,7 @@
   uniform vec2 uRes; uniform vec3 uCam; uniform mat3 uRot;
   uniform sampler3D uDen; uniform vec3 uN; uniform float uVS, uY0, uTime, uBulb;
   uniform vec3 uWin;
-  uniform float uFov, uFar, uGrain, uBright, uLampR, uDrain;
+  uniform float uFov, uFar, uGrain, uBright, uLampR, uDrain, uXray;
 
   vec3 toTex(vec3 w){
     return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
@@ -745,10 +745,25 @@
     g.fillRect(0, -w * .9, len, px(3));
   }
 
+  // Кирка одна, но с уровнем меняются и форма, и металл.
+  // Чем выше ступень, тем больше в ней цвета, которого в породе не бывает.
+  const TIERS = [
+    { m:"pick",   c:["#c9a179","#9c7752","#4a3423"], rim:"#e0c09a" },  // ржавая
+    { m:"pick",   c:["#f4ecdf","#aca093","#221d29"], rim:"#ffffff" },  // стальная
+    { m:"maul",   c:["#c9ecfb","#4f9ecb","#173d5c"], rim:"#d5f2ff" },  // кобальт
+    { m:"maul",   c:["#ffe9a8","#d5a026","#5f420c"], rim:"#fff3c4" },  // золото
+    { m:"hammer", c:["#ffd9a0","#e07a2c","#4a1a08"], rim:"#ffd8a4" },  // магма
+    { m:"auger",  c:["#e2cbff","#9a6ad0","#331a54"], rim:"#f0e2ff" },  // кристалл
+    { m:"auger",  c:["#c9a0ff","#7b3fb8","#22093a"], rim:"#e6ccff" },  // бездна
+    { m:"lance",  c:["#d8b0ff","#4e1478","#0f0219"], rim:"#f2dcff" }   // нечто
+  ];
+  const tierOf = () => TIERS[Math.max(0, Math.min(TIERS.length - 1, SAV.pick - 1))];
+
   function steel(g, dark) {
+    const t = tierOf().c;
     return dark
-      ? [[0, "#8d8798"], [.2, "#5d5768"], [.55, "#37313f"], [1, "#191420"]]
-      : [[0, "#f4ecdf"], [.2, "#aca093"], [.55, "#5c5462"], [1, "#221d29"]];
+      ? [[0, t[1]], [.2, t[2]], [.55, t[2]], [1, "#141019"]]
+      : [[0, t[0]], [.22, t[1]], [.6, t[2]], [1, "#191420"]];
   }
 
   function drawTool(g, W, H, sw, kind) {
@@ -809,6 +824,17 @@
       }
     }
     g.restore();
+
+    // ореол у высоких ступеней
+    const tg = tierOf();
+    if (SAV.pick >= 5) {
+      const n = parseInt(tg.c[1].slice(1), 16);
+      const rgb = `${(n>>16)&255},${(n>>8)&255},${n&255}`;
+      const gl3 = g.createRadialGradient(hx, hy, 0, hx, hy, px(240));
+      gl3.addColorStop(0, `rgba(${rgb},.30)`);
+      gl3.addColorStop(1, `rgba(${rgb},0)`);
+      g.fillStyle = gl3; g.fillRect(hx - px(240), hy - px(240), px(480), px(480));
+    }
 
     // ---- рабочая часть ----
     g.save(); g.translate(hx, hy); g.rotate(ang - Math.PI / 2);
@@ -1088,6 +1114,7 @@
     }
   }
   function pickSlot(i) {
+    if (i >= 4) { fireSkill(i - 4); return; }
     SET.slot = i; saveSet();
     toolEl.textContent = atSlot(i).name;
     [...hotEl.querySelectorAll(".slot")].forEach((c, k) => c.classList.toggle("on", k === i));
@@ -1099,7 +1126,7 @@
   function flashBelt() { peek = 1.6; hotEl.classList.add("show"); toolEl.classList.add("show"); }
   addEventListener("wheel", e => {
     if (menu.classList.contains("open")) return;
-    pickSlot((SET.slot + (e.deltaY > 0 ? 1 : 6)) % 7);
+    pickSlot((SET.slot + (e.deltaY > 0 ? 1 : 3)) % 4);
   }, { passive: true });
 
   // ---------- меню ----------
@@ -1247,7 +1274,8 @@
       document.querySelector('.tabs b[data-p="inv"]').click();
     }
     const n = parseInt(e.key, 10);
-    if (n >= 1 && n <= 7) pickSlot(n - 1);
+    if (n >= 1 && n <= 4) pickSlot(n - 1);
+    else if (n >= 5 && n <= 7) fireSkill(n - 5);
   });
 
   buildUI(); buildHot(); applySet(); pickSlot(SET.slot);
@@ -1361,7 +1389,7 @@
     evCool -= dt;
     // спокойная ровная работа копит тревогу; подъём наверх её сбрасывает
     if (digging) dread += dt * 1.0; else dread += dt * 0.35;
-    if (evCool > 0) return;
+    if (evCool > 0 || buff.calm > 0) return;
     if (dread < 26) return;
     const pool = EVENTS.filter(e => P.y >= e.at && !fired[e.id]);
     if (!pool.length) return;
@@ -1423,6 +1451,108 @@
     }
   }
 
+
+  // ---------- пояс в деле ----------
+  // 1-4 выбирают то, что в руках; 5-7 срабатывают сразу и уходят в кулдаун.
+  const GDATA = {
+    "КИРКА":     { use:"dig" },
+    "ФОНАРЬ":    { use:"hold", light:2.4 },
+    "ДИНАМИТ":   { use:"blast", r:1.55, cd:40, ore:.45 },
+    "ВЕРЁВКА":   { use:"rope", cd:240 },
+    "САЛЮТ":     { use:"flare", cd:150 },
+    "ПЕЧЕНЬКА":  { use:"blast", r:1.25, cd:80, ore:.5 },
+    "ЗЕРКАЛЬЦЕ": { use:"mirror", cd:20 }
+  };
+  const SDATA = {
+    "КУРАЖ":       { cd:45,  go(){ buff.dmg = 15; } },
+    "ВСПЫШКА":     { cd:90,  go(){ buff.light = 8; } },
+    "ЖАДНЫЙ ГЛАЗ": { cd:120, go(){ buff.ore = 20; } },
+    "ЗАЙКА":       { cd:200, go(){ dread = 0; evCool = Math.max(evCool, 40); } },
+    "КУБИК":       { cd:90,  go(){ buff.soft = 10; } },
+    "HELLO KITTY": { cd:240, go(){ buff.calm = 15; buff.warm = 15; } },
+    "R2D2":        { cd:120, go(){ buff.xray = 10; } },
+    "ДОДОКО":      { cd:180, go(){ boreAhead(3.2); } }
+  };
+  const buff = { dmg:0, light:0, ore:0, soft:0, calm:0, warm:0, xray:0 };
+  const cool = [0, 0, 0];
+  let mirrorT = 0, mirrorYaw = 0;
+
+  function aheadPoint(d) {
+    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
+    return [P.x + Math.sin(P.yaw) * cp * d, P.y - EYE - sp * d, P.z + Math.cos(P.yaw) * cp * d];
+  }
+  function boreAhead(len) {                     // прожигает коридор перед собой
+    for (let d = 0.9; d < len; d += 0.45) {
+      const [x, y, z] = aheadPoint(d);
+      carve(x, y, z, 0.62);
+      cart = Math.min(capOf(), cart + 2);
+    }
+    shake = 12; thud(true, .7);
+  }
+
+  function useHeld() {
+    const it = GOODS[SET.goods[Math.min(3, SET.slot)]];
+    const g2 = GDATA[it.name] || {};
+    if (g2.use === "dig" || g2.use === "hold") return false;   // обычная долбёжка
+    const key = "g" + SET.slot;
+    if ((gcool[key] || 0) > 0) return true;      // на кулдауне — клик просто съедается
+    gcool[key] = g2.cd || 1;
+    if (g2.use === "blast") {
+      const t = aim() || aheadPoint(1.6);
+      carve(t[0], t[1], t[2], g2.r);
+      cart = Math.min(capOf(), cart + 14 * g2.ore * powOf());
+      shake = 14; thud(true, .55); spawnChips("#8a8290");
+    } else if (g2.use === "rope") { goUp(); }
+    else if (g2.use === "flare") { buff.light = 10; lights = 1.2; }
+    else if (g2.use === "mirror") { mirrorYaw = P.yaw; P.yaw += Math.PI; mirrorT = 2.2; }
+    flashBelt();
+    return true;
+  }
+  const gcool = {};
+
+  function fireSkill(i) {
+    if (cool[i] > 0) return;
+    const sk = SKILLS[SET.skills[i]], d = SDATA[sk.name];
+    if (!d) return;
+    cool[i] = d.cd; d.go();
+    thud(false, 1.6); flashBelt();
+  }
+
+  function beltTick(dt) {
+    for (let i = 0; i < 3; i++) if (cool[i] > 0) cool[i] -= dt;
+    for (const k in gcool) if (gcool[k] > 0) gcool[k] -= dt;
+    for (const k in buff) if (buff[k] > 0) buff[k] -= dt;
+    if (mirrorT > 0 && (mirrorT -= dt) <= 0) P.yaw = mirrorYaw;
+
+    // отражаем состояние на ячейках
+    const slots = hotEl.querySelectorAll(".slot");
+    slots.forEach((el, i) => {
+      let left = 0;
+      if (i >= 4) left = cool[i - 4];
+      else { const it = GOODS[SET.goods[i]], g2 = GDATA[it.name] || {};
+             if (g2.cd) left = gcool["g" + i] || 0; }
+      let em = el.querySelector("em");
+      if (left > 0.05) {
+        if (!em) { em = document.createElement("em"); el.append(em); }
+        em.textContent = Math.ceil(left);
+      } else if (em) em.remove();
+    });
+  }
+
+  // что именно нарисовать в руках: кирку своей ступени или выбранный предмет
+  const heldKind = () => {
+    const it = GOODS[SET.goods[Math.min(3, SET.slot)]];
+    if (it.name === "КИРКА") return tierOf().m;
+    return { "ФОНАРЬ":"pick", "ДИНАМИТ":"pick", "ВЕРЁВКА":"pick",
+             "САЛЮТ":"pick", "ПЕЧЕНЬКА":"pick", "ЗЕРКАЛЬЦЕ":"pick" }[it.name] || "pick";
+  };
+
+  const heldLight = () => {
+    const it = GOODS[SET.goods[Math.min(3, SET.slot)]];
+    const g2 = GDATA[it.name] || {};
+    return (g2.light || 1) * (buff.light > 0 ? 5.5 : 1);
+  };
+
   function resize() {
     const dpr = Math.min(devicePixelRatio || 1, isTouch ? 1.4 : 1.8) * (cv.__scale || 1);
     const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
@@ -1466,17 +1596,19 @@
     if (down("jump") && P.ground) { P.vy = -7.2; }
     if (P.y > 46) { P.x = 0; P.z = 3; P.y = -.02; P.vy = 0; }
 
+    beltTick(dt);
     digCd -= dt; swing = Math.max(0, swing - dt * 3.4);
-    if (digging && digCd <= 0) {
+    if (digging && digCd <= 0 && useHeld()) { digCd = .25; swing = 1; }
+    else if (digging && digCd <= 0) {
       const t = aim();
       if (t) {
         digCd = Math.max(.1, .34 - powOf() * .03); swing = 1;
-        carve(t[0], t[1], t[2], 0.40 + powOf() * 0.13);
+        carve(t[0], t[1], t[2], (0.40 + powOf() * 0.13) * (buff.dmg > 0 ? 1.5 : 1) * (buff.soft > 0 ? 1.35 : 1));
         const deep = t[1] > 9;
         thud(deep, .8 + Math.random() * .5);
         shake = deep ? 7 : 5;
         spawnChips(t[1] < 0 ? "#9a9088" : t[1] < 4 ? "#6d4d2f" : "#8a8290");
-        if (t[1] > 0) cart = Math.min(capOf(), cart + 2 + Math.random() * 3 * powOf());
+        if (t[1] > 0) cart = Math.min(capOf(), cart + (2 + Math.random() * 3 * powOf()) * (buff.ore > 0 ? 5 : 1));
         oreEl.textContent = fmt(cart) + " / " + capOf();
         oreEl.classList.add("hot"); oreHot = 1.4;
         cartEl.style.width = (cart / capOf() * 100) + "%";
@@ -1488,9 +1620,8 @@
     if (hush > 0) hush -= dt;
     if (lampOut > 0) {
       lampOut -= dt + (digging ? dt * 1.6 : 0);      // раздувается кликами
-      if (lampOut <= 0) gl.uniform1f(U("uLampR"), lampR());
-      else gl.uniform1f(U("uLampR"), 0.26);
-    }
+      gl.uniform1f(U("uLampR"), lampOut > 0 ? 0.26 : lampR() * heldLight());
+    } else gl.uniform1f(U("uLampR"), lampR() * heldLight());
     if (knockAt && performance.now() > knockAt) { knockAt = 0; thud(false, 0.42); }
     if (oreHot > 0 && (oreHot -= dt) <= 0) oreEl.classList.remove("hot");
     if (peek > 0 && (peek -= dt) <= 0) { hotEl.classList.remove("show"); toolEl.classList.remove("show"); }
@@ -1506,7 +1637,8 @@
     const sk = SET.shake ? shake * .004 : 0;
     gl.uniform3f(U("uCam"), P.x + (Math.random()-.5)*sk, P.y - EYE + (SET.headbob?Math.sin(bob*2)*.035:0) + (Math.random()-.5)*sk, P.z + (Math.random()-.5)*sk);
     gl.uniform1f(U("uTime"), now / 1000);
-    gl.uniform1f(U("uDrain"), Math.max(0, Math.min(.92, (P.y - 10) / 46)));
+    gl.uniform1f(U("uXray"), buff.xray > 0 ? 1.6 : 0);
+    gl.uniform1f(U("uDrain"), buff.warm > 0 ? 0 : Math.max(0, Math.min(.92, (P.y - 10) / 46)));
     gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 7) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
@@ -1522,7 +1654,7 @@
     }
     fxc.globalAlpha = 1;
     drawDread(fxc, fx.width, fx.height, dt);
-    drawTool(fxc, fx.width, fx.height, swing, TOOLS[tool].key);
+    drawTool(fxc, fx.width, fx.height, swing, heldKind());
 
     requestAnimationFrame(frame);
   }
