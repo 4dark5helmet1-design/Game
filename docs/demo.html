@@ -154,6 +154,8 @@
   .hub-go{margin:16px;padding:16px;text-align:center;font-size:12px;letter-spacing:.22em;
     color:var(--lamp);border:1px solid #8a6520;border-radius:11px;background:#241b12;cursor:pointer}
   .hub-go small{display:block;font-size:8.5px;letter-spacing:.16em;color:#6f6788;margin-top:6px}
+  .game.void .hud,.game.void .hotbar,.game.void .cross,.game.void .toolname,
+  .game.void .gear,.game.void .cart,.game.void .hint{opacity:0 !important;transition:opacity .35s}
   .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;text-align:center;font-size:13px;color:var(--ink2);background:#0b0910}
 
   .keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 4px}
@@ -363,6 +365,7 @@
   uniform sampler3D uDen; uniform vec3 uN; uniform float uVS, uY0, uTime, uBulb;
   uniform vec3 uWin;
   uniform float uFov, uFar, uGrain, uBright, uLampR, uDrain, uXray;
+  uniform vec4 uNode;
 
   vec3 toTex(vec3 w){
     return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
@@ -552,6 +555,12 @@
     if(uDrain > 0.001){
       float gy = dot(col, vec3(0.32,0.55,0.13));
       col = mix(col, vec3(gy)*vec3(0.92,0.94,1.06), uDrain);
+    }
+    // узел: не тёмное пятно, а отсутствие изображения
+    if(uNode.w > 0.0){
+      float dn = length(w - uNode.xyz);
+      float k = 1.0 - smoothstep(uNode.w*0.72, uNode.w*1.25, dn);
+      col = mix(col, vec3(0.0), k);
     }
     col = max(col, 0.0) * uBright;
     col = col/(col+0.95)*1.30;                              // мягкое сведение бликов
@@ -1367,6 +1376,87 @@
   }
 
 
+  // ---------- то, чего нет ----------
+  const NODES = [];
+  for (let i = 0; i < 3; i++) NODES.push({
+    x: (h3(i, 11, 3) - .5) * 22, z: (h3(i, 13, 5) - .5) * 22,
+    y: 24 + h3(i, 17, 7) * 24, r: 1.5, hit: 0
+  });
+  let blackOre = 0, nodeBreaks = 0, fallEnd = 0, fallSave = null;
+
+  function nodeNear(x, y, z) {
+    for (const n of NODES) if (Math.hypot(n.x - x, n.y - y, n.z - z) < n.r * 1.25) return n;
+    return null;
+  }
+  function activeNode() {
+    let best = null, bd = 1e9;
+    for (const n of NODES) {
+      const d = Math.hypot(n.x - P.x, n.y - (P.y - EYE), n.z - P.z);
+      if (d < bd) { bd = d; best = n; }
+    }
+    return bd < 16 ? best : null;
+  }
+
+  function startFall() {
+    fallSave = { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, cart: cart - blackOre };
+    fallEnd = performance.now() + 15000;
+    mode = "fall";
+    document.getElementById("game").classList.add("void");
+    if (document.pointerLockElement === cv) document.exitPointerLock();
+    if (AC) { const o = AC.createOscillator(), g2 = AC.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(60, AC.currentTime);
+      o.frequency.exponentialRampToValueAtTime(18, AC.currentTime + 2.4);
+      g2.gain.setValueAtTime(.001, AC.currentTime);
+      g2.gain.exponentialRampToValueAtTime(.22 * (SET.vol/100), AC.currentTime + .25);
+      g2.gain.exponentialRampToValueAtTime(.001, AC.currentTime + 3.2);
+      o.connect(g2); g2.connect(AC.destination); o.start(); o.stop(AC.currentTime + 3.4); }
+  }
+
+  // силуэты бригады, падающие рядом
+  const FALLERS = [0, 1, 2, 3].map(i => ({
+    x: .18 + i * .21, sp: .5 + h3(i, 3, 9) * 1.4, ph: h3(i, 5, 9) * 9, sc: .6 + h3(i, 7, 9) * .8
+  }));
+  function drawFall(g, W, H) {
+    g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+    const t = (fallEnd - performance.now()) / 1000;
+    // штрихи пролетающей пустоты
+    g.strokeStyle = "rgba(150,140,170,.16)"; g.lineWidth = Math.max(1, W / 900);
+    for (let i = 0; i < 60; i++) {
+      const x = ((h3(i, 21, 2) * 1.7 + i * .131) % 1) * W;
+      const y = ((h3(i, 23, 4) + performance.now() / (300 + h3(i, 25, 6) * 500)) % 1) * H;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + H * (.05 + h3(i, 27, 8) * .12)); g.stroke();
+    }
+    // бригада
+    for (const f of FALLERS) {
+      const y = ((performance.now() / 1000 * f.sp + f.ph) % 2.4 - .7) / 1.7;
+      const px2 = W * f.x, py = H * y, sc = W * .016 * f.sc;
+      const rot = performance.now() / 700 * f.sp + f.ph;
+      g.save(); g.translate(px2, py); g.rotate(rot);
+      g.globalAlpha = .5 + .28 * Math.sin(rot);
+      g.fillStyle = "#4a4658";
+      g.beginPath(); g.arc(0, -sc * 1.6, sc * .6, 0, 6.283); g.fill();
+      g.fillRect(-sc * .55, -sc, sc * 1.1, sc * 1.9);
+      g.fillRect(-sc * 1.5, -sc * .7, sc * 1.0, sc * .35);
+      g.fillRect(sc * .5, -sc * .9, sc * 1.0, sc * .35);
+      g.fillRect(-sc * .5, sc * .9, sc * .4, sc * 1.3);
+      g.fillRect(sc * .1, sc * .9, sc * .4, sc * 1.3);
+      g.fillStyle = "rgba(255,205,140,.5)";      // их фонари ещё горят
+      g.fillRect(-sc * .22, -sc * 2.1, sc * .44, sc * .3);
+      g.restore();
+    }
+    g.globalAlpha = 1;
+    if (t < 1.2) { g.fillStyle = `rgba(0,0,0,${Math.max(0, 1 - t / 1.2)})`; g.fillRect(0, 0, W, H); }
+  }
+  function fallTick() {
+    if (performance.now() < fallEnd) return;
+    P.x = fallSave.x; P.y = fallSave.y; P.z = fallSave.z;
+    P.yaw = fallSave.yaw; P.pitch = fallSave.pitch; P.vy = 0;
+    cart = fallSave.cart; blackOre = 0;           // чёрной руды не было
+    cartEl.style.width = (cart / capOf() * 100) + "%";
+    document.getElementById("game").classList.remove("void");
+    mode = "dig";
+  }
+
   // ---------- режиссёр ----------
   // Событие выпадает не по таймеру, а в момент, когда игрок расслабился:
   // ровный темп, давно ничего не было, наверх не поднимался.
@@ -1567,6 +1657,7 @@
     resize();
     if (mode !== "dig") {
       if (mode === "lift") liftTick();
+      if (mode === "fall") { fallTick(); drawFall(fxc, fx.width, fx.height); }
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       requestAnimationFrame(frame);
       return;
@@ -1608,7 +1699,13 @@
         thud(deep, .8 + Math.random() * .5);
         shake = deep ? 7 : 5;
         spawnChips(t[1] < 0 ? "#9a9088" : t[1] < 4 ? "#6d4d2f" : "#8a8290");
-        if (t[1] > 0) cart = Math.min(capOf(), cart + (2 + Math.random() * 3 * powOf()) * (buff.ore > 0 ? 5 : 1));
+        const nd = nodeNear(t[0], t[1], t[2]);
+        if (nd) {
+          nd.hit++; blackOre += 6; cart = Math.min(capOf(), cart + 6);
+          thud(false, .30);
+          if (nd.hit === 1) nodeBreaks++;
+          if (nodeBreaks >= 2 && !fired.nodrop) { fired.nodrop = 1; startFall(); }
+        } else if (t[1] > 0) cart = Math.min(capOf(), cart + (2 + Math.random() * 3 * powOf()) * (buff.ore > 0 ? 5 : 1));
         oreEl.textContent = fmt(cart) + " / " + capOf();
         oreEl.classList.add("hot"); oreHot = 1.4;
         cartEl.style.width = (cart / capOf() * 100) + "%";
@@ -1638,6 +1735,9 @@
     gl.uniform3f(U("uCam"), P.x + (Math.random()-.5)*sk, P.y - EYE + (SET.headbob?Math.sin(bob*2)*.035:0) + (Math.random()-.5)*sk, P.z + (Math.random()-.5)*sk);
     gl.uniform1f(U("uTime"), now / 1000);
     gl.uniform1f(U("uXray"), buff.xray > 0 ? 1.6 : 0);
+    const an = activeNode();
+    if (an) gl.uniform4f(U("uNode"), an.x, an.y, an.z, an.r);
+    else gl.uniform4f(U("uNode"), 0, 0, 0, 0);
     gl.uniform1f(U("uDrain"), buff.warm > 0 ? 0 : Math.max(0, Math.min(.92, (P.y - 10) / 46)));
     gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 7) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
