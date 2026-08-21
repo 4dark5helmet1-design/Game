@@ -1,0 +1,510 @@
+<title>Забой: шесть интерфейсов</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap">
+<style>
+  :root{
+    --lamp:#ffc14d; --ink:#ece7f4; --ink2:#a79ec0; --ink3:#6f6788;
+    --line:#262032; --line2:#1a1622; --bg:#08070c; --panel:#0e0c13;
+    --mono:"Cousine",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --body:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--body);font-size:17px;line-height:1.62;
+    -webkit-text-size-adjust:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:34px 20px 70px}
+
+  header.top{padding-bottom:26px;border-bottom:1px solid var(--line)}
+  .kick{font-family:var(--mono);font-size:11px;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--lamp);margin:0 0 12px}
+  h1{font-family:var(--mono);font-size:clamp(25px,6.4vw,40px);font-weight:700;
+    letter-spacing:.15em;text-transform:uppercase;margin:0 0 16px;text-wrap:balance}
+  .lede{max-width:60ch;color:var(--ink2);margin:0}
+  .lede b{color:var(--ink);font-weight:400}
+
+  h2{font-family:var(--mono);font-size:17px;font-weight:700;letter-spacing:.09em;
+    text-transform:uppercase;margin:46px 0 6px;padding-bottom:10px;
+    border-bottom:1px solid var(--line)}
+  p{max-width:62ch}
+  .dim{color:var(--ink2)}
+
+  /* --- переключатель состояния --- */
+  .bar{position:sticky;top:0;z-index:5;margin:26px 0 0;padding:12px 0;
+    background:linear-gradient(var(--bg) 74%,rgba(8,7,12,0));
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .bar .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--ink3);margin-right:4px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{font-family:var(--mono);font-size:11px;letter-spacing:.13em;
+    text-transform:uppercase;background:transparent;color:var(--ink3);
+    border:0;padding:9px 14px;cursor:pointer;transition:background .18s,color .18s}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button:hover{color:var(--ink2)}
+  .seg button[aria-pressed="true"]{background:rgba(255,193,77,.12);color:var(--lamp)}
+  .seg button:focus-visible{outline:2px solid var(--lamp);outline-offset:-2px}
+
+  /* --- сетка макетов --- */
+  .grid{display:grid;gap:34px 26px;margin-top:26px;
+    grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+  .mock{display:flex;flex-direction:column;gap:14px}
+  .screen{position:relative;width:100%;aspect-ratio:264/560;border-radius:20px;
+    overflow:hidden;background:#000;
+    box-shadow:0 0 0 1px #2b2436,0 18px 42px rgba(0,0,0,.66)}
+  .screen canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .mock h3{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.16em;
+    text-transform:uppercase;margin:0;color:var(--ink)}
+  .mock h3 em{font-style:normal;color:var(--lamp);margin-left:9px;font-size:9.5px;
+    letter-spacing:.2em}
+  .mock p{margin:0;font-size:14.5px;line-height:1.6;color:var(--ink2);max-width:none}
+  .mock .cost{margin:0;font-family:var(--mono);font-size:11.5px;line-height:1.62;
+    color:var(--ink3);letter-spacing:.02em}
+  .mock .cost b{color:#c9a06a;font-weight:400}
+
+  /* --- таблица сравнения --- */
+  .tw{overflow-x:auto;margin-top:16px;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:560px;
+    font-family:var(--mono);font-size:12.5px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line2)}
+  th{color:var(--ink3);font-weight:400;letter-spacing:.14em;text-transform:uppercase;
+    font-size:10px;background:var(--panel)}
+  tr:last-child td{border-bottom:0}
+  td.y{color:var(--lamp)}
+  td.n{color:#5a5370}
+  td:first-child{color:var(--ink)}
+
+  .note{border-left:2px solid var(--lamp);padding:2px 0 2px 16px;margin:22px 0;
+    color:var(--ink2);max-width:62ch}
+  .note b{color:var(--ink);font-weight:400}
+
+  ul{max-width:62ch;padding-left:19px}
+  li{margin:7px 0;color:var(--ink2)}
+  li b{color:var(--ink);font-weight:400}
+
+  .src{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+  .src a{color:var(--ink2)}
+  .src a:hover{color:var(--lamp)}
+
+  footer.end{border-top:1px solid var(--line);margin-top:52px;padding-top:18px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink3)}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="kick">Забой · интерфейс</p>
+  <h1>Шесть интерфейсов</h1>
+  <p class="lede">Один и тот же кадр, один и тот же момент, шесть способов сказать
+  игроку, где он и сколько у него. <b>Переключатель ниже меняет состояние:</b> сначала
+  всё спокойно, потом набралась вагонетка — и видно, кто как об этом сообщает.</p>
+</header>
+
+<div class="bar">
+  <span class="lbl">состояние</span>
+  <div class="seg" role="group" aria-label="Состояние сцены">
+    <button id="b0" aria-pressed="true">спокойно</button>
+    <button id="b1" aria-pressed="false">вагонетка полна</button>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<h2>Что берём из чужого опыта</h2>
+<p class="dim">В <b>Deep Rock Galactic</b> почти всё, что игрок знает, написано на самих
+предметах: патроны — на стволе, задача — на голограмме, а чтобы посмотреть карту,
+гном достаёт сканер и смотрит в него — и другие видят, что он это делает. Карта не
+висит поверх мира, она вещь в руках.</p>
+<p class="dim">В <b>Subnautica</b> глубиномер стоит первым и выше всего остального, а
+компас появляется только если он у тебя есть. Глубина — главная цифра игры, и она
+занимает главное место.</p>
+<p class="dim">Мобильные раскладки 2026-го собираются <b>под большой палец, а не
+симметрично</b>: кнопки уезжают в нижний угол, а не растягиваются по всей ширине. И
+общий принцип, к которому сходятся почти все: показывать только то, что нужно, и
+только когда нужно.</p>
+<p class="src">Источники:
+<a href="https://deeprockgalactic.wiki.gg/wiki/Heads-up_display">DRG · HUD</a> ·
+<a href="https://subnautica.fandom.com/wiki/HUD">Subnautica · HUD</a> ·
+<a href="https://appfollow.io/blog/mobile-gaming-trends-2026">Mobile Gaming Trends 2026</a> ·
+<a href="https://pixune.com/blog/best-examples-mobile-game-ui-design/">Mobile Game UI 2026</a> ·
+<a href="https://en.wikipedia.org/wiki/A_Game_About_Digging_a_Hole">A Game About Digging a Hole</a></p>
+
+<h2>Чем платит каждый</h2>
+<div class="tw">
+<table>
+  <thead><tr><th>вариант</th><th>глубина</th><th>руда</th><th>пояс</th><th>чего стоит</th></tr></thead>
+  <tbody>
+    <tr><td>Бирка</td><td class="y">на бирке</td><td class="y">насечки</td><td class="n">жестом</td><td>надо приглядываться</td></tr>
+    <tr><td>Кромка</td><td class="y">на каске</td><td class="y">на каске</td><td class="y">внизу</td><td>рамка ест обзор</td></tr>
+    <tr><td>Керн</td><td class="y">метка на колонке</td><td class="y">полоса</td><td class="y">внизу</td><td>полоса всегда занята</td></tr>
+    <tr><td>Палец</td><td class="y">крупно</td><td class="y">дугой</td><td class="y">дугой</td><td>правый угол забит</td></tr>
+    <tr><td>Свет</td><td class="n">нет</td><td class="y">цветом обода</td><td class="n">жестом</td><td>точных чисел нет</td></tr>
+    <tr><td>Что изменилось</td><td class="y">всплывает</td><td class="y">всплывает</td><td class="n">жестом</td><td>нельзя свериться молча</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Что бы взял я</h2>
+<p><b>Керн</b> — и вот почему. Это единственный из шести, который решает две задачи
+одной деталью: он и глубиномер, и схема шахты. Слои породы на колонке — те же, что за
+стеной, метка ползёт вниз вместе с тобой, пройденное остаётся выше. А когда начнётся
+тёмный пласт, на колонке будет ровно то, что задумано: <b>пустой разрыв</b>, тоннель
+есть выше и ниже, а между ними не нарисовано ничего.</p>
+<p class="dim">Плюс он занимает левый край, который на телефоне всё равно мёртвый:
+большой палец правой руки туда не дотягивается, и терять там нечего.</p>
+
+<div class="note"><b>Смешивать можно.</b> Керн слева, кромка каски по периметру и пояс
+дугой под большой палец — это три разных края экрана, они не конфликтуют. Свет как
+предупреждение работает поверх любого из них. Скажи, что нравится, — соберу гибрид.</div>
+
+<footer class="end">Забой · макеты интерфейса · рисуется на месте, не картинки</footer>
+
+</div>
+
+<script>
+(function () {
+  const VARIANTS = [
+    { id:"tag", n:"Бирка", tag:"ноль интерфейса",
+      d:"Всё, что нужно знать, висит на самой кирке: деревянная бирка на шнурке. Глубина выжжена, руда — насечки по краю. Экран не занят ничем.",
+      cost:"Стоит: <b>приглядываться</b>. На бегу цифру не прочесть, и в темноте бирка тоже темнеет." },
+    { id:"brim", n:"Кромка каски", tag:"диегетично",
+      d:"Смотришь из-под каски. По периметру — её тень, а на нижней кромке выбиты глубина и вес. Ничего не парит в воздухе: всё это на железе в сантиметре от глаз.",
+      cost:"Стоит: <b>обзора</b>. Рамка съедает края кадра, а на маленьком экране края и так дефицит." },
+    { id:"core", n:"Керн", tag:"рекомендую",
+      d:"Слева — колонка породы, как керн из скважины. Слои настоящие, метка ползёт вниз вместе с тобой, пройденное остаётся выше. Это глубиномер и схема шахты одновременно.",
+      cost:"Стоит: <b>левого края</b>. Полоса занята всегда, даже когда ничего не происходит." },
+    { id:"thumb", n:"Палец", tag:"под телефон",
+      d:"Всё управление собрано дугой в правом нижнем углу — там, где большой палец достаёт не разгибаясь. Левая половина экрана чистая. Глубина крупно, отдельно от кнопок.",
+      cost:"Стоит: <b>угла</b>. В правом нижнем плотно, и кирка машет ровно туда же." },
+    { id:"light", n:"Свет", tag:"без единой цифры",
+      d:"Состояние — это свет. Обод фонаря по краю кадра: ровный и тёплый, пока всё хорошо; жёсткий и белый, когда вагонетка набита; гаснет, когда садится лампа.",
+      cost:"Стоит: <b>точности</b>. Ты знаешь, что почти полная, но не знаешь, сколько именно." },
+    { id:"pulse", n:"Что изменилось", tag:"предел минимума",
+      d:"Экран пуст. Совсем. Цифра появляется в момент, когда меняется, стоит секунду и уходит. В спокойном кадре не видно ничего, кроме забоя.",
+      cost:"Стоит: <b>возможности свериться</b>. Захотел проверить глубину — придётся ударить или полезть в меню." }
+  ];
+
+  const C = {
+    lamp:"#ffc14d", ink:"#ece7f4", ink2:"#a79ec0", ink3:"#6f6788",
+    rock:"#4a3a2a", rockD:"#241a12", ore:"#2f9fae"
+  };
+  const MONO = '"Cousine",ui-monospace,monospace';
+
+  let full = false;               // вагонетка полна?
+
+  // ---------- общая сцена: то, что видно из забоя ----------
+  function scene(g, W, H) {
+    // порода: тёплая вверху, холодная внизу
+    let sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#0d0a0e");
+    sky.addColorStop(.34, "#3b2c1f");
+    sky.addColorStop(.62, "#54402c");
+    sky.addColorStop(1, "#17110c");
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+
+    // пятно фонаря
+    const lg = g.createRadialGradient(W*.5, H*.47, 0, W*.5, H*.47, W*.86);
+    lg.addColorStop(0, "rgba(255,214,150,.42)");
+    lg.addColorStop(.42, "rgba(255,190,120,.15)");
+    lg.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = lg; g.fillRect(0, 0, W, H);
+
+    // забой: три уступа, чтобы читалась глубина
+    for (let i = 0; i < 3; i++) {
+      const y = H*(.52 + i*.10), h = H*.055;
+      g.fillStyle = `rgba(0,0,0,${.16 + i*.10})`;
+      g.beginPath();
+      g.moveTo(0, y); g.lineTo(W, y - h*.3); g.lineTo(W, y + h); g.lineTo(0, y + h*1.2);
+      g.closePath(); g.fill();
+    }
+    // яма по центру
+    g.fillStyle = "rgba(0,0,0,.55)";
+    g.beginPath(); g.ellipse(W*.5, H*.70, W*.27, H*.055, 0, 0, 7); g.fill();
+    g.fillStyle = "rgba(0,0,0,.78)";
+    g.beginPath(); g.ellipse(W*.5, H*.72, W*.20, H*.038, 0, 0, 7); g.fill();
+
+    // зерно породы
+    for (let i = 0; i < 320; i++) {
+      const x = ((i*97)%1009)/1009*W, y = ((i*211)%1301)/1301*H;
+      const d = 1 - Math.min(1, Math.hypot(x-W*.5, y-H*.47)/(W*.8));
+      g.globalAlpha = .05 + d*.11;
+      g.fillStyle = i % 11 === 0 ? C.ore : (i % 3 ? "#e8d3b4" : "#0a0709");
+      g.fillRect(x, y, 1.4, 1.4);
+    }
+    g.globalAlpha = 1;
+
+    // кирка: стоит отвесно перед лицом
+    const bx = W*.60, by = H*1.02, tx = W*.52, ty = H*.20;
+    g.save();
+    g.strokeStyle = "rgba(0,0,0,.42)"; g.lineWidth = W*.05; g.lineCap = "round";
+    g.beginPath(); g.moveTo(bx+W*.03, by); g.lineTo(tx+W*.03, ty+H*.012); g.stroke();
+    const hg = g.createLinearGradient(tx-W*.03, 0, tx+W*.03, 0);
+    hg.addColorStop(0, "#8a6437"); hg.addColorStop(.42, "#c69a5f");
+    hg.addColorStop(1, "#5b4022");
+    g.strokeStyle = hg; g.lineWidth = W*.035;
+    g.beginPath(); g.moveTo(bx, by); g.lineTo(tx, ty); g.stroke();
+    // головка
+    g.translate(tx, ty); g.rotate(-.09);
+    const sg = g.createLinearGradient(0, -W*.03, 0, W*.03);
+    sg.addColorStop(0, "#e6e9ef"); sg.addColorStop(.4, "#9aa0ac");
+    sg.addColorStop(1, "#3d4049");
+    g.fillStyle = sg;
+    g.beginPath();
+    g.moveTo(-W*.24, W*.004); g.lineTo(-W*.08, -W*.028); g.lineTo(W*.08, -W*.028);
+    g.lineTo(W*.23, -W*.006); g.lineTo(W*.23, W*.014); g.lineTo(W*.08, W*.030);
+    g.lineTo(-W*.08, W*.030); g.lineTo(-W*.24, W*.012);
+    g.closePath(); g.fill();
+    g.fillStyle = "#2b2438";
+    g.fillRect(-W*.035, -W*.034, W*.07, W*.068);      // обойма
+    g.restore();
+    return { tx, ty, bx, by };
+  }
+
+  // мелкая утилита: подпись моноширинным
+  function mono(g, txt, x, y, size, col, ls, align) {
+    g.font = size + "px " + MONO;
+    g.fillStyle = col; g.textAlign = align || "left"; g.textBaseline = "alphabetic";
+    if (!ls) { g.fillText(txt, x, y); return; }
+    // ручной трекинг
+    const chars = [...txt];
+    let w = 0; for (const c of chars) w += g.measureText(c).width + ls;
+    w -= ls;
+    let cx = align === "center" ? x - w/2 : align === "right" ? x - w : x;
+    g.textAlign = "left";
+    for (const c of chars) { g.fillText(c, cx, y); cx += g.measureText(c).width + ls; }
+  }
+
+  // ---------- варианты ----------
+  const DRAW = {
+
+    // Бирка на кирке
+    tag(g, W, H, k) {
+      const x = k.tx + W*.055, y = k.ty + H*.085;
+      g.save();
+      g.strokeStyle = "rgba(220,190,140,.5)"; g.lineWidth = 1.2;
+      g.beginPath(); g.moveTo(k.tx + W*.02, k.ty + H*.028);
+      g.quadraticCurveTo(x - W*.01, y - H*.02, x, y); g.stroke();
+      g.translate(x, y); g.rotate(.13);
+      const w = W*.30, h = H*.085;
+      const tg = g.createLinearGradient(0, 0, 0, h);
+      tg.addColorStop(0, "#a2794a"); tg.addColorStop(1, "#6d4d2c");
+      g.fillStyle = tg;
+      g.beginPath(); g.roundRect(0, 0, w, h, W*.014); g.fill();
+      g.strokeStyle = "rgba(0,0,0,.4)"; g.lineWidth = 1; g.stroke();
+      // выжжено
+      mono(g, "34", w*.10, h*.52, W*.098, "#2a1a0d", 0);
+      mono(g, "М", w*.10 + W*.115, h*.52, W*.042, "#4a3118", 0);
+      // насечки — сколько в вагонетке
+      const n = full ? 9 : 5;
+      for (let i = 0; i < 9; i++) {
+        g.fillStyle = i < n ? (full ? "#241205" : "#3a2410") : "rgba(0,0,0,.14)";
+        g.fillRect(w*.10 + i*(w*.088), h*.68, w*.05, h*.16);
+      }
+      g.restore();
+      if (full) {
+        g.globalAlpha = .9;
+        mono(g, "ПОЛНА", W*.5, H*.92, W*.052, C.lamp, W*.014, "center");
+        g.globalAlpha = 1;
+      }
+    },
+
+    // Кромка каски
+    brim(g, W, H) {
+      // тень каски по периметру
+      const v = g.createRadialGradient(W*.5, H*.46, W*.30, W*.5, H*.46, W*.95);
+      v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(3,2,4,.94)");
+      g.fillStyle = v; g.fillRect(0, 0, W, H);
+      // верхний козырёк
+      g.fillStyle = "#0b0810";
+      g.beginPath(); g.moveTo(0, 0); g.lineTo(W, 0); g.lineTo(W, H*.055);
+      g.quadraticCurveTo(W*.5, H*.145, 0, H*.055); g.closePath(); g.fill();
+      // нижняя кромка с гравировкой
+      g.fillStyle = "#121019";
+      g.beginPath(); g.moveTo(0, H); g.lineTo(W, H); g.lineTo(W, H*.855);
+      g.quadraticCurveTo(W*.5, H*.775, 0, H*.855); g.closePath(); g.fill();
+      g.strokeStyle = "rgba(255,193,77,.16)"; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(0, H*.858);
+      g.quadraticCurveTo(W*.5, H*.778, W, H*.858); g.stroke();
+      mono(g, "ГЛУБИНА", W*.10, H*.885, W*.030, C.ink3, W*.010);
+      mono(g, "34", W*.10, H*.945, W*.105, C.ink, 0);
+      mono(g, "М", W*.10 + W*.135, H*.945, W*.042, C.ink3, 0);
+      mono(g, "ВЕС", W*.90, H*.885, W*.030, C.ink3, W*.010, "right");
+      mono(g, full ? "115/115" : "62/115", W*.90, H*.945, W*.060,
+           full ? C.lamp : C.ink2, 0, "right");
+      // три гнезда пояса на самой кромке
+      for (let i = 0; i < 3; i++) {
+        const cx = W*(.40 + i*.13);
+        g.strokeStyle = "rgba(255,255,255,.13)"; g.lineWidth = 1;
+        g.beginPath(); g.arc(cx, H*.905, W*.036, 0, 7); g.stroke();
+      }
+      if (full) {
+        g.strokeStyle = "rgba(255,193,77,.5)"; g.lineWidth = 2;
+        g.beginPath(); g.moveTo(0, H*.858);
+        g.quadraticCurveTo(W*.5, H*.778, W, H*.858); g.stroke();
+      }
+    },
+
+    // Керн — колонка породы слева
+    core(g, W, H) {
+      const x = W*.045, w = W*.072, y0 = H*.075, y1 = H*.80;
+      g.fillStyle = "rgba(6,5,9,.72)";
+      g.beginPath(); g.roundRect(x - 3, y0 - 6, w + 6, y1 - y0 + 12, W*.018); g.fill();
+      // слои: те же, что за стеной
+      const bands = [
+        ["#3a2a19", .00, .10], ["#4a3421", .10, .26], ["#5a4a3c", .26, .42],
+        ["#4b4a4d", .42, .58], ["#3e3a4a", .58, .70],
+        ["#0a0910", .70, .84],                                   // тёмный пласт
+        ["#39344a", .84, 1.0]
+      ];
+      for (const [col, a, b] of bands) {
+        g.fillStyle = col;
+        g.fillRect(x, y0 + (y1-y0)*a, w, (y1-y0)*(b-a));
+      }
+      // жилы
+      for (let i = 0; i < 26; i++) {
+        const t = ((i*79)%97)/97;
+        if (t > .70 && t < .84) continue;                        // в пласте ничего нет
+        g.globalAlpha = .5;
+        g.fillStyle = C.ore;
+        g.fillRect(x + ((i*37)%100)/100*w*.7, y0 + (y1-y0)*t, w*.22, 1.6);
+      }
+      g.globalAlpha = 1;
+      // пустой разрыв на месте тёмного пласта
+      g.fillStyle = "#08070c";
+      g.fillRect(x, y0 + (y1-y0)*.70, w, (y1-y0)*.14);
+      g.strokeStyle = "rgba(120,110,140,.30)"; g.lineWidth = 1;
+      g.setLineDash([3, 4]);
+      g.strokeRect(x + .5, y0 + (y1-y0)*.70 + .5, w - 1, (y1-y0)*.14 - 1);
+      g.setLineDash([]);
+      // ты
+      const my = y0 + (y1-y0)*.52;
+      g.fillStyle = C.lamp;
+      g.beginPath(); g.moveTo(x + w + 3, my); g.lineTo(x + w + 12, my - 5);
+      g.lineTo(x + w + 12, my + 5); g.closePath(); g.fill();
+      g.fillRect(x, my - 1, w, 2);
+      mono(g, "34", x + w + 16, my + W*.030, W*.082, C.ink, 0);
+      mono(g, "М", x + w + 16 + W*.105, my + W*.030, W*.034, C.ink3, 0);
+      // руда — тонкая шкала по правому краю
+      const rh = (y1 - y0) * (full ? 1 : .54);
+      g.fillStyle = "rgba(255,255,255,.07)";
+      g.fillRect(W - W*.045, y0, W*.016, y1 - y0);
+      g.fillStyle = full ? C.lamp : "rgba(160,220,225,.62)";
+      g.fillRect(W - W*.045, y1 - rh, W*.016, rh);
+      if (full) mono(g, "ПОЛНА", W - W*.062, y0 - 8, W*.030, C.lamp, W*.010, "right");
+      // пояс — четыре гнезда внизу
+      for (let i = 0; i < 4; i++) {
+        const cx = W*(.30 + i*.147), cy = H*.925;
+        g.strokeStyle = i === 0 ? "rgba(255,193,77,.5)" : "rgba(255,255,255,.13)";
+        g.lineWidth = i === 0 ? 1.6 : 1;
+        g.beginPath(); g.roundRect(cx - W*.055, cy - W*.055, W*.11, W*.11, W*.022); g.stroke();
+      }
+    },
+
+    // Всё под большой палец
+    thumb(g, W, H) {
+      mono(g, "34", W*.075, H*.115, W*.16, C.ink, 0);
+      mono(g, "М", W*.075 + W*.20, H*.115, W*.050, C.ink3, 0);
+      mono(g, full ? "ВАГОНЕТКА ПОЛНА" : "62 / 115", W*.075, H*.155,
+           W*.036, full ? C.lamp : C.ink3, W*.012);
+      // дуга под палец: центр — правый нижний угол экрана
+      const cx = W*.94, cy = H*.930, r1 = W*.40, r2 = W*.68;
+      const a0 = Math.PI*1.08, a1 = Math.PI*1.45;
+      g.fillStyle = "rgba(10,8,14,.55)";
+      g.beginPath(); g.arc(cx, cy, r2, a0, a1);
+      g.arc(cx, cy, r1, a1, a0, true); g.closePath(); g.fill();
+      g.strokeStyle = "rgba(255,255,255,.08)"; g.lineWidth = 1;
+      g.beginPath(); g.arc(cx, cy, r2, a0, a1); g.stroke();
+      g.beginPath(); g.arc(cx, cy, r1, a0, a1); g.stroke();
+      // четыре гнезда ровно по средней линии дуги
+      const rm = (r1 + r2)/2;
+      for (let i = 0; i < 4; i++) {
+        const a = a0 + (a1 - a0) * (i / 3);
+        const bxp = cx + Math.cos(a)*rm, byp = cy + Math.sin(a)*rm;
+        g.strokeStyle = i === 0 ? "rgba(255,193,77,.6)" : "rgba(255,255,255,.18)";
+        g.lineWidth = i === 0 ? 1.8 : 1.2;
+        g.fillStyle = "rgba(20,16,26,.82)";
+        g.beginPath(); g.arc(bxp, byp, W*.052, 0, 7); g.fill(); g.stroke();
+      }
+      // бить — в самом углу, под подушечкой пальца
+      g.fillStyle = full ? "rgba(255,193,77,.18)" : "rgba(255,255,255,.08)";
+      g.strokeStyle = full ? C.lamp : "rgba(255,255,255,.30)"; g.lineWidth = 2;
+      g.beginPath(); g.arc(W*.78, H*.885, W*.105, 0, 7); g.fill(); g.stroke();
+      mono(g, "БИТЬ", W*.78, H*.898, W*.038, full ? C.lamp : C.ink2, W*.010, "center");
+    },
+
+    // Только свет
+    light(g, W, H) {
+      const warm = !full;
+      const col = warm ? [255,193,77] : [214,232,255];
+      // мягкое свечение только у самой кромки
+      g.save();
+      g.beginPath(); g.roundRect(W*.030, H*.021, W*.940, H*.958, W*.052);
+      g.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},${warm ? .10 : .22})`;
+      g.lineWidth = W*.075; g.filter = `blur(${W*.030}px)`; g.stroke();
+      g.restore();
+      // сам обод
+      g.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},${warm ? .34 : .82})`;
+      g.lineWidth = warm ? 1.8 : 3.0;
+      g.beginPath(); g.roundRect(W*.030, H*.021, W*.940, H*.958, W*.052); g.stroke();
+      // и еле заметное усиление света в кадре, когда набито
+      if (!warm) {
+        const gr = g.createRadialGradient(W*.5, H*.5, W*.52, W*.5, H*.5, W*1.0);
+        gr.addColorStop(0, "rgba(0,0,0,0)");
+        gr.addColorStop(1, "rgba(190,214,255,.16)");
+        g.fillStyle = gr; g.fillRect(0, 0, W, H);
+      }
+    },
+
+    // Пусто, пока ничего не изменилось
+    pulse(g, W, H) {
+      if (!full) return;                              // спокойно — не видно ничего
+      g.globalAlpha = .95;
+      mono(g, "ВАГОНЕТКА ПОЛНА", W*.5, H*.815, W*.052, C.lamp, W*.016, "center");
+      g.globalAlpha = .72;
+      mono(g, "34 М", W*.5, H*.862, W*.038, C.ink2, W*.012, "center");
+      g.globalAlpha = 1;
+    }
+  };
+
+  // ---------- сборка ----------
+  const grid = document.getElementById("grid");
+  const cvs = [];
+  for (const v of VARIANTS) {
+    const card = document.createElement("div");
+    card.className = "mock";
+    card.innerHTML =
+      `<div class="screen"><canvas></canvas></div>` +
+      `<h3>${v.n}<em>${v.tag}</em></h3>` +
+      `<p>${v.d}</p><p class="cost">${v.cost}</p>`;
+    grid.append(card);
+    cvs.push({ c: card.querySelector("canvas"), id: v.id });
+  }
+
+  function paint() {
+    for (const { c, id } of cvs) {
+      const r = c.getBoundingClientRect();
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const W = Math.max(180, Math.round(r.width)), H = Math.round(r.height);
+      c.width = W*dpr; c.height = H*dpr;
+      const g = c.getContext("2d");
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const k = scene(g, W, H);
+      DRAW[id](g, W, H, k);
+    }
+  }
+
+  const b0 = document.getElementById("b0"), b1 = document.getElementById("b1");
+  function setState(v) {
+    full = v;
+    b0.setAttribute("aria-pressed", String(!v));
+    b1.setAttribute("aria-pressed", String(v));
+    paint();
+  }
+  b0.onclick = () => setState(false);
+  b1.onclick = () => setState(true);
+
+  addEventListener("resize", paint);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(paint);
+  paint();
+})();
+</script>
