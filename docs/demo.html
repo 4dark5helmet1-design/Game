@@ -122,6 +122,38 @@
     opacity:.28;transition:opacity .25s}
   .gear:hover{opacity:1;color:#ffc14d}
   @media (hover:none){ .gear{opacity:.6;background:rgba(12,9,17,.5);border:1px solid rgba(255,255,255,.12)} }
+  /* --- подъём и штрек --- */
+  .lift{position:absolute;inset:0;background:#07060a;display:none;align-items:center;justify-content:center;
+    z-index:24;font-size:11px;letter-spacing:.3em;color:#6f6788}
+  .lift.on{display:flex}
+  .lift span{opacity:.7;animation:lp 1.4s ease-in-out infinite}
+  @keyframes lp{0%,100%{opacity:.25}50%{opacity:.8}}
+
+  .hub{position:absolute;inset:0;background:#100c14;display:none;flex-direction:column;z-index:23;
+    overflow:auto;font-family:var(--mono)}
+  .hub.on{display:flex}
+  .hub::before{content:"";position:absolute;left:50%;top:-70px;width:340px;height:230px;
+    transform:translateX(-50%);pointer-events:none;
+    background:radial-gradient(ellipse at center,rgba(255,193,77,.16),transparent 66%)}
+  .hub-top{display:flex;justify-content:space-between;align-items:baseline;padding:18px 16px 14px;
+    border-bottom:1px solid #241d2f;position:relative}
+  .hub-top .place{font-size:12px;letter-spacing:.28em;color:var(--lamp)}
+  .hub-top .hore b{font-size:19px;color:#fff;font-variant-numeric:tabular-nums}
+  .hub-top .hore i{font-style:normal;font-size:8px;letter-spacing:.18em;color:#6f6788;margin-left:5px}
+  .hrow{display:grid;grid-template-columns:1fr auto;gap:3px 12px;padding:13px 16px;
+    border-bottom:1px solid #1a1622;align-items:center;position:relative;cursor:default}
+  .hrow .n{font-size:12.5px;letter-spacing:.13em;color:#6f6788}
+  .hrow .s{font-size:10px;color:#544c68;letter-spacing:.03em}
+  .hrow .p{grid-row:span 2;font-size:11.5px;color:#4d4661;font-variant-numeric:tabular-nums;
+    padding:9px 13px;border:1px solid #262032;border-radius:8px}
+  .hrow.can{background:#171119;cursor:pointer}
+  .hrow.can .n{color:#ece7f4}.hrow.can .s{color:#857c9b}
+  .hrow.can .p{color:var(--lamp);border-color:#8a6520}
+  .hrow.can::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--lamp)}
+  .hrow.max .p{color:#5aa9e6;border-color:#2b4a63}
+  .hub-go{margin:16px;padding:16px;text-align:center;font-size:12px;letter-spacing:.22em;
+    color:var(--lamp);border:1px solid #8a6520;border-radius:11px;background:#241b12;cursor:pointer}
+  .hub-go small{display:block;font-size:8.5px;letter-spacing:.16em;color:#6f6788;margin-top:6px}
   .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;text-align:center;font-size:13px;color:var(--ink2);background:#0b0910}
 
   .keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 4px}
@@ -151,7 +183,7 @@
     <div class="dep" id="depth">0<i>М</i></div>
     <div class="ore" id="ore">0</div>
   </div>
-  <div class="cart" id="cartbox"><u>ВАГОНЕТКА ПОЛНА</u><b><i id="cart"></i></b></div>
+  <div class="cart" id="cartbox"><u>ВАГОНЕТКА ПОЛНА · E — НАВЕРХ</u><b><i id="cart"></i></b></div>
   <div class="gear" id="gearbtn">&#9881;</div>
   <div class="hotbar" id="hotbar"></div>
   <div class="menu" id="menu">
@@ -173,13 +205,29 @@
   <div class="hint" id="hint">НАЖМИ, ЧТОБЫ ЗАХВАТИТЬ МЫШЬ · WASD ХОДИТЬ · ЛКМ ДОЛБИТЬ</div>
   <div class="stick" id="stick"><i id="knob"></i></div>
   <div class="dig" id="digbtn">ДОЛБИТЬ</div>
+  <div class="lift" id="lift"><span id="liftmsg">ПОДЪЁМ</span></div>
+  <div class="hub" id="hub">
+    <div class="hub-top"><span class="place">ШТРЕК</span>
+      <span class="hore"><b id="hbank">0</b><i>РУДЫ</i></span></div>
+    <div class="hub-rows" id="hubrows"></div>
+    <div class="hub-go" id="hubgo">СПУСТИТЬСЯ<small id="hubdepth">НА 0 М</small></div>
+  </div>
   <div class="fail" id="fail"></div>
 </div>
 
 <div class="keys">
   <span><b>WASD</b> ходить</span><span><b>мышь</b> смотреть</span><span><b>ЛКМ</b> долбить</span>
-  <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span><span><b>1–4</b> предметы</span><span><b>5–7</b> скиллы</span><span><b>Tab</b> инвентарь</span><span><b>Esc</b> настройки</span>
+  <span><b>пробел</b> прыжок</span><span><b>Shift</b> быстрее</span><span><b>Esc</b> отпустить мышь</span><span><b>1–4</b> предметы</span><span><b>5–7</b> скиллы</span><span><b>Tab</b> инвентарь</span><span><b>E</b> наверх</span><span><b>Esc</b> настройки</span>
 </div>
+
+<h2>Штрек</h2>
+<p>Жмёшь <strong>E</strong> — клеть поднимает тебя наверх, и <strong>тем дольше, чем глубже</strong> ты забрался. Наверху сдаёшь руду и тратишь её на кирку, фонарь, вагонетку и бригаду. «Спуститься» возвращает ровно туда, где остановился.</p>
+<ul>
+  <li><strong>Руду надо поднять, чтобы потратить.</strong> Внизу она копится в вагонетке, и вагонетка конечна: набил полную — новая пропадает. Это и есть причина подниматься, а игра при этом ни разу тебя не зовёт.</li>
+  <li><strong>Бригада работает, пока ты копаешь.</strong> Нанял — руда капает сама.</li>
+  <li><strong>Прогресс сохраняется</strong> отдельно от настроек и переживает перезаход.</li>
+</ul>
+<p class="note">Про то, что ждёт глубже, я рассказывать не буду. Скажу только, что оно есть, что оно ничего у тебя не отнимает и что <strong>ни одно из этого нельзя нажать</strong>.</p>
 
 <h2>Что изменилось</h2>
 <ul>
@@ -214,7 +262,7 @@
   if (!gl) { failBox.style.display = "flex"; failBox.textContent = "Нужен WebGL 2 — в этом браузере его нет."; return; }
 
   // ---------- поле плотности ----------
-  const NX = 128, NY = 176, NZ = 128, VS = 0.28;   // метров на ячейку
+  const NX = 128, NY = 232, NZ = 128, VS = 0.28;   // метров на ячейку
   const Y0 = -4.0;                                  // мировая Y у первой ячейки
   const den = new Uint8Array(NX * NY * NZ);
   const di = (x, y, z) => (y * NZ + z) * NX + x;
@@ -314,7 +362,7 @@
   uniform vec2 uRes; uniform vec3 uCam; uniform mat3 uRot;
   uniform sampler3D uDen; uniform vec3 uN; uniform float uVS, uY0, uTime, uBulb;
   uniform vec3 uWin;
-  uniform float uFov, uFar, uGrain, uBright;
+  uniform float uFov, uFar, uGrain, uBright, uLampR, uDrain;
 
   vec3 toTex(vec3 w){
     return vec3( (w.x/uVS + uN.x*0.5 + 0.5)/uN.x,
@@ -387,6 +435,15 @@
     else if(d < 9.0)  c = vec3(0.44,0.35,0.28);       // суглинок
     else if(d < 20.0) c = vec3(0.40,0.38,0.39);       // камень
     else              c = vec3(0.30,0.27,0.35);       // гранит
+    if(w.y > 26.0){
+      float wr = fbm(w*0.32+vec3(613.0));
+      float wb = fbm(w*0.09+vec3(211.0));
+      if(wr > 0.735 && wb > 0.58){
+        float a = smoothstep(0.735,0.80,wr);
+        c = mix(c, vec3(0.42,0.14,0.62), a);
+        oreAmt = max(oreAmt, a*0.4);
+      }
+    }
     float ov = fbm(w*0.5+vec3(31.0));
     float ob = fbm(w*0.14+vec3(77.0));
     if(w.y>0.4 && ov>0.60 && ob>0.52){
@@ -431,7 +488,7 @@
 
     // фонарь на каске
     vec3 L = uCam - w; float ld = length(L); L /= ld;
-    float lamp = max(dot(N,L),0.0)/(1.0+0.05*ld*ld);
+    float lamp = max(dot(N,L),0.0)/(1.0+0.05*ld*ld/(uLampR*uLampR));
     lamp *= 0.26 + 1.1*(1.0 - smoothstep(0.10,0.80,length(uv)));
 
     // лампочка под потолком подвала
@@ -490,6 +547,11 @@
     if(pb > 0.0 && pb < d){
       float dl = length(tb - rd*pb);
       col += vec3(1.0,0.88,0.66) * uBulb * exp(-dl*dl*7.0) * 1.5;
+    }
+    // с глубиной из теней уходит цвет — уют ломается одним параметром
+    if(uDrain > 0.001){
+      float gy = dot(col, vec3(0.32,0.55,0.13));
+      col = mix(col, vec3(gy)*vec3(0.92,0.94,1.06), uDrain);
     }
     col = max(col, 0.0) * uBright;
     col = col/(col+0.95)*1.30;                              // мягкое сведение бликов
@@ -578,7 +640,7 @@
     const src = AC.createBufferSource(); src.buffer = buf;
     const f = AC.createBiquadFilter(); f.type = "bandpass";
     f.frequency.value = (hard ? 1500 : 420) * pitch; f.Q.value = hard ? 1.6 : 0.8;
-    const g = AC.createGain(); g.gain.value = (hard ? .3 : .38) * (SET.vol/100) * (SET.sfx/100);
+    const g = AC.createGain(); g.gain.value = (hush > 0 ? 0 : 1) * (hard ? .3 : .38) * (SET.vol/100) * (SET.sfx/100);
     src.connect(f); f.connect(g); g.connect(AC.destination); src.start();
   }
 
@@ -595,7 +657,7 @@
   // ---------- настройки: живут в localStorage и переживают перезаход ----------
   const KEY = "zaboy.settings.v1";
   const DEF = {
-    bind: { fwd:"KeyW", back:"KeyS", left:"KeyA", right:"KeyD", jump:"Space",
+    bind: { fwd:"KeyW", back:"KeyS", left:"KeyA", right:"KeyD", jump:"Space", up:"KeyE",
             run:"ShiftLeft", dig:"Mouse0", look:"KeyQ", menu:"Escape", inv:"Tab" },
     sens: 26, invY: false, fov: 75, headbob: true, shake: true, grain: true,
     quality: 1, bright: 100, vol: 70, sfx: 100,
@@ -607,6 +669,23 @@
   SET.bind = Object.assign({}, DEF.bind, SET.bind || {});
   const saveSet = () => { try { localStorage.setItem(KEY, JSON.stringify(SET)); } catch (e) {} };
 
+  // ---------- прогресс ----------
+  const SKEY = "zaboy.save.v1";
+  const SDEF = { bank: 0, shards: 0, pick: 1, lamp: 1, crew: 0, cart: 1, best: 0, seen: {} };
+  let SAV;
+  try { SAV = Object.assign({}, SDEF, JSON.parse(localStorage.getItem(SKEY) || "{}")); }
+  catch (e) { SAV = Object.assign({}, SDEF); }
+  SAV.seen = SAV.seen || {};
+  const saveGame = () => { try { localStorage.setItem(SKEY, JSON.stringify(SAV)); } catch (e) {} };
+
+  const PRICE = { pick: l => Math.round(40 * Math.pow(1.42, l - 1)),
+                  lamp: l => Math.round(90 * Math.pow(1.55, l - 1)),
+                  crew: l => Math.round(140 * Math.pow(1.5, l)),
+                  cart: l => Math.round(70 * Math.pow(1.48, l - 1)) };
+  const capOf  = () => 60 + SAV.cart * 55;
+  const lampR  = () => 1 + SAV.lamp * 0.34;
+  const powOf  = () => 1 + (SAV.pick - 1) * 0.55;
+
   const FARQ = [26, 42, 62], SCALEQ = [0.62, 0.82, 1.0];
   function applySet() {
     gl.uniform1f(U("uFov"), 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62);
@@ -614,6 +693,7 @@
     gl.uniform1f(U("uGrain"), SET.grain ? 1 : 0);
     gl.uniform1f(U("uBright"), SET.bright / 100);
     cv.__scale = SCALEQ[SET.quality];
+    gl.uniform1f(U("uLampR"), lampR());
   }
 
   const KEYNAME = { Space:"ПРОБЕЛ", ShiftLeft:"SHIFT", ShiftRight:"SHIFT ПР", Escape:"ESC",
@@ -1073,7 +1153,7 @@
   let waiting = null;
   const BINDS = [["fwd","Вперёд"],["back","Назад"],["left","Влево"],["right","Вправо"],
     ["jump","Прыжок"],["run","Бежать"],["dig","Долбить"],["look","Оглянуться"],
-    ["inv","Инвентарь"],["menu","Меню"]];
+    ["up","Наверх в штрек"],["inv","Инвентарь"],["menu","Меню"]];
   function buildUI() {
     const ctl = document.getElementById("p-ctl"); ctl.innerHTML = "";
     BINDS.forEach(([k, label]) => {
@@ -1160,6 +1240,7 @@
       waiting.el.classList.remove("wait"); waiting.el.textContent = kn(e.code);
       waiting = null; return;
     }
+    if (e.code === SET.bind.up) { e.preventDefault(); goUp(); }
     if (e.code === SET.bind.menu) { e.preventDefault(); openMenu(!menu.classList.contains("open")); }
     if (e.code === SET.bind.inv) {
       e.preventDefault(); openMenu(true);
@@ -1173,7 +1254,7 @@
 
 
   // ---------- добыча ----------
-  let ore = 0, cart = 0, digCd = 0, oreHot = 0;
+  let cart = 0, digCd = 0, oreHot = 0;
   const oreEl = document.getElementById("ore"), depthEl = document.getElementById("depth"), cartEl = document.getElementById("cart");
   function aim() {
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
@@ -1184,6 +1265,162 @@
       if (solidAt(x, y, z)) return [x, y, z];
     }
     return null;
+  }
+
+
+  // ---------- штрек: подъём, покупки, спуск ----------
+  const hubEl = document.getElementById("hub"), liftEl = document.getElementById("lift");
+  const liftMsg = document.getElementById("liftmsg"), hubRows = document.getElementById("hubrows");
+  const hBank = document.getElementById("hbank"), hDepth = document.getElementById("hubdepth");
+  let mode = "dig", liftEnd = 0, liftDir = 1, retPos = null;
+
+  const fmt = n => n >= 1000 ? (n / 1000).toFixed(1) + "K" : Math.round(n);
+
+  const ROWS = [
+    { k:"pick", n:"КИРКА",   d:() => `ур. ${SAV.pick} · ${(powOf()*100|0)}% силы` },
+    { k:"lamp", n:"ФОНАРЬ",  d:() => `ур. ${SAV.lamp} · видно на ${(lampR()*3.4).toFixed(1)} м` },
+    { k:"cart", n:"ВАГОНЕТКА", d:() => `ур. ${SAV.cart} · вмещает ${capOf()}` },
+    { k:"crew", n:"БРИГАДА", d:() => SAV.crew ? `${SAV.crew} чел. · ${(SAV.crew*0.9).toFixed(1)} руды/с` : "никого не нанял" }
+  ];
+
+  function buildHub() {
+    hBank.textContent = fmt(SAV.bank);
+    hDepth.textContent = "НА " + Math.max(0, Math.round(retPos ? retPos.y : 0)) + " М";
+    hubRows.innerHTML = "";
+    for (const r of ROWS) {
+      const lvl = SAV[r.k], cost = PRICE[r.k](lvl), can = SAV.bank >= cost;
+      const d = document.createElement("div");
+      d.className = "hrow" + (can ? " can" : "");
+      d.innerHTML = `<span class="n">${r.n}</span><span class="p">${fmt(cost)}</span>` +
+                    `<span class="s">${r.d()}</span>`;
+      if (can) d.onclick = () => {
+        SAV.bank -= cost; SAV[r.k] += 1; saveGame(); applySet(); buildHub(); thud(false, 1.4);
+      };
+      hubRows.append(d);
+    }
+    const a = document.createElement("div");
+    a.className = "hrow max";
+    a.innerHTML = `<span class="n">ОСКОЛКИ</span><span class="p">${SAV.shards}</span>` +
+                  `<span class="s">рекорд глубины · ${Math.round(SAV.best)} м</span>`;
+    hubRows.append(a);
+  }
+
+  function goUp() {
+    if (mode !== "dig") return;
+    retPos = { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch };
+    mode = "lift"; liftDir = 1;
+    liftEnd = performance.now() + (900 + Math.max(0, P.y) * 100);   // тем дольше, чем глубже
+    liftMsg.textContent = "ПОДЪЁМ";
+    liftEl.classList.add("on");
+    if (document.pointerLockElement === cv) document.exitPointerLock();
+  }
+  function goDown() {
+    mode = "lift"; liftDir = -1;
+    liftEnd = performance.now() + (600 + Math.max(0, retPos ? retPos.y : 0) * 70);
+    liftMsg.textContent = "СПУСК";
+    hubEl.classList.remove("on");
+    liftEl.classList.add("on");
+  }
+  document.getElementById("hubgo").onclick = goDown;
+
+  function liftTick() {
+    if (performance.now() < liftEnd) return;
+    liftEl.classList.remove("on");
+    if (liftDir > 0) {
+      SAV.bank += Math.round(cart); cart = 0;          // руду сдаём наверху
+      SAV.best = Math.max(SAV.best, Math.round(P.y));
+      saveGame(); buildHub(); hubEl.classList.add("on");
+      mode = "hub";
+    } else {
+      if (retPos) { P.x = retPos.x; P.y = retPos.y; P.z = retPos.z;
+                    P.yaw = retPos.yaw; P.pitch = retPos.pitch; P.vy = 0; }
+      mode = "dig";
+    }
+  }
+
+
+  // ---------- режиссёр ----------
+  // Событие выпадает не по таймеру, а в момент, когда игрок расслабился:
+  // ровный темп, давно ничего не было, наверх не поднимался.
+  let dread = 0, evCool = 0, hush = 0, tear = 0, faceT = 0, liar = 0, lights = 0;
+  let lampOut = 0, knockAt = 0, cnt = -1, cntAt = 0;
+  const fired = {};
+
+  const EVENTS = [
+    { id:"knock",  at: 6,  go(){ knockAt = performance.now() + 620; } },
+    { id:"hush",   at: 12, go(){ hush = 8; } },
+    { id:"tear",   at: 18, go(){ tear = 3; } },
+    { id:"lamp",   at: 24, go(){ lampOut = 5; } },
+    { id:"liar",   at: 30, go(){ liar = 2; } },
+    { id:"face",   at: 34, go(){ faceT = 2; } },
+    { id:"count",  at: 38, go(){ cnt = 9; cntAt = P.y; } },
+    { id:"lights", at: 44, go(){ lights = 3.2; } }
+  ];
+
+  function dreadTick(dt) {
+    evCool -= dt;
+    // спокойная ровная работа копит тревогу; подъём наверх её сбрасывает
+    if (digging) dread += dt * 1.0; else dread += dt * 0.35;
+    if (evCool > 0) return;
+    if (dread < 26) return;
+    const pool = EVENTS.filter(e => P.y >= e.at && !fired[e.id]);
+    if (!pool.length) return;
+    const e = pool[(Math.random() * pool.length) | 0];
+    fired[e.id] = 1; SAV.seen[e.id] = 1; saveGame();
+    e.go();
+    dread = 0; evCool = 45;                       // после испуга — гарантированная пустота
+  }
+
+  // счётчик, который никто не объяснял
+  function countTick() {
+    if (cnt < 0) return;
+    while (cnt > 0 && P.y - cntAt >= 4) { cnt--; cntAt += 4; }
+    if (cnt === 0 && !fired.zero) { fired.zero = 1; lights = 4; cnt = -1; }
+  }
+
+  // ---------- наложение ----------
+  const FACEPX = [
+    "..pp..........pp..", ".pppp........pppp.", ".pppp........pppp.",
+    "..pp..........pp..", "..................", "..................",
+    ".......pppp.......", "..................", "..pppppppppppppp.."
+  ];
+  function drawDread(g, W, H, dt) {
+    if (tear > 0) {
+      tear -= 1;
+      for (const [y, h2, dx] of [[.18, .06, .03], [.46, .04, -.05], [.72, .05, .02]]) {
+        const yy = (H * y) | 0, hh = Math.max(2, (H * h2) | 0);
+        const sl = g.getImageData(0, yy, W, hh);
+        g.fillStyle = "#07060a"; g.fillRect(0, yy, W, hh);
+        g.putImageData(sl, W * dx, yy);
+      }
+      g.fillStyle = "rgba(107,47,143,.30)";
+      g.fillRect(0, (H * .18) | 0, W, 1); g.fillRect(0, (H * .46) | 0, W, 1);
+    }
+    if (faceT > 0) {
+      faceT -= 1;
+      const px = W / 46, ox = W * (Math.random() < .5 ? .12 : .70), oy = H * .24;
+      g.save(); g.globalAlpha = .20; g.fillStyle = "#cfc7dd";
+      FACEPX.forEach((row, y) => [...row].forEach((c, x) => {
+        if (c === "p") g.fillRect(ox + x * px, oy + y * px * 1.15, px, px * 1.15);
+      }));
+      g.restore();
+    }
+    if (lights > 0) {
+      lights -= dt;
+      const a = Math.min(.30, lights * .12) * (0.7 + 0.3 * Math.sin(performance.now() / 90));
+      const gg = g.createRadialGradient(W * .5, H * 1.05, 0, W * .5, H * 1.05, H * .85);
+      gg.addColorStop(0, `rgba(120,220,190,${a})`);
+      gg.addColorStop(.5, `rgba(70,150,190,${a * .5})`);
+      gg.addColorStop(1, "rgba(70,150,190,0)");
+      g.fillStyle = gg; g.fillRect(0, 0, W, H);
+    }
+    if (cnt >= 0) {
+      g.save();
+      g.font = `600 ${Math.round(W / 46)}px ui-monospace,monospace`;
+      g.fillStyle = "rgba(176,124,224,.62)"; g.textAlign = "right";
+      g.fillText(String(cnt), W - W * .035, H * .085);
+      g.restore();
+    }
   }
 
   function resize() {
@@ -1198,6 +1435,15 @@
   function frame(now) {
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     resize();
+    if (mode !== "dig") {
+      if (mode === "lift") liftTick();
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      requestAnimationFrame(frame);
+      return;
+    }
+    if (SAV.crew) { cart = Math.min(capOf(), cart + SAV.crew * 0.9 * dt);
+      cartEl.style.width = (cart / capOf() * 100) + "%";
+      cartBox.classList.toggle("show", cart > capOf() * .65); }
 
     let fw = moveZ, st = moveX;
     if (down("fwd")) fw += 1; if (down("back")) fw -= 1;
@@ -1224,26 +1470,35 @@
     if (digging && digCd <= 0) {
       const t = aim();
       if (t) {
-        digCd = TOOLS[tool].cd; swing = 1;
-        carve(t[0], t[1], t[2], 0.42 + TOOLS[tool].pow * 0.028);
+        digCd = Math.max(.1, .34 - powOf() * .03); swing = 1;
+        carve(t[0], t[1], t[2], 0.40 + powOf() * 0.13);
         const deep = t[1] > 9;
         thud(deep, .8 + Math.random() * .5);
         shake = deep ? 7 : 5;
         spawnChips(t[1] < 0 ? "#9a9088" : t[1] < 4 ? "#6d4d2f" : "#8a8290");
-        cart = Math.min(1, cart + .012);
-        ore += t[1] > 0 ? TOOLS[tool].pow + Math.floor(Math.random() * 4) : 0;
-        oreEl.textContent = ore >= 1000 ? (ore / 1000).toFixed(1) + "K" : ore;
+        if (t[1] > 0) cart = Math.min(capOf(), cart + 2 + Math.random() * 3 * powOf());
+        oreEl.textContent = fmt(cart) + " / " + capOf();
         oreEl.classList.add("hot"); oreHot = 1.4;
-        cartEl.style.width = (cart * 100) + "%";
-        cartBox.classList.toggle("show", cart > .65);
+        cartEl.style.width = (cart / capOf() * 100) + "%";
+        cartBox.classList.toggle("show", cart > capOf() * .65);
       }
     }
     shake = Math.max(0, shake - dt * 34);
+    dreadTick(dt); countTick();
+    if (hush > 0) hush -= dt;
+    if (lampOut > 0) {
+      lampOut -= dt + (digging ? dt * 1.6 : 0);      // раздувается кликами
+      if (lampOut <= 0) gl.uniform1f(U("uLampR"), lampR());
+      else gl.uniform1f(U("uLampR"), 0.26);
+    }
+    if (knockAt && performance.now() > knockAt) { knockAt = 0; thud(false, 0.42); }
     if (oreHot > 0 && (oreHot -= dt) <= 0) oreEl.classList.remove("hot");
     if (peek > 0 && (peek -= dt) <= 0) { hotEl.classList.remove("show"); toolEl.classList.remove("show"); }
 
     const depth = Math.max(0, Math.round(P.y));
-    depthEl.innerHTML = depth + "<i>М</i>";
+    if (liar > 0) { liar -= 1;
+      depthEl.innerHTML = (depth + 7 + ((Math.random() * 40) | 0)) + "<i>М</i>"; }
+    else depthEl.innerHTML = depth + "<i>М</i>";
 
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch), cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
     const R = [cy, 0, -sy], F = [sy * cp, -sp, cy * cp], Uv = [-sy * sp, -cp, -cy * sp];
@@ -1251,6 +1506,7 @@
     const sk = SET.shake ? shake * .004 : 0;
     gl.uniform3f(U("uCam"), P.x + (Math.random()-.5)*sk, P.y - EYE + (SET.headbob?Math.sin(bob*2)*.035:0) + (Math.random()-.5)*sk, P.z + (Math.random()-.5)*sk);
     gl.uniform1f(U("uTime"), now / 1000);
+    gl.uniform1f(U("uDrain"), Math.max(0, Math.min(.92, (P.y - 10) / 46)));
     gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 7) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
@@ -1265,6 +1521,7 @@
       fxc.fillRect(p2.x, p2.y, p2.s, p2.s);
     }
     fxc.globalAlpha = 1;
+    drawDread(fxc, fx.width, fx.height, dt);
     drawTool(fxc, fx.width, fx.height, swing, TOOLS[tool].key);
 
     requestAnimationFrame(frame);
