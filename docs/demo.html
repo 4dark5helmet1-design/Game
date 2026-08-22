@@ -1353,6 +1353,7 @@
   SAV.v = 2;
   SAV.seen = SAV.seen || {}; SAV.notes = SAV.notes || {}; SAV.log = SAV.log || [];
   SAV.men = SAV.men || []; SAV.ore = SAV.ore || {}; SAV.took = SAV.took || {};
+  SAV.seenore = SAV.seenore || {}; SAV.notch = SAV.notch || {};
   if (SAV.prop === undefined) SAV.prop = 5;
   SAV.props = SAV.props || []; SAV.learn = SAV.learn || {};
   SAV.mades = SAV.mades || {}; SAV.madeg = SAV.madeg || {};
@@ -1673,6 +1674,95 @@
     return i < 0 ? 0 : (passLevel(i) - 1);
   };
 
+  // ---------- зарубки ----------
+  // Горняк отмечал сделанное насечкой на стойке. Здесь то же самое:
+  // список не выдаёт наград, он только помнит, где ты уже был.
+  const madeCount = () => Object.keys(SAV.mades || {}).length + Object.keys(SAV.madeg || {}).length;
+  const oreKinds  = () => Object.keys(SAV.seenore || {}).length;
+  const NOTCH = [
+    ["ПЕРВЫЙ МЕТР",    "спуститься на метр от пола подвала", () => statOf("depth") >= 1],
+    ["ДЕСЯТЬ",         "десять метров вниз",                 () => statOf("depth") >= 10],
+    ["СОТНЯ",          "сто метров вниз",                    () => statOf("depth") >= 100],
+    ["ПОЛКИЛОМЕТРА",   "пятьсот метров",                     () => statOf("depth") >= 500],
+    ["КИЛОМЕТР",       "тысяча метров над головой",          () => statOf("depth") >= 1000],
+    ["ЧЁРНЫЙ ПЛАСТ",   "пройти пласт, который не отражает",  () => statOf("depth") >= DARK0 + 12],
+    ["ДВА",            "две тысячи метров",                  () => statOf("depth") >= 2000],
+    ["ЧЕТЫРЕ",         "четыре тысячи метров",               () => statOf("depth") >= 4000],
+    ["ДНО",            "шесть тысяч. Дальше не копают",      () => statOf("depth") >= 6000],
+    ["ТЫСЯЧА УДАРОВ",  "тысяча раз киркой",                  () => statOf("hits") >= 1000],
+    ["ДЕСЯТЬ ТЫСЯЧ",   "десять тысяч раз киркой",            () => statOf("hits") >= 10000],
+    ["СТО ТЫСЯЧ",      "сто тысяч раз киркой",               () => statOf("hits") >= 100000],
+    ["ВЁРСТЫ",         "километр ногами под землёй",         () => statOf("walk") >= 1000],
+    ["ДАЛЬШЕ ДОМА",    "десять километров ногами",           () => statOf("walk") >= 10000],
+    ["ПЕРВАЯ ЖИЛА",    "вскрыть жилу",                       () => statOf("veins") >= 1],
+    ["СТО ЖИЛ",        "вскрыть сто жил",                    () => statOf("veins") >= 100],
+    ["ВСЕ ДЕСЯТЬ",     "подержать в руках каждую руду",      () => oreKinds() >= ORES.length],
+    ["АЛМАЗ",          "поднять алмаз",                      () => (SAV.seenore || {}).diam],
+    ["САМОРОДОК",      "поднять самородок",                  () => statOf("nuggets") >= 1],
+    ["ДЕСЯТЬ САМОРОДКОВ", "поднять десять самородков",       () => statOf("nuggets") >= 10],
+    ["ПОЛНАЯ СУМКА",   "тысяча кусков за всё время",         () => statOf("picked") >= 1000],
+    ["ПЕРВЫЙ НАЁМ",    "взять человека в бригаду",           () => (SAV.crew | 0) >= 1 || (SAV.st.lost | 0) >= 1],
+    ["БРИГАДА",        "пятеро внизу одновременно",          () => (SAV.men || []).length >= 5],
+    ["ВСЕ ПОДНЯЛИСЬ",  "закрыть смену, не потеряв никого",   () => (SAV.shift | 0) >= 1 && !(SAV.st.lost | 0)],
+    ["ИМЯ ПОМНЮ",      "недосчитаться человека",             () => (SAV.st.lost | 0) >= 1],
+    ["ПЕРВАЯ РАМА",    "поставить крепь",                    () => statOf("props") >= 1],
+    ["СТО РАМ",        "поставить сто рам",                  () => statOf("props") >= 100],
+    ["СВОДЫ СОШЛИСЬ",  "пережить обвал",                     () => statOf("collapses") >= 1],
+    ["БЕЗ ЕДИНОГО",    "километр вниз и ни одного обвала",   () => statOf("depth") >= 1000 && !statOf("collapses")],
+    ["МЕЧИ",           "дождаться, пока они уйдут обратно",  () => (SAV.st.swords | 0) >= 1],
+    ["ТРИЖДЫ",         "пережить их трижды",                 () => (SAV.st.swords | 0) >= 3],
+    ["ПЕРВАЯ ЗАПИСКА", "найти чужой листок",                 () => statOf("notes") >= 1],
+    ["ПОЛАРХИВА",      "найти половину листков",             () => statOf("notes") >= Math.ceil(DIARY.length / 2)],
+    ["ВЕСЬ АРХИВ",     "найти все листки до одного",         () => statOf("notes") >= DIARY.length],
+    ["ВЕРСТАК",        "сделать первую вещь",                () => madeCount() >= 1],
+    ["МАСТЕР",         "сделать двадцать пять",              () => madeCount() >= 25],
+    ["ВСЁ, ЧТО ЕСТЬ",  "сделать всё, что можно сделать",     () => madeCount() >= GEARS.length + ACTIVE.length],
+    ["ПЕРВАЯ СМЕНА",   "закончить смену и начать заново",    () => (SAV.shift | 0) >= 1],
+    ["ДЕСЯТАЯ СМЕНА",  "десять смен подряд",                 () => (SAV.shift | 0) >= 10],
+    ["ПЕРЕЖИТО",       "встретить десять разных странностей", () => statOf("scares") >= 10]
+  ];
+  const notchGot = () => NOTCH.reduce((n, x) => n + (SAV.notch[x[0]] ? 1 : 0), 0);
+  let notchAt = 0;
+  // Считаем по стенным часам, а не по кадрам: на слабом железе кадр идёт вдвое
+  // медленнее, и проверка расползалась на десятки секунд.
+  function notchSync(quiet) {
+    if (!savReady) return 0;
+    const fresh = [];
+    for (const x of NOTCH) {
+      if (SAV.notch[x[0]]) continue;
+      let ok = false;
+      try { ok = !!x[2](); } catch (e) { ok = false; }
+      if (ok) { SAV.notch[x[0]] = 1; fresh.push(x[0]); }
+    }
+    if (!fresh.length) return 0;
+    saveGame();
+    if (!quiet) {
+      flashMsg("ЗАРУБКА · " + fresh[0] + (fresh.length > 1 ? "   и ещё " + (fresh.length - 1) : ""),
+               "#ffc14d");
+      notchSound();
+    }
+    return fresh.length;
+  }
+  function notchTick() {
+    const t = performance.now();
+    if (t - notchAt < 1200) return;
+    notchAt = t;
+    notchSync(false);
+  }
+  // короткий сухой звук: нож по сухой стойке
+  function notchSound() {
+    if (!AC || !SET.sfx) return;
+    const t = AC.currentTime, o = AC.createOscillator(), g2 = AC.createGain();
+    const f = AC.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1750; f.Q.value = 3;
+    o.type = "square"; o.frequency.setValueAtTime(880, t);
+    o.frequency.exponentialRampToValueAtTime(430, t + 0.09);
+    g2.gain.setValueAtTime(.001, t);
+    g2.gain.exponentialRampToValueAtTime(.10 * (SET.sfx / 100) * (SET.vol / 100), t + .012);
+    g2.gain.exponentialRampToValueAtTime(.001, t + .22);
+    o.connect(f); f.connect(g2); g2.connect(AC.destination);
+    o.start(t); o.stop(t + .24);
+  }
+
   // ---------- обучение ----------
   // Не подсказка, которая висит всегда, а восемь шагов. Каждый ждёт, пока ты
   // сделаешь дело сам, показывается один раз и уходит навсегда.
@@ -1926,6 +2016,7 @@
       if (left <= 0) {
         swPhase = 0; SWORDS.length = 0;
         hazEl.className = "haz";
+        SAV.st.swords = (SAV.st.swords | 0) + 1;
         if (swHit) loseMan();                        // стоял на трещине — недосчитались
       }
     }
@@ -2209,6 +2300,7 @@
   function takeOre(d) {
     const o = ORES[d.k], n = d.big ? 12 + Math.round(Math.random()*10) : 1;
     SAV.ore[o.id] = (SAV.ore[o.id] || 0) + n;
+    SAV.seenore = SAV.seenore || {}; SAV.seenore[o.id] = 1;   // крафт тратит руду, память — нет
     SAV.st.picked = (SAV.st.picked | 0) + 1;
     if (d.big) SAV.st.nuggets = (SAV.st.nuggets | 0) + 1;
     cart = Math.min(capOf(), cart + o.price * n * (buff.ore > 0 ? 5 : 1));
@@ -3087,6 +3179,15 @@
     if (found) nr.onclick = () => buildArchive();
     hubRows.append(nr);
 
+    notchSync(true);                                // в штреке список всегда свежий
+    const got = notchGot();
+    const zr = document.createElement("div");
+    zr.className = "hrow can";
+    zr.innerHTML = `<span class="n">ЗАРУБКИ</span><span class="p">${got} / ${NOTCH.length}</span>` +
+                   `<span class="s">${got ? "что уже сделано" : "стойка пока чистая"}</span>`;
+    zr.onclick = () => buildNotch();
+    hubRows.append(zr);
+
     const a = document.createElement("div");
     a.className = "hrow max";
     a.innerHTML = `<span class="n">ОСКОЛКИ</span><span class="p">${SAV.shards}</span>` +
@@ -3434,6 +3535,34 @@
     });
   }
 
+  // зарубки: сначала свежие, потом ещё не сделанные
+  function buildNotch() {
+    notchSync(true);
+    hubRows.innerHTML = "";
+    const back = document.createElement("div");
+    back.className = "hrow can";
+    back.innerHTML = `<span class="n">← НАЗАД</span><span class="s">к снаряжению</span>`;
+    back.onclick = () => buildHub();
+    hubRows.append(back);
+
+    const hd = document.createElement("div");
+    hd.className = "hrow max";
+    hd.innerHTML = `<span class="n">СТОЙКА</span><span class="p">${notchGot()} / ${NOTCH.length}</span>` +
+                   `<span class="s">насечки на крепи у самого спуска</span>`;
+    hubRows.append(hd);
+
+    NOTCH.slice().sort((a, b) => (SAV.notch[b[0]] ? 1 : 0) - (SAV.notch[a[0]] ? 1 : 0))
+      .forEach(x => {
+        const on = !!SAV.notch[x[0]];
+        const d = document.createElement("div");
+        d.className = "hrow" + (on ? " can" : " max");
+        d.innerHTML = `<span class="n">${on ? x[0] : "· · · · ·"}</span>` +
+                      `<span class="p">${on ? "✓" : ""}</span>` +
+                      `<span class="s">${x[1]}</span>`;
+        hubRows.append(d);
+      });
+  }
+
   // ---------- бригада ----------
   // Это единственное, что игра действительно отнимает. Не руду, не уровни — людей.
   const FIRST = ["Гриша","Толя","Рафис","Сеня","Никола","Ким","Марат","Дуся","Витёк",
@@ -3501,6 +3630,7 @@
     for (let i = 1; i < SAV.men.length; i++) if (SAV.men[i].d > SAV.men[idx].d) idx = i;
     lostName = SAV.men[idx].n + ", " + SAV.men[idx].t;
     SAV.men.splice(idx, 1); SAV.crew = SAV.men.length;
+    SAV.st.lost = (SAV.st.lost | 0) + 1;
     saveGame();
     lostEnd = performance.now() + 5500;
     thud(true, 0.4);
@@ -4524,6 +4654,7 @@
     dreadTick(dt); countTick();
     bottomTick();
     dropsTick(dt); wailTick(dt); nuggetTick(); swordsTick(dt); riskTick(dt); learnTick();
+    notchTick();
     benchTick();
     tideTick(dt); gritTick(dt); hazTick(dt); hazSound(dt);
     stepTick(dt, !!(fw || st), down("run")); dripTick(dt); droneTick();
