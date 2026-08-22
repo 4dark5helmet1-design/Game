@@ -269,7 +269,7 @@
 
 <div class="wrap">
 
-<div class="game" id="game">
+<div class="game" id="game" tabindex="-1">
   <canvas id="gl"></canvas>
   <canvas id="fx"></canvas>
   <div class="hud" hidden>
@@ -1095,17 +1095,61 @@
   const toolEl = document.getElementById("toolname");
   const isTouch = matchMedia("(hover:none)").matches;
   hint.innerHTML = "";
-  cv.addEventListener("click", () => { if (!isTouch) cv.requestPointerLock(); audioOn(); });
+  // Клавиши слушает window, а во встроенном фрейме документ сам фокус не берёт:
+  // без этого WASD просто не доходит.
+  function grabFocus() {
+    try { window.focus(); } catch (e) {}
+    const g = document.getElementById("game");
+    if (g) { try { g.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  cv.addEventListener("click", () => {
+    grabFocus();
+    if (!isTouch) { try { cv.requestPointerLock(); } catch (e) {} }
+    audioOn();
+  });
   document.addEventListener("pointerlockchange", () => {});
+  const turn = (dx, dy, k) => {
+    P.yaw -= dx * k;
+    P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch + (SET.invY ? 1 : -1) * dy * k));
+  };
+  // Захват мыши дают не везде: внутри чужого фрейма его может не быть вовсе,
+  // и тогда осмотреться нечем. Запасной путь — тянуть с зажатой кнопкой,
+  // ровно как пальцем по экрану.
+  let dragOn = false, dragX = 0, dragY = 0;
   document.addEventListener("mousemove", e => {
     if (document.pointerLockElement !== cv) return;
-    const k = SET.sens / 10000;
-    P.yaw -= e.movementX * k;
-    P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch + (SET.invY ? 1 : -1) * e.movementY * k));
+    turn(e.movementX, e.movementY, SET.sens / 10000);
+  });
+  // Тянем по pointermove, а не по mousemove: с зажатой правой кнопкой
+  // браузер mousemove не шлёт вовсе, и осмотр без долбёжки не работал.
+  document.addEventListener("pointermove", e => {
+    if (e.pointerType !== "mouse" || !dragOn) return;
+    if (document.pointerLockElement === cv) return;
+    turn(e.clientX - dragX, e.clientY - dragY, SET.sens / 10000 * 1.7);
+    dragX = e.clientX; dragY = e.clientY;
   });
   let digging = false;
-  cv.addEventListener("mousedown", e => { if (e.button === 0) { digging = true; audioOn(); } });
-  addEventListener("mouseup", () => digging = false);
+  // Перетаскивание вешаем на pointerdown: mousedown для правой кнопки
+  // доходит не всегда, а смотреть, не долбя, уметь надо.
+  cv.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "mouse") return;            // палец ведёт свой обработчик
+    grabFocus(); audioOn();
+    dragOn = true; dragX = e.clientX; dragY = e.clientY;
+    if (e.button === 0) digging = true;
+    else e.preventDefault();                          // правой — только смотреть
+  });
+  cv.addEventListener("contextmenu", e => e.preventDefault());
+  // На телефоне копку держит своя кнопка: второй палец не должен её ронять.
+  const letGo = e => {
+    if (isTouch) return;                              // там копку держит своя кнопка,
+    if (e && e.pointerType && e.pointerType !== "mouse") return;   // и чужой палец её не роняет
+    digging = false; dragOn = false;
+  };
+  addEventListener("pointerup", letGo);
+  addEventListener("mouseup", letGo);
+  // pointercancel здесь не слушаем: браузер шлёт его в начале правого
+  // перетаскивания, и осмотр обрывался, не начавшись.
+  addEventListener("blur", () => { digging = false; dragOn = false; for (const k in keys) keys[k] = false; });
 
   const stick = document.getElementById("stick"), knob = document.getElementById("knob"), digbtn = document.getElementById("digbtn");
   let moveX = 0, moveZ = 0, lookId = null, lx = 0, ly = 0, stickId = null, sx0 = 0, sy0 = 0;
