@@ -1784,7 +1784,6 @@
     { id:"deep",  t:() => "ДАЛЬШЕ САМ", s:"внизу есть на что посмотреть",
                   done:() => P.y >= 40 }
   ];
-  function oreTotal() { let n = 0; for (const k in (SAV.ore || {})) n += SAV.ore[k]; return n; }
   let learnAt = 0, learnShown = 0, learnGap = 0;
   function learnTick() {
     if (mode !== "dig") return;
@@ -4612,7 +4611,10 @@
     if (digging && digCd <= 0 && useHeld()) { digCd = .25; swing = 1; swDur = .25; }
     else if (digging && digCd <= 0) {
       const t = aim();
-      if (t) {
+      if (!t) {                                    // мах в пустоту: кирка идёт, но не встречает ничего
+        digCd = .34; swing = 1; swDur = .34;
+        if (SET.headbob) shake = Math.max(shake, 1.2);
+      } else {
         SAV.st.hits = (SAV.st.hits | 0) + 1;
         const broke = breakPropNear(t[0], t[1], t[2]);
         const dk = broke || inDark(t[1]);            // по раме бьют, а не копают
