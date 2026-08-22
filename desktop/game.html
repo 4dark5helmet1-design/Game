@@ -240,6 +240,14 @@
   .hub-top .hore i{font-style:normal;font-size:8px;letter-spacing:.18em;color:#9b93b0;margin-left:5px}
   .hrow{display:grid;grid-template-columns:1fr auto;gap:3px 12px;padding:13px 16px;
     border-bottom:1px solid #1a1622;align-items:center;position:relative;cursor:default}
+  /* строка с картинкой: значок слева, название и описание справа от него */
+  .hrow.ico{grid-template-columns:auto 1fr auto}
+  .hrow.ico .n,.hrow.ico .s{grid-column:2}
+  .hrow.ico .p{grid-column:3}
+  .hrow .pic{grid-row:span 2;grid-column:1;width:38px;height:38px;border-radius:9px;
+    background:#120e18;border:1px solid #241e30;display:block;padding:3px;box-sizing:content-box}
+  .hrow.can .pic{border-color:#3a2d16;background:#1a1310}
+  .hrow.max .pic{opacity:.55}
   .hrow .n{font-size:12.5px;letter-spacing:.13em;color:#9b93b0}
   .hrow .s{font-size:10px;color:#544c68;letter-spacing:.03em}
   .hrow .p{grid-row:span 2;font-size:11.5px;color:#807896;font-variant-numeric:tabular-nums;
@@ -1080,6 +1088,23 @@
     P.yaw = SAV_AT.yaw; P.pitch = SAV_AT.pitch;
   }
   const EYE = 1.6, RAD = 0.3, TALL = 1.72;
+  // Вытолкнуть игрока наружу, если он оказался в породе. Нужно после каждой
+  // пересборки мира: размер подвала теперь свой у каждой смены, а позиция
+  // может прийти из сохранения, снятого в подвале другого размера.
+  function freePlayer() {
+    P.x = Math.max(-(RW - 0.5), Math.min(RW - 0.5, P.x));
+    P.z = Math.max(-(RH - 0.5), Math.min(RH - 0.5, P.z));
+    if (!blocked(P.x, P.y, P.z)) return;
+    for (let r = 0; r <= 8; r += 0.4) {
+      for (let a = 0; a < 6.283; a += 0.5) {
+        const x = Math.max(-(RW-0.5), Math.min(RW-0.5, P.x + Math.cos(a) * r));
+        const z = Math.max(-(RH-0.5), Math.min(RH-0.5, P.z + Math.sin(a) * r));
+        for (let y = P.y; y > -2.4; y -= 0.3)
+          if (!blocked(x, y, z)) { P.x = x; P.y = y; P.z = z; P.vy = 0; return; }
+      }
+    }
+    P.x = 0; P.z = 0; P.y = -0.6; P.vy = 0;          // совсем некуда — в середину
+  }
   function blocked(x, y, z) {
     for (const yy of [y - 0.08, y - TALL * .55, y - TALL + 0.1])
       for (const [ox, oz] of [[-RAD,-RAD],[RAD,-RAD],[-RAD,RAD],[RAD,RAD],[0,0]])
@@ -1108,7 +1133,10 @@
     if (!isTouch) {
       try { cv.requestPointerLock(); } catch (e) {}
       // дали захват — он и работает; не дали — включаем свой обзор
-      setTimeout(() => { if (document.pointerLockElement !== cv) freeLook = true; }, 250);
+      setTimeout(() => {
+        if (document.pointerLockElement === cv) return;
+        freeLook = true;                     // захвата не дали — ведём сами
+      }, 250);
     }
     audioOn();
   });
@@ -1140,8 +1168,9 @@
   document.addEventListener("pointermove", e => {
     if (e.pointerType !== "mouse" || document.pointerLockElement === cv) return;
     const k = SET.sens / 10000 * 1.7;
-    if (dragOn) turn(e.clientX - dragX, e.clientY - dragY, k);
-    else if (freeOn()) turn(e.clientX - freeX, e.clientY - freeY, k);
+    const dx = e.clientX - (dragOn ? dragX : freeX);
+    const dy = e.clientY - (dragOn ? dragY : freeY);
+    if ((dragOn || freeOn()) && Math.abs(dx) < 400 && Math.abs(dy) < 400) turn(dx, dy, k);
     dragX = freeX = e.clientX; dragY = freeY = e.clientY;
     // насколько курсор ушёл в край кадра — на столько же и доворачиваем
     const r = cv.getBoundingClientRect();
@@ -1168,7 +1197,9 @@
   cv.addEventListener("pointerdown", e => {
     if (e.pointerType !== "mouse") return;            // палец ведёт свой обработчик
     grabFocus(); audioOn();
-    dragOn = true; dragX = e.clientX; dragY = e.clientY;
+    // отсчёт всегда от места, где кнопка нажата: иначе первый же ход мышью
+    // после включения свободного обзора считался от нуля и швырял камеру
+    dragOn = true; dragX = freeX = e.clientX; dragY = freeY = e.clientY;
     if (e.button === 0) digging = true;
     else e.preventDefault();                          // правой — только смотреть
   });
@@ -1485,6 +1516,7 @@
   SAV.seenore = SAV.seenore || {}; SAV.notch = SAV.notch || {};
   WSEED = SAV.seed | 0;                    // без этого после перезагрузки шахта другая, а ходы старые
   if (WSEED) { seedRoom(); genWorld(); uploadWorld(); }   // мир строился до того, как зерно стало известно
+  freePlayer();                                          // подвал мог стать теснее прежнего
   if (SAV.prop === undefined) SAV.prop = 5;
   SAV.props = SAV.props || []; SAV.learn = SAV.learn || {};
   SAV.mades = SAV.mades || {}; SAV.madeg = SAV.madeg || {};
@@ -3243,22 +3275,23 @@
 
 
   // ---------- добыча ----------
-  let cart = SAV.load || 0, digCd = 0, oreHot = 0;
+  let cart = SAV.load || 0, digCd = 0, oreHot = 0, airHits = 0;
   const oreEl = document.getElementById("ore"), depthEl = document.getElementById("depth"), cartEl = document.getElementById("cart");
+  // Радиус выруба. Растёт с силой, но не безгранично: без потолка на
+  // пятистах осколках один удар вынимал шар в тридцать три метра.
+  const carveR = () => Math.min(4.0, 0.40 + powOf() * 0.13);
   function aim() {
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
     const dir = [Math.sin(P.yaw) * cp, -sp, Math.cos(P.yaw) * cp];
     // Досягаемость растёт вместе с вырубом. Иначе сильная кирка выедает вокруг
     // себя шар шире, чем видит прицел (радиус обгоняет 5.4 м уже к середине
     // игры), и бить внезапно становится не во что: замах есть, породы нет.
-    // Досягаемость. Было 5.4 м, и это оказалось меньше, чем нужно: стоя
-    // и глядя под небольшим углом вниз, игрок целится в пол в четырёх-пяти
-    // метрах — то есть на самом пределе луча. Один выруб, и бить уже не во
-    // что: кирка машет впустую, а человек не понимает, что сломалось.
-    // Потолок — дальше самой дальней видимости, за ней всё равно темно.
-    const st = Math.min(26, Math.max(9.5, (0.40 + powOf() * 0.13) * 1.7 + 1.5)) / 120;
+    // Кирка достаёт на длину руки с рукоятью — и не дальше. Больше нужно
+    // только тогда, когда сам выруб шире размаха: иначе сильная кирка
+    // выедает вокруг себя шар больше, чем видит прицел, и бить нечем.
+    const st = Math.min(26, Math.max(2.3, carveR() * 1.7)) / 60;
     let x = P.x, y = P.y - EYE, z = P.z;
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 60; i++) {
       x += dir[0] * st; y += dir[1] * st; z += dir[2] * st;
       if (solidAt(x, y, z)) return [x, y, z];
     }
@@ -3398,6 +3431,36 @@
   }
   let craftTab = 0;
   const CTABS = ["СКИЛЛЫ", "ВЕЩИ", "РАСХОД", "СКЛАД"];
+  // значок в строку списка: те же картинки, что и на поясе
+  function rowPic(d, kind) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 64; c.className = "pic";
+    try { icon(c.getContext("2d"), 64, kind); } catch (e) {}
+    d.classList.add("ico");
+    d.prepend(c);
+    return c;
+  }
+  // кусок руды: тот же цвет, что и в породе
+  function orePic(d, o) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 64; c.className = "pic";
+    const g = c.getContext("2d"), S = 64;
+    const gr = g.createRadialGradient(S*.38, S*.34, S*.05, S*.5, S*.5, S*.46);
+    gr.addColorStop(0, o.g); gr.addColorStop(.55, o.c); gr.addColorStop(1, "#0d0a12");
+    g.fillStyle = gr;
+    g.beginPath();                                   // неровный кусок, не шарик
+    for (let i = 0; i <= 7; i++) {
+      const a = i / 7 * 6.283, r = S * (0.30 + 0.09 * Math.sin(i * 2.3 + o.price));
+      const x = S*.5 + Math.cos(a) * r, y = S*.5 + Math.sin(a) * r * .88;
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    }
+    g.closePath(); g.fill();
+    g.strokeStyle = "rgba(255,255,255,.16)"; g.lineWidth = S*.03; g.stroke();
+    g.fillStyle = "rgba(255,255,255,.30)";
+    g.beginPath(); g.ellipse(S*.40, S*.36, S*.09, S*.05, -.5, 0, 6.283); g.fill();
+    d.classList.add("ico"); d.prepend(c);
+  }
+
   function buildCraft() {
     const tabsEl = document.getElementById("ctabs");
     tabsEl.innerHTML = "";
@@ -3421,6 +3484,7 @@
         d.innerHTML = '<span class="n">' + n + " <em style=\"font-style:normal;color:#948ba9\">×" + have + "</em></span>" +
                       '<span class="p">' + (ok ? "СДЕЛАТЬ" : "—") + "</span>" +
                       '<span class="s">' + desc + "<br>" + recText(rec) + "</span>";
+        rowPic(d, "auto:" + n);
         if (ok) d.onclick = () => { payFor(rec); make(); saveGame(); buildCraft(); thud(false, 1.4); };
         rows.append(d);
       });
@@ -3434,6 +3498,7 @@
         d.innerHTML = '<span class="n" style="color:' + (n ? o.g : "#8c84a4") + '">' + o.n + "</span>" +
                       '<span class="p">' + fmt(n) + "</span>" +
                       '<span class="s">за кусок ' + o.price + " руды</span>";
+        orePic(d, o);
         rows.append(d);
       });
       return;
@@ -3448,6 +3513,7 @@
       d.innerHTML = '<span class="n">' + it[0] + "</span>" +
                     '<span class="p">' + (has ? "ЕСТЬ" : ok ? "СОБРАТЬ" : "—") + "</span>" +
                     '<span class="s">' + it[1] + "<br>" + recText(rec) + "</span>";
+      rowPic(d, "auto:" + it[0]);
       if (!has && ok) d.onclick = () => {
         payFor(rec); SAV[key][i2] = 1; saveGame(); buildCraft(); thud(false, 1.4);
       };
@@ -4038,6 +4104,7 @@
       cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
       for (const k in fired) delete fired[k];
       P.x = 0; P.y = -0.02; P.z = Math.min(3.2, RH - 1.2); P.vy = 0; P.yaw = Math.PI; P.pitch = -0.40;
+    freePlayer();
       endT = 0; mode = "dig"; applySet();
       saveGame(true);
     }
@@ -4141,6 +4208,7 @@
     lampOut = 0; knockAt = 0; cnt = -1; shake = 0;
     for (const k in fired) delete fired[k];
     P.x = 0; P.y = -0.02; P.z = Math.min(3.2, RH - 1.2); P.vy = 0; P.yaw = Math.PI; P.pitch = -0.40;
+    freePlayer();
 
     hubEl.classList.remove("on");
     document.getElementById("game").classList.add("void");
@@ -4950,13 +5018,17 @@
       if (!t) {                                    // мах в пустоту: кирка идёт, но не встречает ничего
         digCd = .34; swing = 1; swDur = .34;
         if (SET.headbob) shake = Math.max(shake, 1.2);
+        // подсказываем не сразу, а когда человек уже несколько раз промахнулся
+        if (++airHits === 5) flashMsg("НЕ ДОСТАЁШЬ · ПОДОЙДИ ИЛИ СМОТРИ НИЖЕ", "#cfc7dd");
+        if (airHits > 40) airHits = 5;
       } else {
+        airHits = 0;
         SAV.st.hits = (SAV.st.hits | 0) + 1;
         const broke = breakPropNear(t[0], t[1], t[2]);
         const dk = broke || inDark(t[1]);            // по раме бьют, а не копают
         digCd = dk ? .09 : Math.max(.08, (.34 - powOf() * .03) * (1 - beltBonus("rate"))); swing = 1;
         swDur = Math.max(.15, digCd);
-        carve(t[0], t[1], t[2], (0.40 + powOf() * 0.13) * (buff.dmg > 0 ? 1.5 : 1) * (buff.soft > 0 ? 1.35 : 1));
+        carve(t[0], t[1], t[2], carveR() * (buff.dmg > 0 ? 1.5 : 1) * (buff.soft > 0 ? 1.35 : 1));
         const deep = t[1] > 9;
         if (!dk) {                                   // в тёмном пласте кирка не встречает ничего
           hitRock(t[1], deep);
