@@ -1390,10 +1390,12 @@
   const shardMul = () => 1 + Math.pow(Math.max(0, SAV.shards), 0.62) * 0.35;
   // чем глубже, тем ценнее порода: иначе спуск не окупается
   const oreMul = () => 1 + Math.pow(Math.max(0, P.y) / 55, 0.88);
-  const capOf  = () => Math.round((60 + SAV.cart * 62) * shardMul() * (1 + passBonus("СПИНА") * 0.06)
+  const capOf  = () => Math.round((60 + SAV.cart * 62) * shardMul()
+                                 * (1 + passBonus("СПИНА") * 0.06 + beltBonus("cap"))
                                  * (buff.cap > 0 ? 2 : 1));
   const lampR  = () => (1 + SAV.lamp * 0.34) * (1 + passBonus("ГЛАЗ") * 0.04);
-  const powOf  = () => (1 + (SAV.pick - 1) * 0.55) * shardMul() * (1 + passBonus("РУКА") * 0.05);
+  const powOf  = () => (1 + (SAV.pick - 1) * 0.55) * shardMul()
+                     * (1 + passBonus("РУКА") * 0.05 + beltBonus("dmg"));
 
   const FARQ = [26, 42, 62], RESQ = [0.50, 0.62, 0.75, 1.0, 1.25];
   const uiS = () => (SET.ui || 100) / 100;
@@ -1604,6 +1606,16 @@
     ["ГВОЗДЬ","работает после отсчёта",{9:12,8:30}],
     ["ПОСЛЕДНИЙ ЛИСТ","на нём твоё имя",{9:16,6:50}]
   ];
+  // расходники: их делают снова и снова, а не один раз
+  const CONSUM = [
+    ["КРЕПЬ",     "+3 рамы",              {2:6, 0:10},  () => { SAV.prop = (SAV.prop|0) + 3; }],
+    ["ДИНАМИТ",   "+2 заряда",            {3:8, 1:4},   () => { SAV.dyn = (SAV.dyn|0) + 2; }],
+    ["ФАКЕЛ",     "+5 · горит в кармане", {0:6, 3:2},   () => { SAV.torch = (SAV.torch|0) + 5; }],
+    ["ЛАМПОВОЕ",  "фонарь до подъёма",    {1:12, 3:6},  () => { SAV.oil = (SAV.oil|0) + 1; }],
+    ["ПАЁК",      "шаг быстрее до подъёма", {5:8, 2:6}, () => { SAV.food = (SAV.food|0) + 1; }],
+    ["ЗАПАСНАЯ",  "+1 вагонетка руды",    {2:16, 4:4},  () => { SAV.spare = (SAV.spare|0) + 1; }]
+  ];
+
   const PASSIVE2 = [
     ["РУКА","сила удара","hits",900],
     ["НОГА","скорость шага","walk",1400],
@@ -1709,7 +1721,8 @@
   const PROPS = [];                                  // {x,y,z,yaw,hp}
   let riskT = 0, warnT = 0;
   setTimeout(() => propsFromSave(), 0);   // сохранение читается раньше этого блока
-  const PROP_HOLD = 26;                              // метров держит одна рама
+  const PROP_HOLD_BASE = 26;                         // метров держит одна рама
+  const PROP_HOLD = 26;
 
   function propsFromSave() {
     if (!savReady) return;
@@ -1720,6 +1733,7 @@
     SAV.props = PROPS.map(p => [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.yaw.toFixed(2)]);
   }
   // насколько ты далеко от последней рамы над тобой
+  const propHold = () => PROP_HOLD_BASE * (1 + passBonus("ЖИЛИСТОСТЬ") * 0.08 + beltBonus("prop") * 0.5);
   function unheld() {
     let best = 1e9;
     for (const p of PROPS) {
@@ -1731,9 +1745,10 @@
   // риск обвала за секунду: растёт с глубиной и с расстоянием до крепи
   function caveRisk() {
     if (P.y < 30) return 0;
-    const far = Math.min(3, Math.max(0, unheld() - PROP_HOLD) / 60);
+    const far = Math.min(3, Math.max(0, unheld() - propHold()) / 60);
     const deep = Math.min(2.5, Math.pow(P.y / 900, 0.7));
-    return Math.min(0.0045, far * deep * 0.0009);    // худший случай — раз в три-четыре минуты
+    const guard = 1 - Math.min(0.75, passBonus("УПРЯМСТВО") * 0.06 + beltBonus("safe") * 0.3);
+    return Math.min(0.0045, far * deep * 0.0009) * guard;
   }
   function placeProp() {
     if ((SAV.prop | 0) <= 0) { flashMsg("КРЕПИ НЕТ", "#e0505f"); return; }
@@ -1780,6 +1795,10 @@
   function collapseNow(sure) {
     if (mode !== "dig") return;
     const lost = Math.round(cart);
+    if ((SAV.spare | 0) > 0 && lost > 0) {          // запасная вагонетка спасает груз
+      SAV.spare--; SAV.bank += lost;
+      flashMsg("ЗАПАСНАЯ ВЫВЕЗЛА РУДУ", "#ffc14d");
+    }
     cart = 0; SAV.st.collapses = (SAV.st.collapses | 0) + 1;
     if (SAV.men.length && (sure || Math.random() < 0.6)) loseMan();
     refillAbove(P.y);                                // ход над тобой засыпает
@@ -1899,7 +1918,7 @@
     } else if (swPhase === 2) {
       shake = Math.max(shake, 16);
       // пока стоят — режут всё, что рядом
-      if (!swHit) for (const sw of SWORDS) {
+      if (!swHit && !beltBonus("sword")) for (const sw of SWORDS) {
         if (Math.hypot(sw.x - P.x, sw.z - P.z) < 0.85) { swHit = true; break; }
       }
       if (left <= 0) { swPhase = 3; swEnd = performance.now() + 900; swordAfter(); }
@@ -3079,7 +3098,7 @@
     }).join(" · ");
   }
   let craftTab = 0;
-  const CTABS = ["СКИЛЛЫ", "ВЕЩИ", "СКЛАД"];
+  const CTABS = ["СКИЛЛЫ", "ВЕЩИ", "РАСХОД", "СКЛАД"];
   function buildCraft() {
     const tabsEl = document.getElementById("ctabs");
     tabsEl.innerHTML = "";
@@ -3093,7 +3112,22 @@
 
     const rows = document.getElementById("crows");
     rows.innerHTML = "";
-    if (craftTab === 2) {
+    if (craftTab === 2) {                              // расходники
+      CONSUM.forEach(([n, desc, rec, make]) => {
+        const ok = canMake(rec);
+        const have = { "КРЕПЬ": SAV.prop|0, "ДИНАМИТ": SAV.dyn|0, "ФАКЕЛ": SAV.torch|0,
+                       "ЛАМПОВОЕ": SAV.oil|0, "ПАЁК": SAV.food|0, "ЗАПАСНАЯ": SAV.spare|0 }[n] || 0;
+        const d = document.createElement("div");
+        d.className = "hrow" + (ok ? " can" : "");
+        d.innerHTML = '<span class="n">' + n + " <em style=\"font-style:normal;color:#948ba9\">×" + have + "</em></span>" +
+                      '<span class="p">' + (ok ? "СДЕЛАТЬ" : "—") + "</span>" +
+                      '<span class="s">' + desc + "<br>" + recText(rec) + "</span>";
+        if (ok) d.onclick = () => { payFor(rec); make(); saveGame(); buildCraft(); thud(false, 1.4); };
+        rows.append(d);
+      });
+      return;
+    }
+    if (craftTab === 3) {
       ORES.forEach(o => {
         const n = haveOre(o.id);
         const d = document.createElement("div");
@@ -3583,7 +3617,10 @@
     SAV.shift = (SAV.shift || 0) + 1;
     SAV.log = SAV.log || [];
     SAV.log.push({ n: SAV.shift, d: caveDepth, s: caveGain, c: SAV.crew });
-    SAV.bank = 0; SAV.pick = 1; SAV.lamp = 1; SAV.cart = 1; SAV.crew = 0; SAV.best = 0;
+    // ступень инструмента остаётся: сгорают уровни внутри неё, а не сам инструмент
+    const tier = Math.max(1, Math.floor((SAV.pick - 1) / 6) * 6 + 1);
+    SAV.bank = 0; SAV.pick = tier; SAV.lamp = Math.max(1, Math.floor(SAV.lamp / 2));
+    SAV.cart = 1; SAV.crew = 0; SAV.best = 0;
     SAV.men = [];
     saveGame();
 
@@ -3702,6 +3739,7 @@
       if (retPos) { P.x = retPos.x; P.y = retPos.y; P.z = retPos.z;
                     P.yaw = retPos.yaw; P.pitch = retPos.pitch; P.vy = 0; }
       slideTo(P.y - EYE * 0.5);
+      spendOil(); spendFood();
       mode = "dig";
     }
   }
@@ -4040,15 +4078,72 @@
 
   // ---------- пояс в деле ----------
   // 1-4 выбирают то, что в руках; 5-7 срабатывают сразу и уходят в кулдаун.
+  // что делает вещь в руке. Остальные работают, просто лёжа на поясе.
   const GDATA = {
-    "КИРКА":     { use:"dig" },
-    "ФОНАРЬ":    { use:"hold", light:2.4 },
-    "ДИНАМИТ":   { use:"blast", r:1.55, cd:40, ore:.45 },
-    "ВЕРЁВКА":   { use:"rope", cd:240 },
-    "САЛЮТ":     { use:"flare", cd:150 },
-    "ПЕЧЕНЬКА":  { use:"blast", r:1.25, cd:80, ore:.5 },
-    "ЗЕРКАЛЬЦЕ": { use:"mirror", cd:20 }
+    "КИРКА":       { use:"dig" },
+    "ФОНАРЬ":      { use:"hold", light:2.4 },
+    "ВЕРЁВКА":     { use:"rope", cd:240 },
+    "ЗЕРКАЛЬЦЕ":   { use:"mirror", cd:20 },
+    "МЕЛ":         { use:"mark", cd:8 },
+    "СВИСТОК":     { use:"call", cd:90 },
+    "ЛОМ":         { use:"pry", cd:20 },
+    "ПЕЧЕНЬЕ":     { use:"blast", r:1.5, cd:80, ore:.5 },
+    "ПЛАЗМОРЕЗ":   { use:"blast", r:2.2, cd:50, ore:.7 },
+    "ДОДОКО":      { use:"bore", cd:70 },
+    "МЕЧ ИЗ СВЕТА":{ use:"bore", cd:45 },
+    "R2D2":        { use:"fixprop", cd:120, light:1.8 },
+    "ПЛЮШЕВЫЙ ЗАЙКА": { use:"scare", cd:150 },
+    "КУБИК":       { use:"soft", cd:90 },
+    "ПОКЕБОЛ":     { use:"trap", cd:200 },
+    "ЛИЦЕХВАТ":    { use:"scare", cd:180 },
+    "ЯЙЦО":        { use:"nest", cd:240 },
+    "ЧЁРНАЯ РУКА": { use:"eat", cd:110 },
+    "КИСЛОТА":     { use:"acid", cd:130 },
+    "ЛАМПА ЗАПАСНАЯ": { use:"hold", light:3.2 },
+    "ЛИНЗА":       { use:"hold", light:1.6 },
+    "ХЕЛЛО КИТТИ": { use:"warm", cd:200 },
+    "ЗВЕЗДОЛЁТ":   { use:"rope", cd:300 },
+    "КЛЮЧ":        { use:"key", cd:600 },
+    "ПУСТАЯ ФЛЯГА":{ use:"nothing", cd:3 }
   };
+  // вещи, которые ничего не делают в руке, но что-то дают, пока лежат на поясе
+  const GEAR_BONUS = {
+    "КЛИН СТАЛЬНОЙ":  { dmg: 0.15 },
+    "РУКАВИЦЫ":       { rate: 0.12 },
+    "РАНЕЦ":          { cap: 0.40 },
+    "НАКОЛЕННИКИ":    { speed: 0.12 },
+    "ГРУЗИЛО":        { fall: 1 },
+    "МАСЛЁНКА":       { dmg: 0.08, rate: 0.06 },
+    "ФИТИЛЬ":         { blast: 1 },
+    "РЕСПИРАТОР":     { see: 0.2 },
+    "ЩУП":            { see: 0.5 },
+    "КОМПАС":         { map: 1 },
+    "СЧЁТЧИК":        { see: 0.3 },
+    "ОТВЕС":          { map: 1 },
+    "ОБЕРЕГ":         { safe: 0.4 },
+    "ВТОРАЯ КАСКА":   { safe: 1 },
+    "ЛОВЕЦ СНОВ":     { calm: 0.35 },
+    "ЯКОРЬ":          { sword: 1 },
+    "ЖЕЛЕЗНОЕ ДЕРЕВО":{ prop: 1 },
+    "ПЕРЧАТКА":       { heat: 1 },
+    "ТЕРМОС":         { heat: 0.5 },
+    "ФЛЯГА":          { speed: 0.06 },
+    "ПОЯС ШИРЕ":      { slot: 1 },
+    "ТЕТРАДЬ":        { read: 1 },
+    "ЧАСЫ":           { clock: 1 },
+    "КАРТА ЧУЖАЯ":    { map: 1, see: 0.3 },
+    "ОСКОЛОК ЗЕРКАЛА":{ see: 0.4 }
+  };
+  // сумма бонусов от того, что сейчас на поясе
+  function beltBonus(k) {
+    let v = 0;
+    for (const gi of SET.goods) {
+      const nm = GOODS[gi] && GOODS[gi].name;
+      const b = nm && GEAR_BONUS[nm];
+      if (b && b[k]) v += b[k];
+    }
+    return v;
+  }
   // что делают эффекты. Разные скиллы зовут одни и те же.
   const FX = {
     dmg:   () => { buff.dmg = 15; },
@@ -4114,6 +4209,15 @@
     shake = 12; thud(true, .7);
   }
 
+  // расходники расходуются: масло держит фонарь, паёк ускоряет, запасная спасает груз
+  function spendOil() {
+    if ((SAV.oil | 0) <= 0) return false;
+    SAV.oil--; buff.light = 600; saveGame(); flashMsg("ФОНАРЬ ЗАПРАВЛЕН", "#ffc14d"); return true;
+  }
+  function spendFood() {
+    if ((SAV.food | 0) <= 0) return false;
+    SAV.food--; buff.speed = 600; saveGame(); flashMsg("ПЕРЕКУСИЛ", "#ffc14d"); return true;
+  }
   function useHeld() {
     const it = GOODS[SET.goods[Math.min(3, SET.slot)]];
     const g2 = GDATA[it.name] || {};
@@ -4127,6 +4231,26 @@
       cart = Math.min(capOf(), cart + 14 * g2.ore * powOf());
       shake = 14; thud(true, .55); spawnChips("#8a8290");
     } else if (g2.use === "rope") { goUp(); }
+    else if (g2.use === "mark") { flashMsg("МЕТКА ПОСТАВЛЕНА", "#ffc14d");
+      SAV.marks = SAV.marks || []; SAV.marks.push([+P.x.toFixed(1), +P.y.toFixed(1), +P.z.toFixed(1)]); saveGame(); }
+    else if (g2.use === "call") { for (const m of SAV.men) m.d = P.y; saveGame(); flashMsg("БРИГАДА ИДЁТ", "#ffc14d"); }
+    else if (g2.use === "pry") { const p = PROPS.find(q => Math.hypot(q.x-P.x,q.y-P.y,q.z-P.z) < 1.6);
+      if (p) { PROPS.splice(PROPS.indexOf(p), 1); SAV.prop = (SAV.prop|0) + 1; propsToSave(); saveGame();
+        flashMsg("КРЕПЬ СНЯТА", "#ffc14d"); } else flashMsg("НЕЧЕГО СНИМАТЬ", "#e0505f"); }
+    else if (g2.use === "bore") { boreAhead(5.0); shake = 10; thud(true, .5); }
+    else if (g2.use === "fixprop") { SAV.prop = (SAV.prop|0) + 1; saveGame(); flashMsg("+1 КРЕПЬ", "#ffc14d"); }
+    else if (g2.use === "scare") { if (haz) endHaz(true); dread = 0; buff.calm = 12; flashMsg("ОТСТУПИЛО", "#ffc14d"); }
+    else if (g2.use === "soft") { buff.soft = 20; }
+    else if (g2.use === "trap") { if (haz) endHaz(true);
+      if (swPhase) { swPhase = 0; SWORDS.length = 0; hazEl.className = "haz"; }
+      flashMsg("ПОЙМАНО", "#ffc14d"); }
+    else if (g2.use === "nest") { for (let i2 = 0; i2 < 5; i2++)
+      dropOre(P.x + (Math.random()-.5)*2, P.y - 1, P.z + (Math.random()-.5)*2, (Math.random()*10)|0, false); }
+    else if (g2.use === "eat") { for (let r = 1; r <= 3; r++) carve(P.x, P.y - EYE, P.z, r * 1.1); shake = 12; }
+    else if (g2.use === "acid") { for (let d2 = 0; d2 < 7; d2 += 0.6) carve(P.x, P.y + 1 + d2, P.z, 0.85); }
+    else if (g2.use === "warm") { buff.warm = 30; buff.calm = 15; }
+    else if (g2.use === "key") { flashMsg("ЗАМОК НЕ НАЙДЕН", "#8c84a4"); }
+    else if (g2.use === "nothing") { flashMsg("НИЧЕГО", "#8c84a4"); }
     else if (g2.use === "flare") { buff.light = 10; lights = 1.2; }
     else if (g2.use === "mirror") { mirrorYaw = P.yaw; P.yaw += Math.PI; mirrorT = 2.2; }
     flashBelt();
@@ -4219,7 +4343,8 @@
     if (down("fwd")) fw += 1; if (down("back")) fw -= 1;
     if (down("right")) st += 1; if (down("left")) st -= 1;
     const L = Math.hypot(fw, st) || 1;
-    const spd = (down("run") ? 6.4 : 3.9) * (1 + passBonus("НОГА") * 0.03) * (buff.speed > 0 ? 2 : 1) * dt;
+    const spd = (down("run") ? 6.4 : 3.9) * (1 + passBonus("НОГА") * 0.03 + beltBonus("speed"))
+              * (buff.speed > 0 ? 2 : 1) * dt;
     const sn = Math.sin(P.yaw), cs = Math.cos(P.yaw);
     const dx = (sn * fw / L + cs * st / L) * spd, dz = (cs * fw / L - sn * st / L) * spd;
     if (fw || st) {
@@ -4258,7 +4383,7 @@
         SAV.st.hits = (SAV.st.hits | 0) + 1;
         const broke = breakPropNear(t[0], t[1], t[2]);
         const dk = broke || inDark(t[1]);            // по раме бьют, а не копают
-        digCd = dk ? .09 : Math.max(.1, .34 - powOf() * .03); swing = 1;
+        digCd = dk ? .09 : Math.max(.08, (.34 - powOf() * .03) * (1 - beltBonus("rate"))); swing = 1;
         swDur = Math.max(.15, digCd);
         carve(t[0], t[1], t[2], (0.40 + powOf() * 0.13) * (buff.dmg > 0 ? 1.5 : 1) * (buff.soft > 0 ? 1.35 : 1));
         const deep = t[1] > 9;
