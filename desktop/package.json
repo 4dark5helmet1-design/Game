@@ -1,0 +1,19 @@
+{
+  "name": "zaboy",
+  "productName": "ЗАБОЙ",
+  "version": "1.0.0",
+  "description": "Забой — шахтёрский кликер от первого лица",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "ru.zaboy.game",
+    "productName": "ЗАБОЙ",
+    "directories": { "output": "out" },
+    "files": ["main.js", "game.html", "package.json"],
+    "win": { "target": ["zip"], "artifactName": "ЗАБОЙ-${version}-win-x64.${ext}" }
+  },
+  "devDependencies": { "electron": "^43.0.0", "electron-builder": "^25.1.8" }
+}

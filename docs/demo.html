@@ -440,7 +440,14 @@
   }
 
   // подвал: комната 9 x 3.2 x 9, пол на Y = 0
-  const RH = 4.5, RW = 4.5, CEIL = -3.1;
+  // Подвал пересевается вместе с шахтой: другой размер, другая высота.
+  let RH = 4.5, RW = 4.5, CEIL = -3.1, homeReady = false;
+  function seedRoom() {
+    RW   = 3.5 + hs(901, 7,  3) * 2.4;
+    RH   = 3.5 + hs(903, 9,  5) * 2.4;
+    CEIL = -2.6 - hs(905, 11, 7) * 1.1;
+    if (homeReady) seedHome();          // до объявления обстановки звать нечего
+  }
   // каждая смена копает свой забой — сид меняется при обвале
   let WSEED = 0;                                   // ставится из сохранения ниже
   const hs = (a, b, c) => h3(a + WSEED * 7919, b + WSEED * 104729, c);
@@ -574,7 +581,8 @@
     const Y = wy(ly);
     const base = tyOf(ly) * NZ * NX;
     // сплошная порода, дом наверху, ничего выше перекрытия
-    if (Y < CEIL - 0.55) { den.fill(0, base, base + NZ * NX); }
+    if (Y < CEIL - 1.0) { den.fill(0, base, base + NZ * NX); }   // выше крыши смотреть не на что
+    else if (Y < CEIL) { den.fill(255, base, base + NZ * NX); }  // само перекрытие: доски над головой
     else if (Y < 0) {
       for (let z = 0; z < NZ; z++) {
         const Z = wz(z), inZ = Math.abs(Z) < RH;
@@ -740,7 +748,7 @@
   const FSH = `#version 300 es
   precision highp float; precision highp sampler3D;
   out vec4 outColor;
-  uniform vec2 uRes; uniform vec3 uCam; uniform mat3 uRot;
+  uniform vec2 uRes; uniform vec3 uCam; uniform mat3 uRot; uniform float uCeil;
   uniform sampler3D uDen; uniform vec3 uN; uniform float uVS, uY0, uTime, uBulb;
   uniform vec3 uWin;
   uniform float uFov, uFar, uGrain, uBright, uLampR, uDrain, uXray;
@@ -811,7 +819,7 @@
     float d = w.y + warp;
     vec3 c;
     if(w.y < -0.06){                                  // подвал
-      if(w.y < -2.72){                                 // деревянное перекрытие
+      if(w.y < uCeil + 0.42){                          // деревянное перекрытие
         c = plankC(w, rough);
       } else {                                         // кирпич с извёсткой
         c = brickC(w, w.y, rough);
@@ -1093,7 +1101,7 @@
   gl.uniform3f(U("uWin"), 4.4, -2.15, 0.0);
 
   // ---------- игрок ----------
-  const P = { x: 0, y: -0.02, z: 3.2, vy: 0, yaw: Math.PI, pitch: -0.40, ground: false };
+  const P = { x: 0, y: -0.02, z: Math.min(3.2, RH - 1.2), vy: 0, yaw: Math.PI, pitch: -0.40, ground: false };
   if (SAV_AT) {                                     // вернулись туда, где закончили
     P.x = SAV_AT.x; P.y = SAV_AT.y; P.z = SAV_AT.z;
     P.yaw = SAV_AT.yaw; P.pitch = SAV_AT.pitch;
@@ -1244,19 +1252,42 @@
   // нельзя. Раньше на этом снимался и наш класс, и игра прыгала обратно в
   // страницу вместо того, чтобы открыть меню.
   let wantFull = false;
+  // Esc забирает у браузера и отдаёт игре. Умеют Chrome и Edge; где не умеют —
+  // Esc по-прежнему выходит из полноэкранного, и тогда мы просто оставляем
+  // кадр во весь экран и открываем меню. Совсем отнять Esc нельзя нигде:
+  // если держать его пару секунд, браузер выйдет всё равно, и это не обойти.
+  function keysToGame(on) {
+    try {
+      const k = navigator.keyboard;
+      if (!k) return;
+      if (on && k.lock) k.lock(["Escape", "F11"]).catch(() => {});
+      else if (!on && k.unlock) k.unlock();
+    } catch (e) {}
+  }
   function toggleFull(on) {
     wantFull = on === undefined ? !wantFull : !!on;
     gameEl.classList.toggle("full", wantFull);
     try {
-      if (wantFull && gameEl.requestFullscreen) gameEl.requestFullscreen().catch(() => {});
-      else if (!wantFull && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      if (wantFull && gameEl.requestFullscreen) {
+        const r = gameEl.requestFullscreen();
+        if (r && r.then) r.then(() => keysToGame(true)).catch(() => {});
+        else keysToGame(true);
+      } else if (!wantFull) {
+        keysToGame(false);
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      }
     } catch (e) {}
     setTimeout(resize, 60);
+    if (fsBtn) fsBtn.classList.toggle("on", wantFull);
   }
+  const fsBtn = document.getElementById("fsbtn");
   tap("fsbtn", () => toggleFull());
   document.addEventListener("fullscreenchange", () => {
     // вышли из браузерного полноэкранного, а кадр держим — значит нажали Esc
-    if (!document.fullscreenElement && wantFull && !menu.classList.contains("open")) openMenu(true);
+    if (!document.fullscreenElement) {
+      keysToGame(false);
+      if (wantFull && !menu.classList.contains("open")) openMenu(true);
+    }
     setTimeout(resize, 60);
   });
 
@@ -1480,6 +1511,7 @@
   SAV.men = SAV.men || []; SAV.ore = SAV.ore || {}; SAV.took = SAV.took || {};
   SAV.seenore = SAV.seenore || {}; SAV.notch = SAV.notch || {};
   WSEED = SAV.seed | 0;                    // без этого после перезагрузки шахта другая, а ходы старые
+  if (WSEED) { seedRoom(); genWorld(); uploadWorld(); }   // мир строился до того, как зерно стало известно
   if (SAV.prop === undefined) SAV.prop = 5;
   SAV.props = SAV.props || []; SAV.learn = SAV.learn || {};
   SAV.mades = SAV.mades || {}; SAV.madeg = SAV.madeg || {};
@@ -1531,6 +1563,7 @@
   const uiS = () => (SET.ui || 100) / 100;
   function applySet() {
     gl.uniform1f(U("uFov"), 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62);
+    gl.uniform1f(U("uCeil"), CEIL);
     gl.uniform1f(U("uFar"), FARQ[SET.quality]);
     gl.uniform1f(U("uGrain"), SET.grain ? 1 : 0);
     gl.uniform1f(U("uBright"), SET.bright / 100);
@@ -3063,7 +3096,13 @@
     "Пропадёт всё: осколки, кирка и фонарь, вся руда, собранные вещи и скиллы, " +
     "найденные дневники, зарубки и сама шахта. Смены начнутся с первой. Отменить будет нельзя.",
     () => {
-      try { localStorage.removeItem(SKEY); localStorage.removeItem(SKEY_OLD); } catch (e) {}
+      try {
+        localStorage.removeItem(SKEY_OLD);
+        // Не просто стереть: положить чистое сохранение с новым зерном, иначе
+        // следующая игра копает ровно ту же шахту — те же пустоты, подвалы,
+        // узлы и самородки на тех же местах.
+        localStorage.setItem(SKEY, JSON.stringify({ seed: 1 + ((Math.random() * 1e6) | 0), v: 2 }));
+      } catch (e) {}
       location.reload();
     });
 
@@ -3118,6 +3157,11 @@
     row(gm, "Поле зрения", "чем больше, теснее кажется тоннель", slider("fov", 60, 100, "°"));
     row(gm, "Покачивание при ходьбе", "", toggle("headbob"));
     row(gm, "Тряска от удара", "", toggle("shake"));
+    row(gm, "Во весь экран", "Esc остаётся у игры, выход — этой же кнопкой или F11",
+        (() => { const b2 = document.createElement("div"); b2.className = "key";
+          b2.textContent = wantFull ? "ВЫЙТИ" : "ВКЛЮЧИТЬ";
+          b2.onclick = () => { toggleFull(); b2.textContent = wantFull ? "ВЫЙТИ" : "ВКЛЮЧИТЬ"; };
+          return b2; })());
 
     const vd = document.getElementById("p-vid"); vd.innerHTML = "";
     row(vd, "Качество", "дальность видимости и мягкость света", choice("quality", ["НИЗКОЕ","СРЕДНЕЕ","ВЫСОКОЕ"]));
@@ -3440,7 +3484,7 @@
 
   // ---------- верстак стоит в подвале ----------
   // Не пункт меню, а вещь: доски, тиски, разложенная руда. Подходишь — открываешь.
-  const BENCH = { x: 3.1, y: -0.05, z: 2.4 };
+  // координаты ставит seedHome вместе с остальной обстановкой
   const nearBench = () =>
     P.y < 1.8 && Math.hypot(BENCH.x - P.x, BENCH.z - P.z) < 3.0;
   // видно ли его отсюда: если между глазом и столом порода, рисовать нечего
@@ -3466,18 +3510,36 @@
   // ---------- обжитое ----------
   // Подвал должен читаться как чей-то дом, а не как первая комната шахты:
   // лампочка на шнуре, полка с банками, ящик и табурет у стены.
+  const BENCH = { x: 3.1, y: -0.05, z: 2.4 };        // верстак у самого спуска
   // Лампочка висит низко, на уровне глаз: в кадре она почти всегда, и
   // именно она делает подвал жилым, а не первой комнатой шахты.
-  const BULB = { x: 0.0, y: -1.94, z: -1.05 };       // прямо над начатой дырой
-  const HOME = [
-    { k:"shelf", x:-1.5, y:-1.78, z:-4.24, yaw: 0 },        // на стене, куда смотришь
-    { k:"shelf", x:-4.24, y:-1.68, z: 0.4, yaw: Math.PI/2 },
-    { k:"crate", x: 2.7, y:-0.05, z:-3.5, yaw: 0.35 },
-    { k:"crate", x: 3.3, y:-0.05, z:-2.75, yaw:-0.2 },
-    { k:"crate", x:-3.4, y:-0.05, z: 2.6, yaw: 0.5 },
-    { k:"stool", x:-2.6, y:-0.05, z:-2.1, yaw: 0.9 },
-    { k:"stool", x: 3.6, y:-0.05, z: 0.9, yaw:-0.6 }
-  ];
+  // Всё это встаёт заново вместе с подвалом: другой размер — другая расстановка.
+  const BULB = { x: 0, y: -1.94, z: -1.05 };
+  const HOME = [];
+  function seedHome() {
+    BULB.x = (hs(911, 3, 2) - 0.5) * 1.2;
+    BULB.z = -0.6 - hs(913, 5, 4) * 1.0;
+    BULB.y = CEIL + 1.05 + hs(915, 7, 6) * 0.25;
+    BENCH.x = (RW - 1.5) * (hs(931, 3, 5) < 0.5 ? -1 : 1);
+    BENCH.z = RH - 2.0 - hs(933, 5, 7) * 0.8;
+    HOME.length = 0;
+    HOME.push({ k:"shelf", x:(hs(917,3,2)-0.5)*RW*0.9, y: CEIL + 1.25, z:-(RH-0.26), yaw: 0 });
+    HOME.push({ k:"shelf", x:-(RW-0.26), y: CEIL + 1.35 + hs(919,5,3)*0.2,
+                z:(hs(921,7,4)-0.5)*RH*0.9, yaw: Math.PI/2 });
+    const n = 3 + Math.floor(hs(923, 9, 5) * 3);
+    for (let i = 0; i < n; i++) {
+      const k = hs(925 + i, 11, 6) < 0.62 ? "crate" : "stool";
+      // по углам и вдоль стен, но не там, где начатая яма и не на верстаке
+      let x = (hs(927 + i * 3, 13, 7) - 0.5) * 2 * (RW - 0.7);
+      let z = (hs(929 + i * 5, 17, 8) - 0.5) * 2 * (RH - 0.7);
+      if (Math.hypot(x, z) < 2.2) { x *= 2.4; z *= 2.4; }        // подальше от ямы
+      x = Math.max(-(RW-0.6), Math.min(RW-0.6, x));
+      z = Math.max(-(RH-0.6), Math.min(RH-0.6, z));
+      if (Math.hypot(x - BENCH.x, z - BENCH.z) < 1.3) continue;   // верстак важнее
+      HOME.push({ k, x, y:-0.05, z, yaw: hs(935 + i, 19, 9) * 6.28 });
+    }
+  }
+  homeReady = true; seedHome();       // обстановка объявлена — можно расставлять
   function drawHome(g, W, H) {
     if (P.y > 6) return;                              // всё это только наверху
     const pr = viewProj(W, H);
@@ -3996,12 +4058,13 @@
       SAV.best = 0; SAV.men = []; SAV.notes = {}; SAV.seen = { end: 1, cosmic: SAV.seen.cosmic };
       saveGame();
       WSEED++; SAV.seed = WSEED; SAV.took = {};       // новый цикл — и самородки снова на месте
+      seedRoom();
       PROPS.length = 0; SAV.props = []; SAV.marks = [];
       CUTS.length = 0; CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
       genWorld(); uploadWorld(); seedNotes(); seedCosmic();
       cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
       for (const k in fired) delete fired[k];
-      P.x = 0; P.y = -0.02; P.z = 3.2; P.vy = 0; P.yaw = Math.PI; P.pitch = -0.40;
+      P.x = 0; P.y = -0.02; P.z = Math.min(3.2, RH - 1.2); P.vy = 0; P.yaw = Math.PI; P.pitch = -0.40;
       endT = 0; mode = "dig"; applySet();
       saveGame(true);
     }
@@ -4096,6 +4159,7 @@
     saveGame();
 
     WSEED++; SAV.seed = WSEED;                        // новая смена — новый забой
+    seedRoom();                                       // и подвал другой
     PROPS.length = 0; SAV.props = []; SAV.marks = [];                 // поставленное осталось в засыпанной шахте
     CUTS.length = 0; CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
     genWorld(); uploadWorld(); seedNotes();
@@ -4103,7 +4167,7 @@
     dread = 0; evCool = 0; hush = 0; tear = 0; faceT = 0; liar = 0; lights = 0;
     lampOut = 0; knockAt = 0; cnt = -1; shake = 0;
     for (const k in fired) delete fired[k];
-    P.x = 0; P.y = -0.02; P.z = 3.2; P.vy = 0; P.yaw = Math.PI; P.pitch = -0.40;
+    P.x = 0; P.y = -0.02; P.z = Math.min(3.2, RH - 1.2); P.vy = 0; P.yaw = Math.PI; P.pitch = -0.40;
 
     hubEl.classList.remove("on");
     document.getElementById("game").classList.add("void");
