@@ -1303,7 +1303,7 @@
   const KEY = "zaboy.settings.v1";
   const DEF = {
     bind: { fwd:"KeyW", back:"KeyS", left:"KeyA", right:"KeyD", jump:"Space", up:"KeyE",
-            run:"ShiftLeft", dig:"Mouse0", look:"KeyQ", menu:"Escape", inv:"Tab",
+            run:"ShiftLeft", dig:"Mouse0", menu:"Escape", inv:"Tab",
             prop:"KeyF" },
     sens: 26, invY: false, fov: 75, headbob: true, shake: true, grain: true,
     quality: 1, bright: 100, vol: 70, sfx: 100, ui: 100, res: 3,
@@ -2978,7 +2978,7 @@
 
   let waiting = null;
   const BINDS = [["fwd","Вперёд"],["back","Назад"],["left","Влево"],["right","Вправо"],
-    ["jump","Прыжок"],["run","Бежать"],["dig","Долбить"],["look","Оглянуться"],
+    ["jump","Прыжок"],["run","Бежать"],["dig","Долбить"],
     ["prop","Поставить крепь"],["up","Наверх в штрек"],["inv","Инвентарь"],["menu","Меню"]];
   function buildUI() {
     const ctl = document.getElementById("p-ctl"); ctl.innerHTML = "";
@@ -3741,6 +3741,7 @@
       SAV.log = SAV.log || [];
       SAV.log.push({ n: SAV.shift, d: Math.round(SAV.best), s: shardsFor(SAV.best),
                      c: SAV.men.length, end: 1 });
+      while (SAV.log.length > 60) SAV.log.shift();
       SAV.shards += shardsFor(SAV.best);
       SAV.bank = 0; SAV.pick = 1; SAV.lamp = 1; SAV.cart = 1; SAV.crew = 0;
       SAV.best = 0; SAV.men = []; SAV.notes = {}; SAV.seen = { end: 1, cosmic: SAV.seen.cosmic };
@@ -3837,6 +3838,7 @@
     SAV.shift = (SAV.shift || 0) + 1;
     SAV.log = SAV.log || [];
     SAV.log.push({ n: SAV.shift, d: caveDepth, s: caveGain, c: SAV.crew });
+    while (SAV.log.length > 60) SAV.log.shift();
     // ступень инструмента остаётся: сгорают уровни внутри неё, а не сам инструмент
     const tier = Math.max(1, Math.floor((SAV.pick - 1) / 6) * 6 + 1);
     SAV.bank = 0; SAV.pick = tier; SAV.lamp = Math.max(1, Math.floor(SAV.lamp / 2));
