@@ -2362,6 +2362,16 @@
     g.font = Math.round(Math.min(15, W * 0.013) * u) + "px ui-monospace,monospace";
     g.fillStyle = "rgba(185,176,204,.9)";
     g.fillText("М", x + w + 18 + dw, my + Math.min(10, W * 0.010));
+
+    // часы: показывают, сколько ты уже внизу. Без них времени под землёй нет.
+    if (beltBonus("clock") > 0) {
+      const sec = Math.max(0, (performance.now() - downT0) / 1000);
+      const mm = String(Math.floor(sec / 60)).padStart(2, "0");
+      const ss = String(Math.floor(sec % 60)).padStart(2, "0");
+      g.font = Math.round(Math.min(13, W * 0.012) * u) + "px ui-monospace,monospace";
+      g.fillStyle = "rgba(200,192,216,.92)";
+      g.fillText(mm + ":" + ss + " ПОД ЗЕМЛЁЙ", x + w + 15, my + Math.min(10, W * 0.010) + Math.round(17 * u));
+    }
     g.shadowBlur = 0;
 
     // руда — тонкая шкала по правому краю, у самого большого пальца
@@ -2984,6 +2994,7 @@
   const liftMsg = document.getElementById("liftmsg"), hubRows = document.getElementById("hubrows");
   const hBank = document.getElementById("hbank"), hDepth = document.getElementById("hubdepth");
   let mode = "dig", liftEnd = 0, liftDir = 1, retPos = null;
+  let downT0 = performance.now();                 // когда ты в последний раз спустился
 
   const fmt = n => n >= 1000 ? (n / 1000).toFixed(1) + "K" : Math.round(n);
 
@@ -3304,7 +3315,43 @@
       g.fillStyle = "rgba(255,193,77,.6)";
       g.fillText("комната", cx + rm.x * mSc + rm.hx * mSc + 5 * dpr, yOf(rm.y) + 3 * dpr);
     }
+    // компас, отвес, чужая карта: схема начинает показывать то, до чего ты ещё не дошёл.
+    // «ПАМЯТЬ» растёт от поднятых дневников и добавляет к тому же взгляду.
+    const mp = beltBonus("map") + passBonus("ПАМЯТЬ") * 0.5;
+    if (mp > 0) {
+      // твои метки
+      for (const mk of (SAV.marks || [])) {
+        if (mk[1] > deep) continue;
+        g.strokeStyle = "rgba(159,214,238,.75)"; g.lineWidth = dpr;
+        const mx = cx + mk[0] * mSc, myy = yOf(mk[1]);
+        g.beginPath(); g.moveTo(mx - 3 * dpr, myy - 3 * dpr); g.lineTo(mx + 3 * dpr, myy + 3 * dpr);
+        g.moveTo(mx + 3 * dpr, myy - 3 * dpr); g.lineTo(mx - 3 * dpr, myy + 3 * dpr); g.stroke();
+      }
+      // поставленная крепь
+      g.fillStyle = "rgba(196,150,96,.75)";
+      for (const pr of PROPS) {
+        if (pr.y > deep) continue;
+        g.fillRect(cx + pr.x * mSc - 3 * dpr, yOf(pr.y) - dpr, 6 * dpr, 2 * dpr);
+      }
+      // подвалы ниже пройденного — пунктиром, без подписи
+      g.setLineDash([2 * dpr, 3 * dpr]);
+      for (let k = 0; k < 60; k++) {
+        const rm = roomAt(k); if (rm.y > deep) break;
+        if (rm.y <= SAV.best) continue;
+        g.strokeStyle = "rgba(255,193,77,.28)"; g.lineWidth = dpr;
+        g.strokeRect(cx + rm.x * mSc - rm.hx * mSc, yOf(rm.y) - 3 * dpr, rm.hx * 2 * mSc, 6 * dpr);
+      }
+      g.setLineDash([]);
+    }
+    if (mp >= 1.5) {                                  // две карты сразу — видно и ненайденные записи
+      g.textAlign = "left"; g.fillStyle = "rgba(226,220,240,.55)";
+      for (const n of NOTEPOS) {
+        if (n.y > deep) continue;
+        g.fillText("?", cx + n.x * mSc - 2 * dpr, yOf(n.y) + 3 * dpr);
+      }
+    }
     // где стоят люди
+    g.textAlign = "left";
     for (const m of SAV.men) {
       if (m.d > deep) continue;
       g.fillStyle = "rgba(180,214,238,.85)";
@@ -3710,7 +3757,7 @@
     if (document.pointerLockElement === cv) document.exitPointerLock();
   }
   function goDown() {
-    mode = "lift"; liftDir = -1;
+    mode = "lift"; liftDir = -1; downT0 = performance.now();
     liftEnd = performance.now() + Math.min(7000, 600 + Math.pow(Math.max(0, retPos ? retPos.y : 0), 0.62) * 78);
     liftMsg.textContent = "СПУСК";
     liftSound(true);
@@ -3852,7 +3899,8 @@
   function noteTick() {
     for (let k = 0; k < NOTEPOS.length; k++) {
       const n = NOTEPOS[k];
-      if (Math.hypot(n.x - P.x, n.y - (P.y - EYE * 0.5), n.z - P.z) > 1.6) continue;
+      const rr = 1.6 + beltBonus("read") * 1.6;      // тетрадь тянет чужие записи к себе
+      if (Math.hypot(n.x - P.x, n.y - (P.y - EYE * 0.5), n.z - P.z) > rr) continue;
       if (solidAt(n.x, n.y, n.z)) continue;             // ещё в породе — не видно
       NOTEPOS.splice(k, 1);
       SAV.notes[n.i] = Math.max(1, Math.round(n.y));   // архив покажет, где именно нашлась
@@ -3932,7 +3980,7 @@
 
   function startFall() {
     fallSave = { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, cart: cart - blackOre };
-    fallEnd = performance.now() + 15000;
+    fallEnd = performance.now() + 15000 / (1 + beltBonus("fall") * 0.55);
     mode = "fall";
     document.getElementById("game").classList.add("void");
     if (document.pointerLockElement === cv) document.exitPointerLock();
@@ -4012,7 +4060,8 @@
   function dreadTick(dt) {
     evCool -= dt;
     // спокойная ровная работа копит тревогу; подъём наверх её сбрасывает
-    if (digging) dread += dt * 1.0; else dread += dt * 0.35;
+    const cq = 1 - Math.min(0.55, beltBonus("calm"));   // ловец снов и прочее держат тревогу
+    if (digging) dread += dt * 1.0 * cq; else dread += dt * 0.35 * cq;
     if (evCool > 0 || buff.calm > 0) return;
     if (dread < 26) return;
     const pool = EVENTS.filter(e => P.y >= e.at && !fired[e.id]);
@@ -4128,7 +4177,7 @@
     "ПЕРЧАТКА":       { heat: 1 },
     "ТЕРМОС":         { heat: 0.5 },
     "ФЛЯГА":          { speed: 0.06 },
-    "ПОЯС ШИРЕ":      { slot: 1 },
+    "ПОЯС ШИРЕ":      { cap: 0.22, rate: 0.05 },
     "ТЕТРАДЬ":        { read: 1 },
     "ЧАСЫ":           { clock: 1 },
     "КАРТА ЧУЖАЯ":    { map: 1, see: 0.3 },
@@ -4227,8 +4276,9 @@
     gcool[key] = g2.cd || 1;
     if (g2.use === "blast") {
       const t = aim() || aheadPoint(1.6);
-      carve(t[0], t[1], t[2], g2.r);
-      cart = Math.min(capOf(), cart + 14 * g2.ore * powOf());
+      const bw = 1 + beltBonus("blast") * 0.30;       // фитиль берёт шире
+      carve(t[0], t[1], t[2], g2.r * bw);
+      cart = Math.min(capOf(), cart + 14 * g2.ore * powOf() * bw);
       shake = 14; thud(true, .55); spawnChips("#8a8290");
     } else if (g2.use === "rope") { goUp(); }
     else if (g2.use === "mark") { flashMsg("МЕТКА ПОСТАВЛЕНА", "#ffc14d");
@@ -4450,7 +4500,7 @@
     const sk = SET.shake ? shake * .004 : 0;
     gl.uniform3f(U("uCam"), P.x + (Math.random()-.5)*sk, P.y - EYE + (SET.headbob?Math.sin(bob*2)*.035:0) + (Math.random()-.5)*sk, P.z + (Math.random()-.5)*sk);
     gl.uniform1f(U("uTime"), now / 1000);
-    gl.uniform1f(U("uXray"), buff.xray > 0 ? 1.6 : 0);
+    gl.uniform1f(U("uXray"), buff.xray > 0 ? 1.6 : Math.min(1.1, beltBonus("see")));
     const an = activeNode();
     if (an) gl.uniform4f(U("uNode"), an.x, an.y, an.z, an.r);
     else gl.uniform4f(U("uNode"), 0, 0, 0, 0);
@@ -4468,7 +4518,9 @@
     gl.uniform1f(U("uShift"), shiftAmt());
     gl.uniform1f(U("uDark"), DARK0);
     gl.uniform1f(U("uWet"), wet);
-    gl.uniform1f(U("uDrain"), buff.warm > 0 ? 0 : Math.max(0, Math.min(.80, Math.pow(Math.max(0, P.y - 8) / 900, 0.55))));
+    gl.uniform1f(U("uDrain"), buff.warm > 0 ? 0 :
+      Math.max(0, Math.min(.80, Math.pow(Math.max(0, P.y - 8) / 900, 0.55)))
+      * (1 - Math.min(0.65, beltBonus("heat") * 0.45)));
     gl.uniform1f(U("uBulb"), Math.max(0, 1 - Math.max(0, P.y) / 9) * (0.965 + 0.035*Math.sin(now/240) + 0.015*Math.sin(now/97)));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
