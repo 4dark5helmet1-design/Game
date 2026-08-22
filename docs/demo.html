@@ -62,12 +62,6 @@
   .toolname{position:absolute;left:50%;bottom:74px;transform:translateX(-50%) scale(var(--uis,1));font-size:11px;letter-spacing:.22em;
     color:rgba(255,193,77,.92);text-shadow:0 1px 8px #000;pointer-events:none;opacity:0;transition:opacity .35s}
   .toolname.show{opacity:1}
-  @media (max-width:759px){
-    .toolname{bottom:186px}
-    .hotbar{left:50%;bottom:132px}
-    .hint{bottom:210px;font-size:10px;padding:0 22px}
-    .haz{top:11%}
-  }
   .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;pointer-events:none;
     transition:opacity .55s}
   .hint b{display:block;font-size:13px;font-weight:400;letter-spacing:.2em;color:#fff;
@@ -108,6 +102,23 @@
   .slot.on{border-color:var(--lamp);box-shadow:0 0 14px rgba(255,193,77,.35)}
   .slot canvas{width:32px;height:32px;display:block}
   .slot u{position:absolute;right:3px;bottom:1px;font-size:8px;color:#8f86a4;text-decoration:none}
+  /* Телефон. Блок обязан стоять НИЖЕ базовых правил: у них та же
+     специфичность, и раньше он молча проигрывал — пояс уезжал под палец. */
+  @media (max-width:759px){
+    .toolname{bottom:186px}
+    .hotbar{bottom:132px;gap:4px}
+    .slot{width:40px;height:40px}
+    .slot canvas{width:29px;height:29px}
+    .tbtns{bottom:190px}                 /* столбик кнопок — выше пояса, а не поперёк него */
+    .hint{bottom:236px;font-size:10px;padding:0 72px}
+    .haz{top:11%}
+  }
+  /* совсем узкие: пояс из семи ячеек должен влезть по ширине целиком */
+  @media (max-width:360px){
+    .hotbar{gap:3px}
+    .slot{width:34px;height:34px;border-radius:7px}
+    .slot canvas{width:25px;height:25px}
+  }
   .slot em{position:absolute;left:0;right:0;top:0;bottom:0;border-radius:8px;display:flex;
     align-items:center;justify-content:center;background:rgba(8,6,12,.7);color:#c9c1da;font-size:13px;font-style:normal}
 
@@ -300,7 +311,7 @@
   <div class="tbtns" id="tbtns">
     <b id="tjump" title="Прыжок">&#8593;</b>
     <b id="tprop" title="Крепь">&#9776;</b>
-    <b id="tbelt" title="Пояс">&#9632;</b>
+    <b id="tbelt" title="Сумка">&#9636;</b>
     <b id="tup" title="Наверх">E</b>
   </div>
   <div class="fs" id="fsbtn" title="Во весь экран">&#9974;</div>
@@ -1115,7 +1126,7 @@
     el.addEventListener("click", e => { fn(); audioOn(); e.preventDefault(); });
   };
   tap("tjump", () => { if (P.ground) P.vy = -7.2; });
-  tap("tbelt", () => flashBelt());
+  tap("tbelt", () => openInv(!invSheet.classList.contains("open")));
   tap("tprop", () => placeProp());
   tap("tup",   () => { if (nearBench()) openCraft(true); else goUp(); });
 
@@ -2869,6 +2880,7 @@
   // Пояс и подпись живут по 1.6 секунды после смены.
   let peek = 0;
   function flashBelt() { peek = 1.6; hotEl.classList.add("show"); toolEl.classList.add("show"); }
+  if (isTouch) hotEl.classList.add("show");        // пальцем целиться не во что, если пояса не видно
   addEventListener("wheel", e => {
     if (menu.classList.contains("open")) return;
     pickSlot((SET.slot + (e.deltaY > 0 ? 1 : 3)) % 4);
@@ -4670,7 +4682,10 @@
     if (knockAt && performance.now() > knockAt) { knockAt = 0; thud(false, 0.42); }
     if (now > digSaveAt) { digSaveAt = now + 8000; saveGame(true); }
     if (oreHot > 0 && (oreHot -= dt) <= 0) oreEl.classList.remove("hot");
-    if (peek > 0 && (peek -= dt) <= 0) { hotEl.classList.remove("show"); toolEl.classList.remove("show"); }
+    if (peek > 0 && (peek -= dt) <= 0) {
+      if (!isTouch) hotEl.classList.remove("show");
+      toolEl.classList.remove("show");
+    }
 
     const depth = Math.max(0, Math.round(P.y));
     // рядом с точкой счётчик отстаёт от реальности — догоняет тем медленнее, чем ближе
