@@ -422,7 +422,7 @@
   // подвал: комната 9 x 3.2 x 9, пол на Y = 0
   const RH = 4.5, RW = 4.5, CEIL = -3.1;
   // каждая смена копает свой забой — сид меняется при обвале
-  let WSEED = 0;
+  let WSEED = 0;                                   // ставится из сохранения ниже
   const hs = (a, b, c) => h3(a + WSEED * 7919, b + WSEED * 104729, c);
 
   // ---------- то, что лежит в породе ----------
@@ -1364,7 +1364,8 @@
   const SDEF = { bank: 0, shards: 0, pick: 1, lamp: 1, crew: 0, cart: 1, best: 0,
                  seen: {}, notes: {}, log: [], shift: 0, men: [],
                  mine: "", at: null, load: 0, off: 0, seenAt: 0, ore: {},
-                 prop: 5, props: [], learn: {}, st: { hits:0, walk:0, lifts:0 }, v: 2 };
+                 prop: 5, props: [], learn: {}, st: { hits:0, walk:0, lifts:0 },
+                 seed: 0, v: 2 };
   let SAV;
   // v2 хранит ещё и саму шахту. Старое сохранение переносим, чтобы прогресс не пропал.
   try {
@@ -1375,6 +1376,7 @@
   SAV.seen = SAV.seen || {}; SAV.notes = SAV.notes || {}; SAV.log = SAV.log || [];
   SAV.men = SAV.men || []; SAV.ore = SAV.ore || {}; SAV.took = SAV.took || {};
   SAV.seenore = SAV.seenore || {}; SAV.notch = SAV.notch || {};
+  WSEED = SAV.seed | 0;                    // без этого после перезагрузки шахта другая, а ходы старые
   if (SAV.prop === undefined) SAV.prop = 5;
   SAV.props = SAV.props || []; SAV.learn = SAV.learn || {};
   SAV.mades = SAV.mades || {}; SAV.madeg = SAV.madeg || {};
@@ -3743,13 +3745,15 @@
       SAV.bank = 0; SAV.pick = 1; SAV.lamp = 1; SAV.cart = 1; SAV.crew = 0;
       SAV.best = 0; SAV.men = []; SAV.notes = {}; SAV.seen = { end: 1, cosmic: SAV.seen.cosmic };
       saveGame();
-      WSEED++; PROPS.length = 0; SAV.props = [];
+      WSEED++; SAV.seed = WSEED; SAV.took = {};       // новый цикл — и самородки снова на месте
+      PROPS.length = 0; SAV.props = []; SAV.marks = [];
       CUTS.length = 0; CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
       genWorld(); uploadWorld(); seedNotes(); seedCosmic();
       cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
       for (const k in fired) delete fired[k];
       P.x = 0; P.y = -0.02; P.z = 3.2; P.vy = 0; P.yaw = Math.PI; P.pitch = -0.40;
       endT = 0; mode = "dig"; applySet();
+      saveGame(true);
     }
   }
   // На дне стоит человек. Ты знаешь это лицо: оно было во всех бликах.
@@ -3840,8 +3844,8 @@
     SAV.men = [];
     saveGame();
 
-    WSEED++;                                          // новая смена — новый забой
-    PROPS.length = 0; SAV.props = [];                 // поставленное осталось в засыпанной шахте
+    WSEED++; SAV.seed = WSEED;                        // новая смена — новый забой
+    PROPS.length = 0; SAV.props = []; SAV.marks = [];                 // поставленное осталось в засыпанной шахте
     CUTS.length = 0; CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
     genWorld(); uploadWorld(); seedNotes();
     cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
@@ -3854,6 +3858,7 @@
     document.getElementById("game").classList.add("void");
     mode = "cave"; caveEnd = performance.now() + 6600;
     applySet();
+    saveGame(true);            // пустая шахта и позиция наверху — на диск сразу
     rumble();
   }
 
@@ -4504,7 +4509,9 @@
       shake = 14; thud(true, .55); spawnChips("#8a8290");
     } else if (g2.use === "rope") { goUp(); }
     else if (g2.use === "mark") { flashMsg("МЕТКА ПОСТАВЛЕНА", "#ffc14d");
-      SAV.marks = SAV.marks || []; SAV.marks.push([+P.x.toFixed(1), +P.y.toFixed(1), +P.z.toFixed(1)]); saveGame(); }
+      SAV.marks = SAV.marks || []; SAV.marks.push([+P.x.toFixed(1), +P.y.toFixed(1), +P.z.toFixed(1)]);
+      while (SAV.marks.length > 40) SAV.marks.shift();     // мелом можно чиркать бесконечно
+      saveGame(); }
     else if (g2.use === "call") { for (const m of SAV.men) m.d = P.y; saveGame(); flashMsg("БРИГАДА ИДЁТ", "#ffc14d"); }
     else if (g2.use === "pry") { const p = PROPS.find(q => Math.hypot(q.x-P.x,q.y-P.y,q.z-P.z) < 1.6);
       if (p) { PROPS.splice(PROPS.indexOf(p), 1); SAV.prop = (SAV.prop|0) + 1; propsToSave(); saveGame();
