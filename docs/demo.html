@@ -1104,30 +1104,62 @@
   }
   cv.addEventListener("click", () => {
     grabFocus();
-    if (!isTouch) { try { cv.requestPointerLock(); } catch (e) {} }
+    if (!isTouch) {
+      try { cv.requestPointerLock(); } catch (e) {}
+      // дали захват — он и работает; не дали — включаем свой обзор
+      setTimeout(() => { if (document.pointerLockElement !== cv) freeLook = true; }, 250);
+    }
     audioOn();
   });
-  document.addEventListener("pointerlockchange", () => {});
+  document.addEventListener("pointerlockerror", () => { freeLook = true; });
+  document.addEventListener("pointerlockchange", () => {
+    if (document.pointerLockElement === cv) freeLook = false;   // настоящий лучше
+  });
   const turn = (dx, dy, k) => {
     P.yaw -= dx * k;
     P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch + (SET.invY ? 1 : -1) * dy * k));
   };
-  // Захват мыши дают не везде: внутри чужого фрейма его может не быть вовсе,
-  // и тогда осмотреться нечем. Запасной путь — тянуть с зажатой кнопкой,
-  // ровно как пальцем по экрану.
+  // Захват мыши дают не везде: внутри встроенного фрейма его не дают вовсе.
+  // Игра от первого лица без свободного обзора — не игра, поэтому когда
+  // захвата нет, мы его подделываем: курсор прячем, камера ходит за мышью
+  // сама, а у краёв кадра доворачиваем — иначе дальше окна не развернуться.
   let dragOn = false, dragX = 0, dragY = 0;
+  let freeLook = false, freeX = 0, freeY = 0, edgeX = 0, edgeY = 0;
+  const uiOpen = () =>
+    !!document.querySelector(".menu.open, .sheet.open, .hub.on, .note.on, .lift.on");
+  const freeOn = () => freeLook && document.pointerLockElement !== cv && !uiOpen();
+
   document.addEventListener("mousemove", e => {
     if (document.pointerLockElement !== cv) return;
     turn(e.movementX, e.movementY, SET.sens / 10000);
   });
-  // Тянем по pointermove, а не по mousemove: с зажатой правой кнопкой
+  // Ведём по pointermove, а не по mousemove: с зажатой правой кнопкой
   // браузер mousemove не шлёт вовсе, и осмотр без долбёжки не работал.
   document.addEventListener("pointermove", e => {
-    if (e.pointerType !== "mouse" || !dragOn) return;
-    if (document.pointerLockElement === cv) return;
-    turn(e.clientX - dragX, e.clientY - dragY, SET.sens / 10000 * 1.7);
-    dragX = e.clientX; dragY = e.clientY;
+    if (e.pointerType !== "mouse" || document.pointerLockElement === cv) return;
+    const k = SET.sens / 10000 * 1.7;
+    if (dragOn) turn(e.clientX - dragX, e.clientY - dragY, k);
+    else if (freeOn()) turn(e.clientX - freeX, e.clientY - freeY, k);
+    dragX = freeX = e.clientX; dragY = freeY = e.clientY;
+    // насколько курсор ушёл в край кадра — на столько же и доворачиваем
+    const r = cv.getBoundingClientRect();
+    const bx = Math.max(24, Math.min(90, r.width * 0.16));
+    const by = Math.max(24, Math.min(90, r.height * 0.16));
+    const band = (v, lo, hi, w) => v > hi - w ? Math.min(1, (v - (hi - w)) / w)
+                                 : v < lo + w ? -Math.min(1, ((lo + w) - v) / w) : 0;
+    edgeX = band(e.clientX, r.left, r.right, bx);
+    edgeY = band(e.clientY, r.top, r.bottom, by);
   });
+  // курсор ушёл со страницы — крутить вслепую не надо
+  document.addEventListener("mouseout", e => { if (!e.relatedTarget) { edgeX = 0; edgeY = 0; } });
+
+  function lookTick(dt) {
+    const on = freeOn();
+    const want = on ? "none" : "";
+    if (cv.style.cursor !== want) cv.style.cursor = want;
+    if (!on || (!edgeX && !edgeY)) return;
+    turn(edgeX * 780 * dt, edgeY * 780 * dt, SET.sens / 10000 * 1.7);
+  }
   let digging = false;
   // Перетаскивание вешаем на pointerdown: mousedown для правой кнопки
   // доходит не всегда, а смотреть, не долбя, уметь надо.
@@ -1994,20 +2026,31 @@
     }
   }
   // рамы видно в тоннеле
+  // ---------- проекция мира на накладку ----------
+  // Шейдер строит луч как uv = (frag - 0.5*uRes)/uRes.y, значит точка с
+  // отношением a/c по горизонтали попадает в W/2 + a/c*uFov*H. Здесь долго
+  // стояло H*0.5: всё нарисованное поверх кадра висело вдвое ближе к центру
+  // и тянулось за камерой. Одна функция на всех, чтобы не разошлось снова.
+  function viewProj(W, H) {
+    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
+    const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
+    const ex = P.x, ez = P.z;
+    const ey = P.y - EYE + (SET.headbob ? Math.sin(bob * 2) * .035 : 0);   // как у камеры
+    const f = 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62 * H;
+    return (X, Y, Z, minZ) => {
+      const rx = X - ex, ry = Y - ey, rz = Z - ez;
+      const czv = sy*cp*rx - sp*ry + cy*cp*rz;
+      if (czv < (minZ || 0.25)) return null;
+      const cxv = cy*rx - sy*rz;
+      const cyv = -sy*sp*rx - cp*ry - cy*sp*rz;
+      return [W*0.5 + (cxv/czv)*f, H*0.5 - (cyv/czv)*f, czv];
+    };
+  }
   function drawProps(g, W, H) {
     if (!PROPS.length) return;
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
     const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
-    const ex = P.x, ey = P.y - EYE, ez = P.z;
-    const fov = 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62;
-    const pr = (X, Y, Z) => {
-      const rx = X-ex, ry = Y-ey, rz = Z-ez;
-      const cxv = cy*rx - sy*rz;
-      const cyv = -sy*sp*rx - cp*ry - cy*sp*rz;
-      const czv = sy*cp*rx - sp*ry + cy*cp*rz;
-      if (czv < 0.25) return null;
-      return [W*0.5 + (cxv/czv)*fov*H*0.5, H*0.5 - (cyv/czv)*fov*H*0.5, czv];
-    };
+    const pr = viewProj(W, H);
     for (const p of PROPS) {
       if (Math.abs(p.y - P.y) > 18 || Math.hypot(p.x-P.x, p.z-P.z) > 18) continue;
       const s2 = Math.sin(p.yaw), c2 = Math.cos(p.yaw);
@@ -2117,14 +2160,8 @@
     const fov = 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62;
     const left = (swEnd - performance.now()) / 1000;
     const now = performance.now() / 1000;
-    const proj = (X, Y, Z) => {
-      const rx = X - ex, ry = Y - ey, rz = Z - ez;
-      const cxv = cy*rx - sy*rz;
-      const cyv = -sy*sp*rx - cp*ry - cy*sp*rz;
-      const czv = sy*cp*rx - sp*ry + cy*cp*rz;
-      if (czv < 0.2) return null;
-      return [W*0.5 + (cxv/czv)*fov*H*0.5, H*0.5 - (cyv/czv)*fov*H*0.5, czv];
-    };
+    const _pj = viewProj(W, H);
+    const proj = (X, Y, Z) => _pj(X, Y, Z, 0.2);
 
     if (swPhase === 1) {
       // весь кадр наливается красным, и чем ближе, тем сильнее
@@ -2394,19 +2431,11 @@
   // куски рисуются поверх сцены: маленькие искры на своих местах
   function drawDrops(g, W, H) {
     if (!DROPS.length) return;
-    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
-    const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
-    const ex = P.x, ey = P.y - EYE, ez = P.z;
-    const fov = 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62;
+    const pr = viewProj(W, H);
     for (const d of DROPS) {
-      const rx = d.x - ex, ry = d.y - ey, rz = d.z - ez;
-      // мировой вектор в координаты камеры (те же базисы, что в шейдере)
-      const cxv = cy*rx - sy*rz;
-      const cyv = -sy*sp*rx - cp*ry - cy*sp*rz;
-      const czv = sy*cp*rx - sp*ry + cy*cp*rz;
-      if (czv < 0.25) continue;
-      const sx = W*0.5 + (cxv/czv) * fov * H*0.5;
-      const sy2 = H*0.5 - (cyv/czv) * fov * H*0.5;
+      const q = pr(d.x, d.y, d.z);
+      if (!q) continue;
+      const sx = q[0], sy2 = q[1], czv = q[2];
       if (sx < -40 || sx > W+40 || sy2 < -40 || sy2 > H+40) continue;
       const o = ORES[d.k];
       const r = Math.max(1.4, (d.big ? 13 : 5) / czv * (H/560));
@@ -3383,18 +3412,7 @@
     if (P.y > 6) return;
     const vis = benchSeen();
     if (!vis) return;
-    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
-    const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
-    const ex = P.x, ey = P.y - EYE, ez = P.z;
-    const fov = 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62;
-    const pr = (X, Y, Z) => {
-      const rx = X-ex, ry = Y-ey, rz = Z-ez;
-      const cxv = cy*rx - sy*rz;
-      const cyv = -sy*sp*rx - cp*ry - cy*sp*rz;
-      const czv = sy*cp*rx - sp*ry + cy*cp*rz;
-      if (czv < 0.25) return null;
-      return [W*0.5 + (cxv/czv)*fov*H*0.5, H*0.5 - (cyv/czv)*fov*H*0.5, czv];
-    };
+    const pr = viewProj(W, H);
     const hw = 0.62, hd = 0.44, top = BENCH.y - 0.95, foot = BENCH.y;
     const C = [
       pr(BENCH.x-hw, top,  BENCH.z-hd), pr(BENCH.x+hw, top,  BENCH.z-hd),
@@ -4705,6 +4723,7 @@
     if (P.y > BOTTOM + 40) { P.y = BOTTOM + 40; P.vy = 0; }   // ниже дна не бывает
 
     beltTick(dt);
+    lookTick(dt);
     noteTick();
     digCd -= dt; swing = Math.max(0, swing - dt / swDur);
     if (digging && digCd <= 0 && useHeld()) { digCd = .25; swing = 1; swDur = .25; }
