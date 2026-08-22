@@ -1323,6 +1323,8 @@
   SAV.men = SAV.men || []; SAV.ore = SAV.ore || {}; SAV.took = SAV.took || {};
   if (SAV.prop === undefined) SAV.prop = 5;
   SAV.props = SAV.props || []; SAV.learn = SAV.learn || {};
+  SAV.mades = SAV.mades || {}; SAV.madeg = SAV.madeg || {};
+  SAV.st = Object.assign({ hits:0, walk:0, lifts:0 }, SAV.st || {}); SAV.learn = SAV.learn || {};
   SAV.st = Object.assign({ hits:0, walk:0, lifts:0 }, SAV.st || {});
   savReady = true; seedNuggets();
   // сохранения, где бригада была просто числом, разворачиваем в людей
@@ -1356,9 +1358,10 @@
   const shardMul = () => 1 + Math.pow(Math.max(0, SAV.shards), 0.62) * 0.35;
   // чем глубже, тем ценнее порода: иначе спуск не окупается
   const oreMul = () => 1 + Math.pow(Math.max(0, P.y) / 55, 0.88);
-  const capOf  = () => Math.round((60 + SAV.cart * 62) * shardMul());
-  const lampR  = () => 1 + SAV.lamp * 0.34;
-  const powOf  = () => (1 + (SAV.pick - 1) * 0.55) * shardMul();
+  const capOf  = () => Math.round((60 + SAV.cart * 62) * shardMul() * (1 + passBonus("СПИНА") * 0.06)
+                                 * (buff.cap > 0 ? 2 : 1));
+  const lampR  = () => (1 + SAV.lamp * 0.34) * (1 + passBonus("ГЛАЗ") * 0.04);
+  const powOf  = () => (1 + (SAV.pick - 1) * 0.55) * shardMul() * (1 + passBonus("РУКА") * 0.05);
 
   const FARQ = [26, 42, 62], RESQ = [0.50, 0.62, 0.75, 1.0, 1.25];
   const uiS = () => (SET.ui || 100) / 100;
@@ -1456,6 +1459,176 @@
     o.start(); o.stop(AC.currentTime + 1.0);
   }
 
+  // ---------- всё, что можно собрать ----------
+  // Руды десять, и каждая вещь просит своих. Чем сильнее эффект, тем глубже
+  // приходится лезть за составом.
+  // 0 уголь · 1 медь · 2 железо · 3 сера · 4 лазурит
+  // 5 малахит · 6 аметист · 7 золото · 8 киноварь · 9 алмаз
+  const ACTIVE = [
+    ["КУРАЖ","урон ×3 на 15 с",{0:12,1:6},45,"dmg"],
+    ["ВСПЫШКА","свет до конца хода",{1:10,3:4},90,"light"],
+    ["ЖАДНЫЙ ГЛАЗ","руда ×5 на 20 с",{1:14,2:8},120,"ore"],
+    ["ВТОРОЕ ДЫХАНИЕ","шаг вдвое быстрее",{0:20,2:6},70,"speed"],
+    ["ОБУХ","удар бьёт по площади",{2:14,0:18},80,"area"],
+    ["КЛИН","шесть ударов насквозь",{2:16,1:10},95,"pierce"],
+    ["РОВНАЯ РУКА","каждый удар как по трещине",{2:12,6:2},110,"crack"],
+    ["ЗАПАЛ","взрыв в трёх метрах",{3:10,0:14},60,"blast"],
+    ["ШНУР","три взрыва подряд",{3:18,2:10},130,"chain"],
+    ["ЖИВОЙ ОГОНЬ","порода осыпается сама",{3:22,8:2},150,"burn"],
+    ["ДЫМ","опасность тебя не находит",{3:14,4:4},140,"hide"],
+    ["ХОЛОДОК","вода отступает",{4:12,5:6},160,"cold"],
+    ["КРЕПЬ НАСПЕХ","две рамы из ничего",{2:24,0:26},150,"shore"],
+    ["ЭХО","слышно всё, что шевелится",{4:16,1:12},120,"echo"],
+    ["ЖИЛА НА ВИД","жилы видно сквозь камень",{4:20,5:10},150,"xray"],
+    ["ТИШЕ ВОДЫ","шаг не слышен",{4:14,6:4},130,"quiet"],
+    ["ЗЕЛЁНЫЙ СВЕТ","в нём видно другое",{5:16,4:8},170,"green"],
+    ["ЛОЗА","руда сама тянется в руки",{5:20,1:16},140,"pull"],
+    ["ЖИВУЧЕСТЬ","бригаду не потерять",{5:26,7:4},210,"guard"],
+    ["ГРАНЁНЫЙ ГЛАЗ","самородки слышно дальше",{6:12,4:10},160,"hear"],
+    ["РАСКОЛ","трескается вся стена",{6:18,2:20},180,"crack"],
+    ["ЗЕРКАЛО","видно, что позади",{6:14,9:1},200,"mirror"],
+    ["ЗОЛОТАЯ ЖИЛА","следующая жила вдвое богаче",{7:10,1:20},190,"rich"],
+    ["ЩЕДРОСТЬ","вагонетка вмещает вдвое",{7:14,2:22},200,"cap"],
+    ["ТЯЖЁЛАЯ РУКА","кирка бьёт как отбойник",{7:16,8:4},230,"dmg"],
+    ["ПОСЛЕДНИЙ ВЗДОХ","человека не потеряешь",{8:8,5:14},260,"save"],
+    ["КРОВЬ КАМНЯ","чинит крепь рядом",{8:12,2:26},240,"fix"],
+    ["ЯРОСТЬ","чем дольше бьёшь, тем сильнее",{8:14,0:40},250,"rage"],
+    ["СТОП-КАДР","всё замирает",{9:2,6:16},300,"freeze"],
+    ["РАЗЛОМ","ход вниз на двенадцать метров",{9:3,3:24},320,"bore"],
+    ["ДВА КЛИНКА","бьёшь дважды за удар",{9:2,7:12},280,"twin"],
+    ["СИСТЕМНОЕ СООБЩЕНИЕ","показывает, что впереди",{9:2,4:24},290,"scan"],
+    ["ЛОВУШКА","то, что за тобой, встаёт",{9:1,5:22},310,"trap"],
+    ["ЧЁРНАЯ ХВАТКА","поглощает породу вокруг",{9:3,8:10},340,"eat"],
+    ["ТЕНЬ","десять секунд тебя нет",{9:2,8:14},330,"hide"],
+    ["ГИПЕРПРЫЖОК","мгновенно наверх",{9:4,7:20},360,"up"],
+    ["ДРОИД","копает рядом сам",{9:3,2:40},350,"droid"],
+    ["СВЕТОВОЙ РЕЗАК","режет что угодно",{9:5,3:30},380,"cut"],
+    ["ЩИТ","обвал не задевает",{9:4,5:26},370,"guard"],
+    ["ГНЕЗДО","из стены выходит руда",{9:6,8:18},420,"nest"],
+    ["КИСЛОТА","прожигает породу вниз",{9:5,3:36},400,"acid"],
+    ["ТИХИЙ ЧАС","долго ничего не происходит",{9:8,4:30},480,"calm"],
+    ["ХОЗЯЙКА","показывает всю руду вокруг",{9:7,6:26},460,"xray"],
+    ["ОТДАЧА","возвращает то, что забрал обвал",{9:9,7:30},500,"undo"],
+    ["ВТОРАЯ СМЕНА","бригада работает вдвое",{9:6,2:60},440,"crew"],
+    ["ЛАМПОВЩИК","фонарь не гаснет",{9:5,1:44},430,"light"],
+    ["ЖЕЛЕЗНАЯ ВОЛЯ","страх не действует",{9:7,8:20},470,"warm"],
+    ["ПРОБОЙ","ход на тридцать метров",{9:10,3:44},520,"bore"],
+    ["ЗОВ","самородки идут к тебе",{9:8,5:34},490,"pull"],
+    ["ПОСЛЕДНЯЯ КИРКА","один удар ломает что угодно",{9:12,8:26},560,"dmg"],
+    ["ЧАС ВОЛКА","всё сразу",{9:14,6:40},600,"all"],
+    ["ОСТАНОВКА","время встаёт",{9:16,7:40},640,"freeze"]
+  ];
+  const GEARS = [
+    ["ВЕРЁВКА","мгновенный подъём",{0:8}],
+    ["ФЛЯГА","шаг не сбивается",{1:6,2:4}],
+    ["МЕЛ","метка на стене",{0:4}],
+    ["СВИСТОК","бригада подтягивается",{1:8,2:6}],
+    ["ЗЕРКАЛЬЦЕ","видно назад",{1:12,6:1}],
+    ["КЛИН СТАЛЬНОЙ","+15% урона",{2:14}],
+    ["НАКОЛЕННИКИ","шаг не сбивает ритм",{2:10,0:12}],
+    ["РЕСПИРАТОР","видно сквозь пыль",{3:8,1:8}],
+    ["РУКАВИЦЫ","удержание бьёт быстрее",{2:12,5:4}],
+    ["ОТВЕС","до следующего пласта",{2:8,4:6}],
+    ["КОМПАС","на схеме видно, где ты был",{4:10,2:8}],
+    ["СЧЁТЧИК","прочность породы цифрой",{4:12,1:10}],
+    ["РАНЕЦ","+40% вагонетки",{2:20,5:8}],
+    ["ЛОМ","ломает крепь без обвала",{2:26}],
+    ["МАСЛЁНКА","кирка не тупится",{3:14,2:12}],
+    ["ФИТИЛЬ","взрывчатка вдвое сильнее",{3:20,8:1}],
+    ["ЛАМПА ЗАПАСНАЯ","фонарь не гаснет",{1:22,3:10}],
+    ["ЛИНЗА","жилы видно дальше",{6:4,4:14}],
+    ["ЩУП","показывает, что за стеной",{4:18,6:3}],
+    ["ГРУЗИЛО","падаешь без вреда",{2:30,7:2}],
+    ["ТЕРМОС","в холодных пластах не мёрзнешь",{5:12,1:18}],
+    ["ОБЕРЕГ","страхует первого копателя",{5:16,6:4}],
+    ["ПЛЮШЕВЫЙ ЗАЙКА","погоня встаёт на шесть секунд",{5:20,7:3}],
+    ["КУБИК","порода мягче",{6:6,5:14}],
+    ["ПЕЧЕНЬЕ","разрушает пять на пять",{6:8,3:22}],
+    ["ХЕЛЛО КИТТИ","в кадре теплеет",{6:10,7:4}],
+    ["R2D2","чинит крепь и светит",{7:8,2:34}],
+    ["ДОДОКО","пробивает ход вперёд",{7:10,3:26}],
+    ["ПОКЕБОЛ","ловит то, что не ловится",{7:12,9:1}],
+    ["ЗВЕЗДОЛЁТ","модель · показывает выход",{7:14,4:26}],
+    ["ЯЙЦО","тёплое · шевелится",{8:6,5:24}],
+    ["ЛИЦЕХВАТ","в банке · стучит по стеклу",{8:10,9:1}],
+    ["ПЛАЗМОРЕЗ","режет гранит как глину",{8:12,9:2}],
+    ["МЕЧ ИЗ СВЕТА","рукоять · при ударе гудит",{9:3,7:18}],
+    ["ЧЁРНАЯ РУКА","берёт то, что не берётся",{9:4,8:16}],
+    ["ПОЯС ШИРЕ","+1 ячейка",{9:2,2:48}],
+    ["ВТОРАЯ КАСКА","один обвал не считается",{9:3,5:30}],
+    ["ЧАСЫ","сколько ты уже внизу",{9:2,6:22}],
+    ["ТЕТРАДЬ","дневники читаются в забое",{6:26,4:30}],
+    ["ОСКОЛОК ЗЕРКАЛА","иногда показывает не тебя",{9:5,6:28}],
+    ["ПЕРЧАТКА","держит раскалённое",{8:18,2:52}],
+    ["ЛОВЕЦ СНОВ","страх приходит реже",{9:4,5:36}],
+    ["ЯКОРЬ","мечи тебя не задевают",{9:6,8:22}],
+    ["ЖЕЛЕЗНОЕ ДЕРЕВО","крепь не ломается",{9:5,2:64}],
+    ["ПУСТАЯ ФЛЯГА","не делает ничего",{0:1}],
+    ["КЛЮЧ","от двери, которой нет",{9:7,7:30}],
+    ["КАРТА ЧУЖАЯ","ходы, которых ты не копал",{9:6,4:40}],
+    ["КОСТЬ","чья-то · тёплая",{8:24,5:40}],
+    ["ПЕСОК","из него ничего не строится",{9:8,3:50}],
+    ["ЗЕРНО","прорастает в темноте",{9:9,5:44}],
+    ["ГВОЗДЬ","работает после отсчёта",{9:12,8:30}],
+    ["ПОСЛЕДНИЙ ЛИСТ","на нём твоё имя",{9:16,6:50}]
+  ];
+  const PASSIVE2 = [
+    ["РУКА","сила удара","hits",900],
+    ["НОГА","скорость шага","walk",1400],
+    ["СПИНА","вместимость вагонетки","carried",40000],
+    ["ГЛАЗ","дальность фонаря","found",240],
+    ["СЛУХ","опасность слышно раньше","depth",2600],
+    ["ЧУТЬЁ","жилы видно дальше","veins",900],
+    ["ПАМЯТЬ","схема помнит больше","notes",21],
+    ["ХВАТКА","куски тянутся дальше","picked",1400],
+    ["ТЕРПЕНИЕ","ритм не сбивается","hits",4200],
+    ["ХОЛОДНАЯ ГОЛОВА","страх слабее","scares",26],
+    ["ПЛЕЧО","бригада работает лучше","shifts",14],
+    ["ЖИЛИСТОСТЬ","крепь держит дольше","props",60],
+    ["УПРЯМСТВО","обвал реже","collapses",12],
+    ["ЛЁГКОСТЬ","прыжок выше","walk",4200],
+    ["ЗОРКОСТЬ","самородки слышно дальше","nuggets",18],
+    ["СНОРОВКА","кирка бьёт чаще","hits",12000],
+    ["ЖАДНОСТЬ","руды за удар больше","carried",260000],
+    ["ГЛУБИНА","на глубине не давит","depth",5200],
+    ["ТИШИНА","шаги тише","walk",9000],
+    ["КОРЕНЬ","стоишь твёрже","props",180]
+  ];
+
+  // ---------- что ты уже сделал ----------
+  // Пассивные ничего не стоят. Они есть у того, кто много копал.
+  function oreTotal() { let n = 0; for (const k in (SAV.ore || {})) n += SAV.ore[k]; return n; }
+  function statOf(k) {
+    const st = SAV.st || {};
+    if (k === "found") return oreTotal();
+    if (k === "depth") return Math.round(SAV.best || 0);
+    if (k === "notes") return Object.keys(SAV.notes || {}).length;
+    if (k === "scares") return Object.keys(SAV.seen || {}).length;
+    if (k === "shifts") return SAV.shift | 0;
+    if (k === "walk") return Math.round(st.walk || 0);
+    if (k === "carried") return Math.round(st.carried || 0);
+    return st[k] | 0;
+  }
+  const SRC_NAME = { hits:"ударов", walk:"пройдено", carried:"поднято руды",
+    found:"кусков в сумке", depth:"глубина", veins:"вскрыто жил", notes:"дневников",
+    picked:"подобрано", scares:"пережито", shifts:"смен", props:"поставлено крепи",
+    collapses:"обвалов", nuggets:"самородков" };
+  const passSrc = k => SRC_NAME[k] || k;
+  function passLevel(i) {
+    const per = PASSIVE2[i][3], v = statOf(PASSIVE2[i][2]);
+    return 1 + Math.floor(Math.log(1 + v / (per / 8)) / Math.log(1.75));
+  }
+  function passProgress(i) {
+    const per = PASSIVE2[i][3], v = statOf(PASSIVE2[i][2]), lv = passLevel(i);
+    const a = (Math.pow(1.75, lv - 1) - 1) * (per / 8);
+    const b = (Math.pow(1.75, lv) - 1) * (per / 8);
+    return Math.max(0, Math.min(1, (v - a) / (b - a)));
+  }
+  const passBonus = (name) => {
+    const i = PASSIVE2.findIndex(p => p[0] === name);
+    return i < 0 ? 0 : (passLevel(i) - 1);
+  };
+
   // ---------- обучение ----------
   // Не подсказка, которая висит всегда, а восемь шагов. Каждый ждёт, пока ты
   // сделаешь дело сам, показывается один раз и уходит навсегда.
@@ -1536,7 +1709,7 @@
     for (const p of PROPS) if (Math.hypot(p.x-P.x, p.y-P.y, p.z-P.z) < 2.2) {
       flashMsg("ТУТ УЖЕ СТОИТ", "#e0505f"); return;
     }
-    SAV.prop--;
+    SAV.prop--; SAV.st.props = (SAV.st.props | 0) + 1;
     PROPS.push({ x: P.x, y: P.y, z: P.z, yaw: P.yaw, hp: 1 });
     propsToSave(); saveGame();
     flashMsg("КРЕПЬ ПОСТАВЛЕНА · ОСТАЛОСЬ " + SAV.prop, "#ffc14d");
@@ -1575,7 +1748,7 @@
   function collapseNow(sure) {
     if (mode !== "dig") return;
     const lost = Math.round(cart);
-    cart = 0;
+    cart = 0; SAV.st.collapses = (SAV.st.collapses | 0) + 1;
     if (SAV.men.length && (sure || Math.random() < 0.6)) loseMan();
     refillAbove(P.y);                                // ход над тобой засыпает
     goUp();
@@ -1985,6 +2158,8 @@
   function takeOre(d) {
     const o = ORES[d.k], n = d.big ? 12 + Math.round(Math.random()*10) : 1;
     SAV.ore[o.id] = (SAV.ore[o.id] || 0) + n;
+    SAV.st.picked = (SAV.st.picked | 0) + 1;
+    if (d.big) SAV.st.nuggets = (SAV.st.nuggets | 0) + 1;
     cart = Math.min(capOf(), cart + o.price * n * (buff.ore > 0 ? 5 : 1));
     oreEl.classList.add("hot"); oreHot = 1.4;
     tookName = o.n + (n > 1 ? "  ×" + n : ""); tookCol = o.g;
@@ -2349,29 +2524,43 @@
 
   // ---------- пояс: четыре предмета и три скилла ----------
   // Кирка — мультитул: она одна на всю игру, и качается только она.
-  const GOODS = [
-    { name:"КИРКА",     ico:"pick",   fix:true },
-    { name:"ФОНАРЬ",    ico:"lamp"  },
-    { name:"ДИНАМИТ",   ico:"dyn"   },
-    { name:"ВЕРЁВКА",   ico:"rope"  },
-    { name:"САЛЮТ",     ico:"salute"},
-    { name:"ПЕЧЕНЬКА",  ico:"cookie"},
-    { name:"ЗЕРКАЛЬЦЕ", ico:"mirror"}
-  ];
-  const SKILLS = [
-    { name:"КУРАЖ",       ico:"fist"  }, { name:"ВСПЫШКА",   ico:"flare" },
-    { name:"ЖАДНЫЙ ГЛАЗ", ico:"eye"   }, { name:"ЗАЙКА",     ico:"bunny" },
-    { name:"КУБИК",       ico:"rubik" }, { name:"HELLO KITTY", ico:"kitty" },
-    { name:"R2D2",        ico:"r2"    }, { name:"ДОДОКО",    ico:"dodo"  }
-  ];
-  const PASSIVE = [
-    ["Ранец","вместимость вагонетки"], ["Наколенники","шаг не сбивает ритм"],
-    ["Респиратор","трещины видно сквозь пыль"], ["Компас","на схеме видно, где ты был"],
-    ["Отвес","до следующего пласта"], ["Счётчик","прочность блока цифрой"],
-    ["Рукавицы","урон на удержании"], ["Оберег","страхует первого копателя"]
-  ];
+  const GOODS = [{ name:"КИРКА", ico:"pick", fix:true }, { name:"ФОНАРЬ", ico:"lamp" }]
+    .concat(GEARS.map(g => ({ name: g[0], ico: "auto:" + g[0], made: true })));
+  const START_GEAR = { 2:1, 3:1, 4:1 };              // верёвка, фляга, мел даются сразу
+  const SKILLS = ACTIVE.map(a => ({ name: a[0], ico: "auto:" + a[0], made: true }));
+  const START_SKILL = { 0:1, 1:1, 3:1 };             // кураж, вспышка, второе дыхание
 
+  // у собранных вещей иконка рисуется от имени: форма, цвет и знак внутри
+  function autoIcon(g, S, name) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    const hue = h % 360, form = (h >> 9) % 5, mark = (h >> 15) % 6;
+    g.save(); g.translate(S/2, S/2);
+    const gr = g.createLinearGradient(-S*.3, -S*.3, S*.3, S*.3);
+    gr.addColorStop(0, "hsl(" + hue + " 62% 60%)");
+    gr.addColorStop(1, "hsl(" + ((hue + 34) % 360) + " 54% 32%)");
+    g.fillStyle = gr;
+    g.beginPath();
+    if (form === 0) g.arc(0, 0, S*.30, 0, 7);
+    else if (form === 1) g.rect(-S*.27, -S*.27, S*.54, S*.54);
+    else if (form === 2) { for (let i = 0; i < 6; i++) { const a = i/6*6.283,
+        px2 = Math.cos(a)*S*.31, py = Math.sin(a)*S*.31; i ? g.lineTo(px2,py) : g.moveTo(px2,py); } g.closePath(); }
+    else if (form === 3) { g.moveTo(0,-S*.32); g.lineTo(S*.30,S*.24); g.lineTo(-S*.30,S*.24); g.closePath(); }
+    else { g.moveTo(0,-S*.32); g.lineTo(S*.26,0); g.lineTo(0,S*.32); g.lineTo(-S*.26,0); g.closePath(); }
+    g.fill();
+    g.strokeStyle = "rgba(0,0,0,.45)"; g.lineWidth = S*.035; g.stroke();
+    g.strokeStyle = "rgba(255,255,255,.78)"; g.lineWidth = S*.055; g.lineCap = "round";
+    g.beginPath();
+    if (mark === 0) { g.moveTo(-S*.11,0); g.lineTo(S*.11,0); }
+    else if (mark === 1) { g.moveTo(0,-S*.13); g.lineTo(0,S*.13); g.moveTo(-S*.13,0); g.lineTo(S*.13,0); }
+    else if (mark === 2) { g.arc(0,0,S*.12,0,7); }
+    else if (mark === 3) { g.moveTo(-S*.12,S*.10); g.lineTo(0,-S*.12); g.lineTo(S*.12,S*.10); }
+    else if (mark === 4) { g.moveTo(-S*.12,-S*.10); g.lineTo(S*.12,S*.10); g.moveTo(S*.12,-S*.10); g.lineTo(-S*.12,S*.10); }
+    else { g.moveTo(-S*.12,-S*.08); g.lineTo(S*.12,-S*.08); g.moveTo(-S*.12,S*.08); g.lineTo(S*.12,S*.08); }
+    g.stroke(); g.restore();
+  }
   function icon(g, S, k) {
+    if (k && k.indexOf("auto:") === 0) { autoIcon(g, S, k.slice(5)); return; }
     const q = (a, b, c) => { const t = g.createLinearGradient(0, S * .1, 0, S * .9);
       t.addColorStop(0, a); t.addColorStop(.5, b); t.addColorStop(1, c); return t; };
     g.clearRect(0, 0, S, S);
@@ -2622,8 +2811,12 @@
       const w = document.createElement("div"); w.className = "iwrap"; ig.append(w); return w;
     };
 
-    const wg = sec("ПРЕДМЕТЫ", "четыре ячейки · первая всегда кирка");
+    const haveGear = i => !GOODS[i].made || SAV.madeg[i - 2] || START_GEAR[i];
+    const haveSkill = i => SAV.mades[i] || START_SKILL[i];
+
+    const wg = sec("ПРЕДМЕТЫ", "четыре ячейки · первая всегда кирка · остальное с верстака");
     GOODS.forEach((it, i) => {
+      if (!haveGear(i)) return;
       const d = document.createElement("div");
       const used = SET.goods.indexOf(i);
       d.className = "it" + (used >= 0 ? " act" : "") + (it.fix ? " fix" : "");
@@ -2639,8 +2832,9 @@
       wg.append(d);
     });
 
-    const ws = sec("СКИЛЛЫ", "три ячейки · кулдаун у каждого свой");
+    const ws = sec("СКИЛЛЫ", "три ячейки · собираются на верстаке");
     SKILLS.forEach((it, i) => {
+      if (!haveSkill(i)) return;
       const d = document.createElement("div");
       const used = SET.skills.indexOf(i);
       d.className = "it" + (used >= 0 ? " act" : "");
@@ -2656,13 +2850,14 @@
       ws.append(d);
     });
 
-    const wp = sec("ПАССИВНЫЕ", "ячеек не занимают · работают всегда · только качаются");
-    PASSIVE.forEach(([n, d2], i) => {
+    const wp = sec("ПАССИВНЫЕ", "не покупаются · растут от того, что ты делал");
+    PASSIVE2.forEach(([n, d2, stat], i) => {
       const d = document.createElement("div"); d.className = "it pas";
-      const lv = (SET.pas && SET.pas[i]) || 1;
+      const lv = passLevel(i), prog = passProgress(i);
       const sp = document.createElement("span");
-      sp.innerHTML = `${n}<small>${d2}</small>`;
-      const b = document.createElement("u"); b.textContent = "ур. " + lv;
+      sp.innerHTML = `${n}<small>${d2} · ${passSrc(stat)}</small>`;
+      const b = document.createElement("u");
+      b.innerHTML = `ур. ${lv}<i style="display:block;font-style:normal;font-size:7.5px;color:#948ba9">${Math.round(prog*100)}%</i>`;
       d.append(sp, b); wp.append(d);
     });
   }
@@ -2770,6 +2965,14 @@
     };
     hubRows.append(cr);
 
+    const cf = document.createElement("div");
+    cf.className = "hrow can";
+    const madeN = Object.keys(SAV.mades || {}).length + Object.keys(SAV.madeg || {}).length;
+    cf.innerHTML = `<span class="n">ВЕРСТАК</span><span class="p">${madeN} / ${ACTIVE.length + GEARS.length}</span>` +
+                   `<span class="s">собрать скилл или вещь из руды</span>`;
+    cf.onclick = () => buildCraft();
+    hubRows.append(cf);
+
     const pr = document.createElement("div");
     pr.className = "hrow can";
     pr.innerHTML = `<span class="n">СХЕМА ШАХТЫ</span><span class="p">${Math.round(SAV.best)} м</span>` +
@@ -2799,6 +3002,67 @@
     a.innerHTML = `<span class="n">ОСКОЛКИ</span><span class="p">${SAV.shards}</span>` +
                   `<span class="s">рекорд глубины · ${Math.round(SAV.best)} м</span>`;
     hubRows.append(a);
+  }
+
+  // верстак: всё собирается из руды, а не покупается за общий счёт
+  const haveOre = id => (SAV.ore && SAV.ore[id]) || 0;
+  function canMake(rec) {
+    for (const k in rec) if (haveOre(ORES[k].id) < rec[k]) return false;
+    return true;
+  }
+  function payFor(rec) { for (const k in rec) SAV.ore[ORES[k].id] = haveOre(ORES[k].id) - rec[k]; }
+  function recText(rec) {
+    return Object.keys(rec).map(k => {
+      const need = rec[k], has = haveOre(ORES[k].id), ok = has >= need;
+      return '<em style="font-style:normal;color:' + (ok ? ORES[k].g : "#8c84a4") + '">' +
+             ORES[k].n + " " + fmt(has) + "/" + need + "</em>";
+    }).join(" · ");
+  }
+  let craftTab = 0;
+  function buildCraft() {
+    hubRows.innerHTML = "";
+    const back = document.createElement("div");
+    back.className = "hrow can";
+    back.innerHTML = '<span class="n">← НАЗАД</span><span class="s">к снаряжению</span>';
+    back.onclick = () => buildHub();
+    hubRows.append(back);
+
+    const tabs = document.createElement("div");
+    tabs.className = "hrow can";
+    tabs.innerHTML = '<span class="n">ВЕРСТАК</span>' +
+      '<span class="p">' + ["СКИЛЛЫ", "ВЕЩИ", "СКЛАД"][craftTab] + '</span>' +
+      '<span class="s">нажми, чтобы переключить</span>';
+    tabs.onclick = () => { craftTab = (craftTab + 1) % 3; buildCraft(); };
+    hubRows.append(tabs);
+
+    if (craftTab === 2) {
+      ORES.forEach(o => {
+        const d = document.createElement("div");
+        const n = haveOre(o.id);
+        d.className = "hrow" + (n ? " can" : " max");
+        d.innerHTML = '<span class="n" style="color:' + (n ? o.g : "#8c84a4") + '">' + o.n + "</span>" +
+                      '<span class="p">' + fmt(n) + "</span>" +
+                      '<span class="s">за кусок ' + o.price + " руды</span>";
+        hubRows.append(d);
+      });
+      return;
+    }
+
+    const list = craftTab === 0 ? ACTIVE : GEARS;
+    const key = craftTab === 0 ? "mades" : "madeg";
+    SAV[key] = SAV[key] || {};
+    list.forEach((it, i) => {
+      const rec = it[2], has = SAV[key][i], ok = canMake(rec);
+      const d = document.createElement("div");
+      d.className = "hrow" + (has ? " max" : ok ? " can" : "");
+      d.innerHTML = '<span class="n">' + it[0] + "</span>" +
+                    '<span class="p">' + (has ? "ЕСТЬ" : ok ? "СОБРАТЬ" : "—") + "</span>" +
+                    '<span class="s">' + it[1] + "<br>" + recText(rec) + "</span>";
+      if (!has && ok) d.onclick = () => {
+        payFor(rec); SAV[key][i] = 1; saveGame(); buildCraft(); thud(false, 1.4);
+      };
+      hubRows.append(d);
+    });
   }
 
   // схема шахты: разрез по глубине. То, что ты выкопал, и то, что тебе попалось.
@@ -3276,6 +3540,7 @@
     liftEl.classList.remove("on");
     liftSound(false);
     if (liftDir > 0) {
+      SAV.st.carried = (SAV.st.carried || 0) + cart;
       SAV.bank += Math.round(cart); cart = 0;          // руду сдаём наверху
       saveGame(true);
       SAV.best = Math.max(SAV.best, Math.round(P.y));
@@ -3637,17 +3902,55 @@
     "ПЕЧЕНЬКА":  { use:"blast", r:1.25, cd:80, ore:.5 },
     "ЗЕРКАЛЬЦЕ": { use:"mirror", cd:20 }
   };
-  const SDATA = {
-    "КУРАЖ":       { cd:45,  go(){ buff.dmg = 15; } },
-    "ВСПЫШКА":     { cd:90,  go(){ buff.light = 8; } },
-    "ЖАДНЫЙ ГЛАЗ": { cd:120, go(){ buff.ore = 20; } },
-    "ЗАЙКА":       { cd:200, go(){ dread = 0; evCool = Math.max(evCool, 40); if (haz) endHaz(true); } },
-    "КУБИК":       { cd:90,  go(){ buff.soft = 10; } },
-    "HELLO KITTY": { cd:240, go(){ buff.calm = 15; buff.warm = 15; } },
-    "R2D2":        { cd:120, go(){ buff.xray = 10; } },
-    "ДОДОКО":      { cd:180, go(){ boreAhead(3.2); } }
+  // что делают эффекты. Разные скиллы зовут одни и те же.
+  const FX = {
+    dmg:   () => { buff.dmg = 15; },
+    light: () => { buff.light = 8; },
+    ore:   () => { buff.ore = 20; },
+    speed: () => { buff.speed = 20; },
+    area:  () => { buff.soft = 12; buff.dmg = Math.max(buff.dmg, 12); },
+    pierce:() => { buff.soft = 14; },
+    crack: () => { buff.dmg = 10; buff.soft = 10; },
+    blast: () => { boreAhead(3.0); },
+    chain: () => { boreAhead(3.0); setTimeout(() => boreAhead(4.2), 700); setTimeout(() => boreAhead(5.4), 1400); },
+    burn:  () => { buff.soft = 8; buff.dmg = 8; },
+    hide:  () => { buff.calm = 12; if (haz) endHaz(true); },
+    cold:  () => { if (haz && haz.kind === "water") endHaz(true); wet = 0; },
+    shore: () => { SAV.prop = (SAV.prop | 0) + 2; saveGame(); flashMsg("+2 КРЕПИ", "#ffc14d"); },
+    echo:  () => { buff.xray = 15; },
+    xray:  () => { buff.xray = 20; },
+    quiet: () => { hush = Math.max(hush, 25); },
+    green: () => { buff.xray = 10; buff.warm = 10; },
+    pull:  () => { for (const d of DROPS) d.pull = 0.4; },
+    guard: () => { buff.calm = 40; },
+    hear:  () => { buff.xray = 12; },
+    mirror:() => { mirrorT = 8; mirrorYaw = P.yaw; },
+    rich:  () => { buff.ore = 25; },
+    cap:   () => { buff.cap = 30; },
+    save:  () => { buff.calm = 60; },
+    fix:   () => { SAV.prop = (SAV.prop | 0) + 1; saveGame(); flashMsg("+1 КРЕПЬ", "#ffc14d"); },
+    rage:  () => { buff.dmg = 25; buff.speed = 25; },
+    freeze:() => { buff.calm = 8; hush = Math.max(hush, 8); },
+    bore:  () => { boreAhead(6.0); },
+    twin:  () => { buff.dmg = 20; buff.soft = 20; },
+    scan:  () => { buff.xray = 10; },
+    trap:  () => { if (haz) endHaz(true); if (swPhase) { swPhase = 0; SWORDS.length = 0; hazEl.className = "haz"; } },
+    eat:   () => { for (let r = 1; r <= 3; r++) carve(P.x, P.y - EYE, P.z, r * 1.1); },
+    up:    () => { goUp(); },
+    droid: () => { cart = Math.min(capOf(), cart + 60 * oreMul()); },
+    cut:   () => { boreAhead(8.0); },
+    nest:  () => { for (let i2 = 0; i2 < 6; i2++)
+                     dropOre(P.x + (Math.random()-.5)*2, P.y - 1, P.z + (Math.random()-.5)*2, (Math.random()*10)|0, false); },
+    acid:  () => { for (let d = 0; d < 8; d += 0.6) carve(P.x, P.y + 1 + d, P.z, 0.8); },
+    calm:  () => { buff.calm = 600; dread = 0; },
+    undo:  () => { cart = Math.min(capOf(), cart + 120 * oreMul()); },
+    crew:  () => { buff.crew = 60; },
+    warm:  () => { buff.warm = 30; },
+    all:   () => { buff.dmg = 20; buff.ore = 20; buff.light = 20; buff.soft = 20; }
   };
-  const buff = { dmg:0, light:0, ore:0, soft:0, calm:0, warm:0, xray:0 };
+  const SDATA = {};
+  ACTIVE.forEach(a => { SDATA[a[0]] = { cd: a[3], go: FX[a[4]] || FX.dmg }; });
+  const buff = { dmg:0, light:0, ore:0, soft:0, calm:0, warm:0, xray:0, speed:0, cap:0, crew:0 };
   const cool = [0, 0, 0];
   let mirrorT = 0, mirrorYaw = 0;
 
@@ -3769,7 +4072,7 @@
     if (down("fwd")) fw += 1; if (down("back")) fw -= 1;
     if (down("right")) st += 1; if (down("left")) st -= 1;
     const L = Math.hypot(fw, st) || 1;
-    const spd = (down("run") ? 6.4 : 3.9) * dt;
+    const spd = (down("run") ? 6.4 : 3.9) * (1 + passBonus("НОГА") * 0.03) * (buff.speed > 0 ? 2 : 1) * dt;
     const sn = Math.sin(P.yaw), cs = Math.cos(P.yaw);
     const dx = (sn * fw / L + cs * st / L) * spd, dz = (cs * fw / L - sn * st / L) * spd;
     if (fw || st) {
@@ -3829,6 +4132,7 @@
           if (ore) {                                 // попал по жиле — выбил кусок
             const big = ore.amt > 0.82 && Math.random() < 0.14;
             dropOre(t[0], t[1], t[2], ore.k, big);
+            SAV.st.veins = (SAV.st.veins | 0) + 1;
             if (ore.amt > 0.5 && Math.random() < 0.45) dropOre(t[0], t[1], t[2], ore.k, false);
           } else {                                   // просто порода — только крошка
             cart = Math.min(capOf(),
