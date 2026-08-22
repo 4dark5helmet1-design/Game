@@ -68,8 +68,12 @@
     .hint{bottom:210px;font-size:10px;padding:0 22px}
     .haz{top:11%}
   }
-  .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;font-size:11.5px;letter-spacing:.14em;
-    color:rgba(255,255,255,.9);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .8s}
+  .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;pointer-events:none;
+    transition:opacity .55s}
+  .hint b{display:block;font-size:13px;font-weight:400;letter-spacing:.2em;color:#fff;
+    text-shadow:0 1px 8px #000,0 0 20px rgba(0,0,0,.9)}
+  .hint i{display:block;margin-top:5px;font-style:normal;font-size:10px;letter-spacing:.1em;
+    color:rgba(220,212,236,.78);text-shadow:0 1px 6px #000}
   .hint.gone{opacity:0}
   .stick{position:absolute;left:18px;bottom:18px;width:104px;height:104px;border-radius:50%;
     border:1px solid rgba(255,255,255,.14);background:rgba(10,8,14,.3);backdrop-filter:blur(4px)}
@@ -1037,11 +1041,9 @@
   const hint = document.getElementById("hint");
   const toolEl = document.getElementById("toolname");
   const isTouch = matchMedia("(hover:none)").matches;
-  hint.textContent = isTouch
-    ? "СЛЕВА — ИДТИ · ПРОВЕДИ ПО ЭКРАНУ — СМОТРЕТЬ · ДОЛБИТЬ — КОПАТЬ"
-    : "НАЖМИ, ЧТОБЫ ЗАХВАТИТЬ МЫШЬ · WASD ХОДИТЬ · ЛКМ ДОЛБИТЬ";
+  hint.innerHTML = "";
   cv.addEventListener("click", () => { if (!isTouch) cv.requestPointerLock(); audioOn(); });
-  document.addEventListener("pointerlockchange", () => { if (document.pointerLockElement === cv) hint.classList.add("gone"); });
+  document.addEventListener("pointerlockchange", () => {});
   document.addEventListener("mousemove", e => {
     if (document.pointerLockElement !== cv) return;
     const k = SET.sens / 10000;
@@ -1059,7 +1061,7 @@
   digbtn.addEventListener("touchstart", e => { digging = true; digbtn.classList.add("on"); audioOn(); e.preventDefault(); }, {passive:false});
   digbtn.addEventListener("touchend", e => { digging = false; digbtn.classList.remove("on"); e.preventDefault(); }, {passive:false});
   cv.addEventListener("touchstart", e => { for (const t of e.changedTouches) if (lookId === null) { lookId = t.identifier; lx = t.clientX; ly = t.clientY; }
-    hint.classList.add("gone"); audioOn(); e.preventDefault(); }, {passive:false});
+    audioOn(); e.preventDefault(); }, {passive:false});
   addEventListener("touchmove", e => { for (const t of e.changedTouches) {
       if (t.identifier === lookId) {
         const k = SET.sens / 4800;
@@ -1309,7 +1311,7 @@
   const SDEF = { bank: 0, shards: 0, pick: 1, lamp: 1, crew: 0, cart: 1, best: 0,
                  seen: {}, notes: {}, log: [], shift: 0, men: [],
                  mine: "", at: null, load: 0, off: 0, seenAt: 0, ore: {},
-                 prop: 5, props: [], v: 2 };
+                 prop: 5, props: [], learn: {}, st: { hits:0, walk:0, lifts:0 }, v: 2 };
   let SAV;
   // v2 хранит ещё и саму шахту. Старое сохранение переносим, чтобы прогресс не пропал.
   try {
@@ -1320,7 +1322,8 @@
   SAV.seen = SAV.seen || {}; SAV.notes = SAV.notes || {}; SAV.log = SAV.log || [];
   SAV.men = SAV.men || []; SAV.ore = SAV.ore || {}; SAV.took = SAV.took || {};
   if (SAV.prop === undefined) SAV.prop = 5;
-  SAV.props = SAV.props || [];
+  SAV.props = SAV.props || []; SAV.learn = SAV.learn || {};
+  SAV.st = Object.assign({ hits:0, walk:0, lifts:0 }, SAV.st || {});
   savReady = true; seedNuggets();
   // сохранения, где бригада была просто числом, разворачиваем в людей
   while (SAV.men.length < (SAV.crew | 0))
@@ -1453,7 +1456,49 @@
     o.start(); o.stop(AC.currentTime + 1.0);
   }
 
-  // ---------- крепь ----------
+  // ---------- обучение ----------
+  // Не подсказка, которая висит всегда, а восемь шагов. Каждый ждёт, пока ты
+  // сделаешь дело сам, показывается один раз и уходит навсегда.
+  const LEARN = [
+    { id:"dig",   t:() => isTouch ? "ДЕРЖИ «ДОЛБИТЬ»" : "ЗАЖМИ ЛЕВУЮ КНОПКУ",
+                  s:"порода поддаётся не сразу", done:() => (SAV.st.hits|0) >= 12 },
+    { id:"move",  t:() => isTouch ? "СЛЕВА — ИДТИ, ПО ЭКРАНУ — СМОТРЕТЬ" : "WASD — ИДТИ, МЫШЬ — СМОТРЕТЬ",
+                  s:"копать можно в любую сторону", done:() => (SAV.st.walk|0) >= 12 },
+    { id:"down",  t:() => "КОПАЙ ВНИЗ", s:"глубина слева на колонке",
+                  done:() => P.y >= 6 },
+    { id:"ore",   t:() => "БЕЙ ПО ЖИЛЕ", s:"кусок выпадет — подбери его",
+                  done:() => oreTotal() >= 3 },
+    { id:"cart",  t:() => "ВАГОНЕТКА КОНЕЧНА", s:"набьёшь — новое пропадёт",
+                  done:() => cart > capOf() * 0.5 },
+    { id:"up",    t:() => isTouch ? "КНОПКА E — НАВЕРХ" : "E — НАВЕРХ",
+                  s:"внизу руду не потратить", done:() => (SAV.st.lifts|0) >= 1 },
+    { id:"prop",  t:() => isTouch ? "КНОПКА ≡ — КРЕПЬ" : "F — ПОСТАВИТЬ КРЕПЬ",
+                  s:"без неё своды сходятся", done:() => (SAV.props || []).length >= 1 },
+    { id:"deep",  t:() => "ДАЛЬШЕ САМ", s:"внизу есть на что посмотреть",
+                  done:() => P.y >= 40 }
+  ];
+  function oreTotal() { let n = 0; for (const k in (SAV.ore || {})) n += SAV.ore[k]; return n; }
+  let learnAt = 0, learnShown = 0, learnGap = 0;
+  function learnTick() {
+    if (mode !== "dig") return;
+    SAV.st = SAV.st || { hits:0, walk:0, lifts:0 };
+    while (learnAt < LEARN.length && SAV.learn && SAV.learn[LEARN[learnAt].id]) learnAt++;
+    if (learnAt >= LEARN.length) { hint.classList.add("gone"); return; }
+    if (learnGap > performance.now()) return;
+    const step = LEARN[learnAt];
+    if (!learnShown) {
+      learnShown = 1;
+      hint.innerHTML = "<b>" + step.t() + "</b><i>" + step.s + "</i>";
+      hint.classList.remove("gone");
+    }
+    if (step.done()) {
+      SAV.learn = SAV.learn || {}; SAV.learn[step.id] = 1; saveGame();
+      hint.classList.add("gone");
+      learnAt++; learnShown = 0; learnGap = performance.now() + 1500;
+    }
+  }
+
+  // ---------- крепь ----------  // ---------- крепь ----------
   // Штрек держится на рамах. Чем длиннее ход и чем дальше последняя рама,
   // тем выше шанс, что своды сойдутся. Сломать поставленную — сойдутся точно.
   const PROPS = [];                                  // {x,y,z,yaw,hp}
@@ -3234,6 +3279,7 @@
       SAV.bank += Math.round(cart); cart = 0;          // руду сдаём наверху
       saveGame(true);
       SAV.best = Math.max(SAV.best, Math.round(P.y));
+      SAV.st = SAV.st || { hits:0, walk:0, lifts:0 }; SAV.st.lifts = (SAV.st.lifts|0) + 1;
       saveGame(); buildHub(); hubEl.classList.add("on");
       mode = "hub";
     } else {
@@ -3741,6 +3787,7 @@
       if (!blocked(P.x + mx, P.y, P.z)) P.x += mx;
       if (!blocked(P.x, P.y, P.z + mz)) P.z += mz;
       if (P.ground && SET.headbob) bob += dt * 11;
+      SAV.st.walk = (SAV.st.walk || 0) + dt * 2;
     }
 
     P.vy += 22 * dt;
@@ -3758,6 +3805,7 @@
     else if (digging && digCd <= 0) {
       const t = aim();
       if (t) {
+        SAV.st.hits = (SAV.st.hits | 0) + 1;
         const broke = breakPropNear(t[0], t[1], t[2]);
         const dk = broke || inDark(t[1]);            // по раме бьют, а не копают
         digCd = dk ? .09 : Math.max(.1, .34 - powOf() * .03); swing = 1;
@@ -3796,7 +3844,7 @@
     shake = Math.max(0, shake - dt * 34);
     dreadTick(dt); countTick();
     bottomTick();
-    dropsTick(dt); wailTick(dt); nuggetTick(); swordsTick(dt); riskTick(dt);
+    dropsTick(dt); wailTick(dt); nuggetTick(); swordsTick(dt); riskTick(dt); learnTick();
     tideTick(dt); gritTick(dt); hazTick(dt); hazSound(dt);
     stepTick(dt, !!(fw || st), down("run")); dripTick(dt); droneTick();
     if (!sawPoint && PT && ptDist() < 18) { sawPoint = true; SAV.seen.cosmic = 1; saveGame(); }
