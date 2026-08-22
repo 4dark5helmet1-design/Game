@@ -3444,11 +3444,12 @@
   const nearBench = () =>
     P.y < 1.8 && Math.hypot(BENCH.x - P.x, BENCH.z - P.z) < 3.0;
   // видно ли его отсюда: если между глазом и столом порода, рисовать нечего
-  function benchSeen() {
+  // видно ли точку: между глазом и ней не должно быть породы
+  function seenAt(X, Y, Z, far) {
     const ex = P.x, ey = P.y - EYE, ez = P.z;
-    const dx = BENCH.x - ex, dy = (BENCH.y - 0.5) - ey, dz = BENCH.z - ez;
+    const dx = X - ex, dy = Y - ey, dz = Z - ez;
     const d = Math.hypot(dx, dy, dz);
-    if (d > 16) return 0;
+    if (d > (far || 16)) return 0;
     const n = Math.ceil(d / 0.22);
     for (let i = 1; i < n; i++) {
       const t = i / n;
@@ -3456,10 +3457,138 @@
     }
     return Math.max(0.25, 1 - d / 14);              // дальше — темнее
   }
+  const benchSeen = () => seenAt(BENCH.x, BENCH.y - 0.5, BENCH.z);
   const useEl = document.getElementById("usehint");
   function benchTick() {
     useEl.classList.toggle("on", mode === "dig" && nearBench() && !anySheet());
   }
+
+  // ---------- обжитое ----------
+  // Подвал должен читаться как чей-то дом, а не как первая комната шахты:
+  // лампочка на шнуре, полка с банками, ящик и табурет у стены.
+  // Лампочка висит низко, на уровне глаз: в кадре она почти всегда, и
+  // именно она делает подвал жилым, а не первой комнатой шахты.
+  const BULB = { x: 0.0, y: -1.94, z: -1.05 };       // прямо над начатой дырой
+  const HOME = [
+    { k:"shelf", x:-1.5, y:-1.78, z:-4.24, yaw: 0 },        // на стене, куда смотришь
+    { k:"shelf", x:-4.24, y:-1.68, z: 0.4, yaw: Math.PI/2 },
+    { k:"crate", x: 2.7, y:-0.05, z:-3.5, yaw: 0.35 },
+    { k:"crate", x: 3.3, y:-0.05, z:-2.75, yaw:-0.2 },
+    { k:"crate", x:-3.4, y:-0.05, z: 2.6, yaw: 0.5 },
+    { k:"stool", x:-2.6, y:-0.05, z:-2.1, yaw: 0.9 },
+    { k:"stool", x: 3.6, y:-0.05, z: 0.9, yaw:-0.6 }
+  ];
+  function drawHome(g, W, H) {
+    if (P.y > 6) return;                              // всё это только наверху
+    const pr = viewProj(W, H);
+    const px = n => Math.max(1, n * (H / 560));
+
+    // лампочка: шнур от перекрытия, стекло и тёплое пятно вокруг
+    const bv = seenAt(BULB.x, BULB.y, BULB.z, 20);
+    if (bv) {
+      const a = pr(BULB.x, BULB.y, BULB.z);
+      const c0 = pr(BULB.x, CEIL + 0.1, BULB.z);
+      if (a) {
+        g.save(); g.globalAlpha = bv;
+        if (c0) { g.strokeStyle = "rgba(28,22,16,.9)"; g.lineWidth = px(1.6);
+          g.beginPath(); g.moveTo(c0[0], c0[1]); g.lineTo(a[0], a[1]); g.stroke(); }
+        // тёплое пятно на полу прямо под ней — от этого комната и делается жилой
+        const f0 = pr(BULB.x, 0.02, BULB.z);
+        if (f0) {
+          const fr = Math.max(6, 210 / f0[2] * (H / 560));
+          const gp = g.createRadialGradient(f0[0], f0[1], 0, f0[0], f0[1], fr);
+          gp.addColorStop(0, "rgba(255,206,128,.26)");
+          gp.addColorStop(.5, "rgba(240,168,80,.10)");
+          gp.addColorStop(1, "rgba(240,168,80,0)");
+          g.save(); g.globalAlpha = bv * 0.9; g.fillStyle = gp;
+          g.beginPath(); g.ellipse(f0[0], f0[1], fr, fr * 0.42, 0, 0, 6.283); g.fill(); g.restore();
+        }
+        const r = Math.max(3, 46 / a[2] * (H / 560));
+        const gl2 = g.createRadialGradient(a[0], a[1], 0, a[0], a[1], r * 11);
+        gl2.addColorStop(0,   "rgba(255,244,214,.98)");
+        gl2.addColorStop(.10, "rgba(255,216,146,.72)");
+        gl2.addColorStop(.34, "rgba(238,164,74,.24)");
+        gl2.addColorStop(1,   "rgba(238,164,74,0)");
+        g.fillStyle = gl2; g.beginPath(); g.arc(a[0], a[1], r * 11, 0, 6.283); g.fill();
+        g.fillStyle = "rgba(255,247,224,.98)";
+        g.beginPath(); g.ellipse(a[0], a[1], r * .72, r, 0, 0, 6.283); g.fill();
+        g.fillStyle = "rgba(40,32,22,.9)";
+        g.fillRect(a[0] - r*.34, a[1] - r*1.5, r*.68, r*.55);   // цоколь
+        g.restore();
+      }
+    }
+
+    for (const it of HOME) {
+      const v = seenAt(it.x, it.y - 0.3, it.z, 18);
+      if (!v) continue;
+      const s2 = Math.sin(it.yaw), c2 = Math.cos(it.yaw);
+      const box = (hw, hh, hd, col, top) => {
+        const P8 = [];
+        for (const sy2 of [-1, 1]) for (const [ox, oz] of [[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]]) {
+          const rx = ox*c2 - oz*s2, rz = ox*s2 + oz*c2;
+          P8.push(pr(it.x + rx, it.y + (sy2 < 0 ? -hh : 0), it.z + rz));
+        }
+        if (P8.some(q => !q)) return null;
+        g.save(); g.globalAlpha = v;
+        // тень
+        g.save(); g.globalAlpha = v * 0.4; g.filter = "blur(5px)"; g.fillStyle = "#000";
+        g.beginPath(); g.moveTo(P8[4][0], P8[4][1]);
+        for (let i = 5; i < 8; i++) g.lineTo(P8[i][0], P8[i][1]);
+        g.closePath(); g.fill(); g.restore();
+        // бока
+        g.fillStyle = col;
+        for (const [a2,b2,c3,d2] of [[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]]) {
+          g.beginPath(); g.moveTo(P8[a2][0], P8[a2][1]);
+          for (const k of [b2,c3,d2]) g.lineTo(P8[k][0], P8[k][1]);
+          g.closePath(); g.fill();
+        }
+        // крышка
+        g.fillStyle = top;
+        g.beginPath(); g.moveTo(P8[0][0], P8[0][1]);
+        for (let i = 1; i < 4; i++) g.lineTo(P8[i][0], P8[i][1]);
+        g.closePath(); g.fill();
+        g.strokeStyle = "rgba(20,14,8,.55)"; g.lineWidth = px(1.2);
+        for (const [a2,b2] of [[0,1],[1,2],[2,3],[3,0],[0,4],[1,5],[2,6],[3,7]]) {
+          g.beginPath(); g.moveTo(P8[a2][0], P8[a2][1]); g.lineTo(P8[b2][0], P8[b2][1]); g.stroke();
+        }
+        g.restore();
+        return P8;
+      };
+
+      if (it.k === "crate") box(0.32, 0.58, 0.32, "#5a3e1e", "#6d4d27");
+      else if (it.k === "stool") {
+        const t2 = box(0.20, 0.44, 0.20, "#4f3718", "#63481f");
+        if (t2) { g.save(); g.globalAlpha = v; g.strokeStyle = "#3a2811"; g.lineWidth = px(2.4);
+          for (const [a2,b2] of [[0,4],[1,5],[2,6],[3,7]]) {
+            g.beginPath(); g.moveTo(t2[a2][0], t2[a2][1]); g.lineTo(t2[b2][0], t2[b2][1]); g.stroke(); }
+          g.restore(); }
+      }
+      else if (it.k === "shelf") {
+        // доска на стене и банки на ней: свет ловит стекло
+        const t2 = box(0.70, 0.07, 0.20, "#4a3316", "#5e421d");
+        if (!t2) continue;
+        g.save(); g.globalAlpha = v;
+        for (let j = 0; j < 4; j++) {
+          const ox = -0.48 + j * 0.32;
+          const rx = ox*c2, rz = ox*s2;
+          const q = pr(it.x + rx, it.y - 0.20, it.z + rz);
+          if (!q) continue;
+          const r = Math.max(1.5, 9 / q[2] * (H / 560));
+          const gj = g.createLinearGradient(q[0] - r, q[1], q[0] + r, q[1]);
+          const tint = ["#6b5c2c","#4e4120","#5d4f27","#42381b"][j];   // мутное стекло, не белое
+          gj.addColorStop(0, "rgba(226,206,150,.30)");
+          gj.addColorStop(.42, tint);
+          gj.addColorStop(1, "rgba(18,14,8,.92)");
+          g.fillStyle = gj;
+          g.beginPath(); g.ellipse(q[0], q[1], r * .62, r * 1.25, 0, 0, 6.283); g.fill();
+          g.fillStyle = "rgba(46,38,22,.9)";
+          g.fillRect(q[0] - r*.5, q[1] - r*1.5, r, r*.42);
+        }
+        g.restore();
+      }
+    }
+  }
+
   function drawBench(g, W, H) {
     if (P.y > 6) return;
     const vis = benchSeen();
@@ -4894,6 +5023,7 @@
       fxc.fillRect(p2.x, p2.y, p2.s, p2.s);
     }
     fxc.globalAlpha = 1;
+    drawHome(fxc, fx.width, fx.height);
     drawBench(fxc, fx.width, fx.height);
     drawProps(fxc, fx.width, fx.height);
     drawSwords(fxc, fx.width, fx.height);
