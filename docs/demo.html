@@ -3109,9 +3109,13 @@
   function aim() {
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
     const dir = [Math.sin(P.yaw) * cp, -sp, Math.cos(P.yaw) * cp];
+    // Досягаемость растёт вместе с вырубом. Иначе сильная кирка выедает вокруг
+    // себя шар шире, чем видит прицел (радиус обгоняет 5.4 м уже к середине
+    // игры), и бить внезапно становится не во что: замах есть, породы нет.
+    const st = Math.max(5.4, (0.40 + powOf() * 0.13) * 1.7 + 1.5) / 90;
     let x = P.x, y = P.y - EYE, z = P.z;
     for (let i = 0; i < 90; i++) {
-      x += dir[0] * .06; y += dir[1] * .06; z += dir[2] * .06;
+      x += dir[0] * st; y += dir[1] * st; z += dir[2] * st;
       if (solidAt(x, y, z)) return [x, y, z];
     }
     return null;
