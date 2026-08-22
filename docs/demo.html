@@ -5,7 +5,7 @@
 
 <style>
   :root{
-    --lamp:#ffc14d; --ink:#ece7f4; --ink2:#a79ec0; --ink3:#6f6788;
+    --lamp:#ffc14d; --ink:#f4f1f9; --ink2:#c5bcd8; --ink3:#9b93b0;
     --line:#262032; --bg:#08070c;
     --mono: ui-monospace,"SFMono-Regular","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;
     --body:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
@@ -40,7 +40,7 @@
   .cart{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:150px;
     opacity:0;transition:opacity .4s;pointer-events:none;text-align:center}
   .cart.show{opacity:1}
-  .cart u{display:block;font-size:8.5px;letter-spacing:.2em;color:#9fd6ee;text-decoration:none;margin-bottom:5px;
+  .cart u{display:block;font-size:8.5px;letter-spacing:.2em;color:#b6e2f6;text-decoration:none;margin-bottom:5px;
     text-shadow:0 1px 6px #000}
   .cart b{display:block;height:4px;border-radius:3px;background:rgba(255,255,255,.16);overflow:hidden}
   .cart b i{display:block;height:100%;background:#7fc9e8;width:0}
@@ -68,8 +68,8 @@
     .hint{bottom:210px;font-size:10px;padding:0 22px}
     .haz{top:11%}
   }
-  .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;font-size:11px;letter-spacing:.14em;
-    color:rgba(255,255,255,.66);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .8s}
+  .hint{position:absolute;left:0;right:0;bottom:104px;text-align:center;font-size:11.5px;letter-spacing:.14em;
+    color:rgba(255,255,255,.9);text-shadow:0 1px 6px #000;pointer-events:none;transition:opacity .8s}
   .hint.gone{opacity:0}
   .stick{position:absolute;left:18px;bottom:18px;width:104px;height:104px;border-radius:50%;
     border:1px solid rgba(255,255,255,.14);background:rgba(10,8,14,.3);backdrop-filter:blur(4px)}
@@ -119,7 +119,7 @@
   .pane{display:none}.pane.on{display:block}
   .opt{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
     padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:#cfc7dd}
-  .opt small{display:block;font-size:9.5px;color:#6f6788;letter-spacing:.04em;margin-top:2px}
+  .opt small{display:block;font-size:9.5px;color:#9b93b0;letter-spacing:.04em;margin-top:2px}
   .opt input[type=range]{width:130px;accent-color:#ffc14d}
   .opt .key{min-width:78px;text-align:center;font-size:10.5px;letter-spacing:.08em;padding:6px 10px;
     border:1px solid var(--line2);border-radius:7px;background:#171320;color:#e6e0f0;cursor:pointer}
@@ -127,15 +127,15 @@
   .opt .sw{width:44px;height:24px;border-radius:12px;background:#241f30;border:1px solid var(--line2);
     position:relative;cursor:pointer}
   .opt .sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
-    background:#6f6788;transition:.15s}
+    background:#9b93b0;transition:.15s}
   .opt .sw.on{background:#3a2a12;border-color:rgba(255,193,77,.6)}
   .opt .sw.on::after{left:22px;background:var(--lamp)}
   .opt .val{font-size:11px;color:#8f86a4;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
   .inv .isec{grid-column:1/-1;margin:8px 0 2px}
   .inv .isec b{font-size:10px;letter-spacing:.2em;color:#ffc14d}
-  .inv .isec small{display:block;font-size:9px;color:#6f6788;letter-spacing:.04em;margin-top:3px}
+  .inv .isec small{display:block;font-size:9px;color:#9b93b0;letter-spacing:.04em;margin-top:3px}
   .inv .iwrap{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:7px}
-  .inv .it small{display:block;font-size:8.5px;color:#6f6788;letter-spacing:.06em;margin-top:2px}
+  .inv .it small{display:block;font-size:8.5px;color:#9b93b0;letter-spacing:.06em;margin-top:2px}
   .inv .it.fix{opacity:.75;cursor:default}
   .inv .it.pas{cursor:default;justify-content:space-between}
   .inv .it.pas u{font-size:9.5px;color:#8f86a4;text-decoration:none;letter-spacing:.08em}
@@ -151,13 +151,13 @@
     border:1px solid var(--line2);color:#a79ec0;cursor:pointer}
   .mbtns b.pri{border-color:rgba(255,193,77,.6);color:var(--lamp);background:#1c1510}
   .gear{position:absolute;right:12px;top:12px;width:30px;height:30px;border-radius:8px;
-    color:#6f6788;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;
+    color:#9b93b0;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;
     opacity:.28;transition:opacity .25s}
   .gear:hover{opacity:1;color:#ffc14d}
   @media (hover:none){ .gear{opacity:.6;background:rgba(12,9,17,.5);border:1px solid rgba(255,255,255,.12)} }
   /* --- подъём и штрек --- */
   .lift{position:absolute;inset:0;background:#07060a;display:none;align-items:center;justify-content:center;
-    z-index:24;font-size:11px;letter-spacing:.3em;color:#6f6788}
+    z-index:24;font-size:11px;letter-spacing:.3em;color:#9b93b0}
   .lift.on{display:flex}
   .lift span{opacity:.7;animation:lp 1.4s ease-in-out infinite}
   @keyframes lp{0%,100%{opacity:.25}50%{opacity:.8}}
@@ -186,15 +186,15 @@
   .hub-top .place{font-size:12px;letter-spacing:.28em;color:var(--lamp)}
   .hub-top .place em{font-style:normal;margin-left:14px;letter-spacing:.16em;color:#4c4560}
   .hub-top .hore b{font-size:19px;color:#fff;font-variant-numeric:tabular-nums}
-  .hub-top .hore i{font-style:normal;font-size:8px;letter-spacing:.18em;color:#6f6788;margin-left:5px}
+  .hub-top .hore i{font-style:normal;font-size:8px;letter-spacing:.18em;color:#9b93b0;margin-left:5px}
   .hrow{display:grid;grid-template-columns:1fr auto;gap:3px 12px;padding:13px 16px;
     border-bottom:1px solid #1a1622;align-items:center;position:relative;cursor:default}
-  .hrow .n{font-size:12.5px;letter-spacing:.13em;color:#6f6788}
+  .hrow .n{font-size:12.5px;letter-spacing:.13em;color:#9b93b0}
   .hrow .s{font-size:10px;color:#544c68;letter-spacing:.03em}
-  .hrow .p{grid-row:span 2;font-size:11.5px;color:#4d4661;font-variant-numeric:tabular-nums;
+  .hrow .p{grid-row:span 2;font-size:11.5px;color:#807896;font-variant-numeric:tabular-nums;
     padding:9px 13px;border:1px solid #262032;border-radius:8px}
   .hrow.can{background:#171119;cursor:pointer}
-  .hrow.can .n{color:#ece7f4}.hrow.can .s{color:#857c9b}
+  .hrow.can .n{color:#ece7f4}.hrow.can .s{color:#a79fbd}
   .hrow.can .p{color:var(--lamp);border-color:#8a6520}
   .hrow.can::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--lamp)}
   .hrow.max .p{color:#5aa9e6;border-color:#2b4a63}
@@ -204,7 +204,7 @@
     background:#0a0810;border:1px solid #241d2f;border-radius:10px}
   .hub-go{margin:16px;padding:16px;text-align:center;font-size:12px;letter-spacing:.22em;
     color:var(--lamp);border:1px solid #8a6520;border-radius:11px;background:#241b12;cursor:pointer}
-  .hub-go small{display:block;font-size:8.5px;letter-spacing:.16em;color:#6f6788;margin-top:6px}
+  .hub-go small{display:block;font-size:8.5px;letter-spacing:.16em;color:#9b93b0;margin-top:6px}
   .game.void .hud,.game.void .hotbar,.game.void .cross,.game.void .toolname,
   .game.void .gear,.game.void .cart,.game.void .hint,
   .game.void .fs,.game.void .tbtns,.game.void .stick,.game.void .dig,
@@ -251,7 +251,7 @@
     <div class="pane" id="p-vid"></div>
     <div class="pane" id="p-snd"></div>
     <div class="pane" id="p-inv"><div class="inv" id="invgrid"></div>
-      <p style="font-size:11px;color:#6f6788;letter-spacing:.05em;margin-top:12px">
+      <p style="font-size:11px;color:#9b93b0;letter-spacing:.05em;margin-top:12px">
         Нажми на предмет, чтобы положить его в выбранную ячейку пояса.</p></div>
     <div class="mbtns"><b id="mreset">СБРОСИТЬ</b><b class="pri" id="mclose">ЗАКРЫТЬ</b></div>
   </div>
@@ -263,6 +263,7 @@
   <div class="dig" id="digbtn">ДОЛБИТЬ</div>
   <div class="tbtns" id="tbtns">
     <b id="tjump" title="Прыжок">&#8593;</b>
+    <b id="tprop" title="Крепь">&#9776;</b>
     <b id="tbelt" title="Пояс">&#9632;</b>
     <b id="tup" title="Наверх">E</b>
   </div>
@@ -780,25 +781,35 @@
       rough = 0.30;
     }
 
-    // жилы: шесть руд. Глубина решает, какая тут основная, медленный шум
-    // подмешивает соседние — поэтому пласты не режутся по линейке.
-    float ov = fbm(w*0.5+vec3(31.0));
+    // жилы: десять руд. Не разлив по стене, а вкрапления в камне — крупинки
+    // сидят в породе кучно, и издалека их видно по цвету, а не по яркости.
+    float ov = fbm(w*0.20+vec3(31.0));
     float sel = fbm(w*0.06+vec3(313.0));
-    float band = clamp(w.y/1100.0, 0.0, 5.0);
-    float kf = clamp(floor(band + (sel-0.5)*2.6 + 0.5), 0.0, 5.0);
+    float band = clamp(w.y/620.0, 0.0, 9.0);
+    float kf = clamp(floor(band + (sel-0.5)*4.4 + 0.5), 0.0, 9.0);
     int kind = int(kf);
-    float thr = 0.575 + kf*0.023;                       // золото реже угля
+    float thr = 0.560 + kf*0.0155;                      // глубже — реже
     if(w.y>0.4 && ov>thr){
-      oreAmt = smoothstep(thr, thr+0.11, ov);
-      vec3 oc = kind==0 ? vec3(0.11,0.11,0.13)          // уголь
-              : kind==1 ? vec3(0.20,0.62,0.70)          // медь
-              : kind==2 ? vec3(0.55,0.32,0.20)          // железо
-              : kind==3 ? vec3(0.52,0.30,0.72)          // кварц
-              : kind==4 ? vec3(0.80,0.60,0.18)          // золото
-                        : vec3(0.82,0.90,0.98);         // иней
+      // жила — не градиент, а место: внутри неё сидят плотные вкрапления
+      float body  = smoothstep(thr, thr+0.022, ov);
+      float grain = smoothstep(0.36, 0.47, fbm(w*1.1+vec3(91.0)));
+      oreAmt = body * grain;
+      vec3 oc = kind==0 ? vec3(0.055,0.055,0.070)       // уголь
+              : kind==1 ? vec3(0.92,0.42,0.14)          // медь
+              : kind==2 ? vec3(0.90,0.74,0.60)          // железо
+              : kind==3 ? vec3(0.94,0.86,0.20)          // сера
+              : kind==4 ? vec3(0.13,0.32,0.92)          // лазурит
+              : kind==5 ? vec3(0.10,0.80,0.42)          // малахит
+              : kind==6 ? vec3(0.66,0.26,0.95)          // аметист
+              : kind==7 ? vec3(1.00,0.80,0.10)          // золото
+              : kind==8 ? vec3(0.95,0.13,0.16)          // киноварь
+                        : vec3(0.55,0.95,1.00);         // алмаз
       c = mix(c, oc, oreAmt);
-      if(kind==0) rough = mix(rough, 0.16, oreAmt);     // уголь блестит на сколе
-      if(kind==4) rough = mix(rough, 0.10, oreAmt);     // золото тем более
+      c += oc * oreAmt * 0.35;                          // руда светлее породы
+      emis = max(emis, oreAmt * (0.06 + kf*0.030));     // и сама подсвечена: видно издалека
+      if(kind==0) rough = mix(rough, 0.14, oreAmt);
+      if(kind==7 || kind==1) rough = mix(rough, 0.08, oreAmt);      // металл блестит
+      if(kind==9 || kind==6) rough = mix(rough, 0.05, oreAmt);      // камень играет гранью
       oreTint = oc;
     }
     c *= 0.84+0.34*h31(floor(w*3.0));
@@ -920,8 +931,8 @@
                      + vec3(1.0,0.62,0.30)*win*2.6
                      + vec3(0.10,0.10,0.14)*0.22 );          // мягкая заливка, тени не чёрные
     col += vec3(1.0,0.90,0.72)*spec*(lamp+bulb*0.8);
-    col += oreTint*oreAmt*(lamp+bulb)*0.9;
-    col += vec3(1.0,0.88,0.66)*emis*2.6;                    // само окно светится
+    col += oreTint*oreAmt*(lamp+bulb)*1.9;
+    col += mix(vec3(1.0,0.88,0.66), oreTint, step(0.001, oreAmt))*emis*2.6;
     col *= 0.64 + 0.74*hC;
 
     // пылинки в косом луче из окошка — только в подвале, иначе дорого
@@ -958,8 +969,9 @@
       col = mix(col, vec3(gy2)*vec3(0.42,0.66,0.92)*0.7, uWet*0.72);
     }
     if(uDrain > 0.001){
+      // цвет уходит из породы, но не из руды: жила остаётся собой на любой глубине
       float gy = dot(col, vec3(0.32,0.55,0.13));
-      col = mix(col, vec3(gy)*vec3(0.92,0.94,1.06), uDrain);
+      col = mix(col, vec3(gy)*vec3(0.92,0.94,1.06), uDrain*(1.0 - oreAmt*0.92));
     }
     // узел: не тёмное пятно, а отсутствие изображения
     if(uNode.w > 0.0){
@@ -1070,6 +1082,7 @@
   };
   tap("tjump", () => { if (P.ground) P.vy = -7.2; });
   tap("tbelt", () => flashBelt());
+  tap("tprop", () => placeProp());
   tap("tup",   () => goUp());
 
   // во весь экран — на телефоне без этого играть нельзя
@@ -1235,7 +1248,8 @@
   const KEY = "zaboy.settings.v1";
   const DEF = {
     bind: { fwd:"KeyW", back:"KeyS", left:"KeyA", right:"KeyD", jump:"Space", up:"KeyE",
-            run:"ShiftLeft", dig:"Mouse0", look:"KeyQ", menu:"Escape", inv:"Tab" },
+            run:"ShiftLeft", dig:"Mouse0", look:"KeyQ", menu:"Escape", inv:"Tab",
+            prop:"KeyF" },
     sens: 26, invY: false, fov: 75, headbob: true, shake: true, grain: true,
     quality: 1, bright: 100, vol: 70, sfx: 100, ui: 100, res: 3,
     goods: [0,1,2,3], skills: [0,1,3], pas: [1,1,1,1,1,1,1,1], slot: 0
@@ -1250,12 +1264,16 @@
   // Шесть видов. Глубина задаёт основную, медленный шум подмешивает соседние —
   // те же формулы, что в шейдере, иначе игра выдавала бы не то, что видно в стене.
   const ORES = [
-    { id:"coal",   n:"УГОЛЬ",   c:"#2a2a30", g:"#4a4a55", price: 1 },
-    { id:"copper", n:"МЕДЬ",    c:"#33a0b3", g:"#7fdcea", price: 3 },
-    { id:"iron",   n:"ЖЕЛЕЗО",  c:"#8c5233", g:"#c98a5c", price: 7 },
-    { id:"quartz", n:"КВАРЦ",   c:"#854dba", g:"#c08cf0", price: 16 },
-    { id:"gold",   n:"ЗОЛОТО",  c:"#cc9a2e", g:"#ffd978", price: 38 },
-    { id:"rime",   n:"ИНЕЙ",    c:"#d2e4f2", g:"#ffffff", price: 90 }
+    { id:"coal",   n:"УГОЛЬ",    c:"#171720", g:"#4d4d5e", price:   1 },
+    { id:"copper", n:"МЕДЬ",     c:"#c9631d", g:"#ff9a4d", price:   3 },
+    { id:"iron",   n:"ЖЕЛЕЗО",   c:"#c2a48b", g:"#f0dcc8", price:   6 },
+    { id:"sulfur", n:"СЕРА",     c:"#c8b81b", g:"#fff06a", price:  11 },
+    { id:"lazur",  n:"ЛАЗУРИТ",  c:"#1f45c9", g:"#6b90ff", price:  19 },
+    { id:"malach", n:"МАЛАХИТ",  c:"#16a558", g:"#5cf0a2", price:  31 },
+    { id:"amet",   n:"АМЕТИСТ",  c:"#9040d6", g:"#cf90ff", price:  52 },
+    { id:"gold",   n:"ЗОЛОТО",   c:"#e0b119", g:"#ffe27a", price:  84 },
+    { id:"cinnab", n:"КИНОВАРЬ", c:"#d81f22", g:"#ff7070", price: 140 },
+    { id:"diam",   n:"АЛМАЗ",    c:"#6fd8ec", g:"#c8f7ff", price: 240 }
   ];
   // шум, повторяющий шейдерный: h31 -> n3 -> fbm
   const gh31 = (x, y, z) => {
@@ -1277,20 +1295,21 @@
 
   function oreAt(X, Y, Z) {                          // что в этой точке породы
     if (Y <= 0.4) return null;
-    const ov = gfbm(X*0.5+31, Y*0.5+31, Z*0.5+31);
+    const ov = gfbm(X*0.20+31, Y*0.20+31, Z*0.20+31);
     const sel = gfbm(X*0.06+313, Y*0.06+313, Z*0.06+313);
-    const band = Math.max(0, Math.min(5, Y/1100));
-    const k = Math.max(0, Math.min(5, Math.floor(band + (sel-0.5)*2.6 + 0.5)));
-    const thr = 0.575 + k*0.023;
+    const band = Math.max(0, Math.min(9, Y/620));
+    const k = Math.max(0, Math.min(9, Math.floor(band + (sel-0.5)*4.4 + 0.5)));
+    const thr = 0.560 + k*0.0155;
     if (ov <= thr) return null;
-    return { k, amt: Math.min(1, (ov - thr)/0.11) };
+    return { k, amt: Math.min(1, (ov - thr)/0.022) };
   }
 
   // ---------- прогресс ----------
   const SKEY = "zaboy.save.v2", SKEY_OLD = "zaboy.save.v1";
   const SDEF = { bank: 0, shards: 0, pick: 1, lamp: 1, crew: 0, cart: 1, best: 0,
                  seen: {}, notes: {}, log: [], shift: 0, men: [],
-                 mine: "", at: null, load: 0, off: 0, seenAt: 0, ore: {}, v: 2 };
+                 mine: "", at: null, load: 0, off: 0, seenAt: 0, ore: {},
+                 prop: 5, props: [], v: 2 };
   let SAV;
   // v2 хранит ещё и саму шахту. Старое сохранение переносим, чтобы прогресс не пропал.
   try {
@@ -1300,6 +1319,8 @@
   SAV.v = 2;
   SAV.seen = SAV.seen || {}; SAV.notes = SAV.notes || {}; SAV.log = SAV.log || [];
   SAV.men = SAV.men || []; SAV.ore = SAV.ore || {}; SAV.took = SAV.took || {};
+  if (SAV.prop === undefined) SAV.prop = 5;
+  SAV.props = SAV.props || [];
   savReady = true; seedNuggets();
   // сохранения, где бригада была просто числом, разворачиваем в людей
   while (SAV.men.length < (SAV.crew | 0))
@@ -1420,7 +1441,7 @@
   // звон куска: уголь глухой, иней стеклянный
   function clink(k, big) {
     if (!AC || hush > 0) return;
-    const base = [180, 420, 340, 780, 560, 1240][k] || 400;
+    const base = [170, 430, 360, 640, 820, 700, 1120, 560, 980, 1560][k] || 500;
     const o = AC.createOscillator(), g = AC.createGain();
     o.type = k === 0 ? "sine" : k === 5 ? "triangle" : "triangle";
     o.frequency.setValueAtTime(base * (big ? 0.72 : 1) * (0.97 + Math.random()*0.06), AC.currentTime);
@@ -1432,11 +1453,165 @@
     o.start(); o.stop(AC.currentTime + 1.0);
   }
 
-  // ---------- мечи ----------
+  // ---------- крепь ----------
+  // Штрек держится на рамах. Чем длиннее ход и чем дальше последняя рама,
+  // тем выше шанс, что своды сойдутся. Сломать поставленную — сойдутся точно.
+  const PROPS = [];                                  // {x,y,z,yaw,hp}
+  let riskT = 0, warnT = 0;
+  setTimeout(() => propsFromSave(), 0);   // сохранение читается раньше этого блока
+  const PROP_HOLD = 26;                              // метров держит одна рама
+
+  function propsFromSave() {
+    if (!savReady) return;
+    PROPS.length = 0;
+    for (const p of (SAV.props || [])) PROPS.push({ x:p[0], y:p[1], z:p[2], yaw:p[3], hp:1 });
+  }
+  function propsToSave() {
+    SAV.props = PROPS.map(p => [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.yaw.toFixed(2)]);
+  }
+  // насколько ты далеко от последней рамы над тобой
+  function unheld() {
+    let best = 1e9;
+    for (const p of PROPS) {
+      const d = Math.abs(p.y - P.y);
+      if (d < best && Math.hypot(p.x - P.x, p.z - P.z) < 9) best = d;
+    }
+    return Math.min(best, P.y);                      // от устья тоже считается
+  }
+  // риск обвала за секунду: растёт с глубиной и с расстоянием до крепи
+  function caveRisk() {
+    if (P.y < 30) return 0;
+    const far = Math.min(3, Math.max(0, unheld() - PROP_HOLD) / 60);
+    const deep = Math.min(2.5, Math.pow(P.y / 900, 0.7));
+    return Math.min(0.0045, far * deep * 0.0009);    // худший случай — раз в три-четыре минуты
+  }
+  function placeProp() {
+    if ((SAV.prop | 0) <= 0) { flashMsg("КРЕПИ НЕТ", "#e0505f"); return; }
+    if (solidAt(P.x, P.y - EYE, P.z)) { flashMsg("ТУТ НЕ ВСТАНЕТ", "#e0505f"); return; }
+    for (const p of PROPS) if (Math.hypot(p.x-P.x, p.y-P.y, p.z-P.z) < 2.2) {
+      flashMsg("ТУТ УЖЕ СТОИТ", "#e0505f"); return;
+    }
+    SAV.prop--;
+    PROPS.push({ x: P.x, y: P.y, z: P.z, yaw: P.yaw, hp: 1 });
+    propsToSave(); saveGame();
+    flashMsg("КРЕПЬ ПОСТАВЛЕНА · ОСТАЛОСЬ " + SAV.prop, "#ffc14d");
+    thud(true, 0.55);
+  }
+  // сломал раму — своды сходятся сразу, без предупреждения
+  function breakPropNear(X, Y, Z) {
+    for (let i = 0; i < PROPS.length; i++) {
+      const p = PROPS[i];
+      if (Math.hypot(p.x-X, p.y-Y, p.z-Z) > 1.5) continue;
+      PROPS.splice(i, 1); propsToSave(); saveGame();
+      flashMsg("КРЕПЬ СЛОМАНА", "#e0505f");
+      collapseNow(true);
+      return true;
+    }
+    return false;
+  }
+  function riskTick(dt) {
+    if (mode !== "dig") return;
+    const r = caveRisk();
+    if (r <= 0) { warnT = 0; return; }
+    // за десять секунд до — сыплется мелочь и потрескивает
+    warnT += dt * r * 190;
+    if (warnT > 1) {
+      warnT = 0;
+      spawnChips("#6d6478");
+      if (Math.random() < 0.5) thud(false, 0.28);
+      if (Math.random() < 0.14) flashMsg("СВОДЫ ГОВОРЯТ", "#d8b06a");
+    }
+    riskT += dt;
+    if (riskT < 1) return;
+    riskT = 0;
+    if (Math.random() < r) collapseNow(false);
+  }
+  // сам обвал: теряешь то, что не поднял, и людей, и вылетаешь наверх
+  function collapseNow(sure) {
+    if (mode !== "dig") return;
+    const lost = Math.round(cart);
+    cart = 0;
+    if (SAV.men.length && (sure || Math.random() < 0.6)) loseMan();
+    refillAbove(P.y);                                // ход над тобой засыпает
+    goUp();
+    flashMsg(sure ? "ОБВАЛ · СВОДЫ СОШЛИСЬ" : "ОБВАЛ", "#e0505f");
+    caveShake = performance.now() + 2600;
+    rumble();
+    SAV.log = SAV.log || [];
+    saveGame();
+    return lost;
+  }
+  let caveShake = 0;
+  // засыпаем то, что над тобой: сплошная порода на пару метров
+  function refillAbove(y0) {
+    const lyA = Math.max(0, lyOf(y0 - 3.2)), lyB = Math.min(NY - 1, lyOf(y0 - 0.6));
+    for (let ly = lyA; ly <= lyB; ly++) {
+      const base = tyOf(ly) * NZ * NX;
+      for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) {
+        if (Math.hypot(wx(x) - P.x, wz(z) - P.z) > 7) continue;
+        den[base + z * NX + x] = 255;
+      }
+      pushSlice(ly);
+    }
+  }
+  // рамы видно в тоннеле
+  function drawProps(g, W, H) {
+    if (!PROPS.length) return;
+    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
+    const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
+    const ex = P.x, ey = P.y - EYE, ez = P.z;
+    const fov = 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62;
+    const pr = (X, Y, Z) => {
+      const rx = X-ex, ry = Y-ey, rz = Z-ez;
+      const cxv = cy*rx - sy*rz;
+      const cyv = -sy*sp*rx - cp*ry - cy*sp*rz;
+      const czv = sy*cp*rx - sp*ry + cy*cp*rz;
+      if (czv < 0.25) return null;
+      return [W*0.5 + (cxv/czv)*fov*H*0.5, H*0.5 - (cyv/czv)*fov*H*0.5, czv];
+    };
+    for (const p of PROPS) {
+      if (Math.abs(p.y - P.y) > 18 || Math.hypot(p.x-P.x, p.z-P.z) > 18) continue;
+      const s2 = Math.sin(p.yaw), c2 = Math.cos(p.yaw);
+      const hw = 1.15, hh = 1.9;                     // полурама
+      const L = [p.x - c2*hw, p.z + s2*hw], R = [p.x + c2*hw, p.z - s2*hw];
+      const a = pr(L[0], p.y + 0.1, L[1]);
+      const b2 = pr(L[0], p.y - hh, L[1]);
+      const c3 = pr(R[0], p.y - hh, R[1]);
+      const d2 = pr(R[0], p.y + 0.1, R[1]);
+      if (!a || !b2 || !c3 || !d2) continue;
+      const wpx = Math.max(2, 22 / a[2] * (H/560));
+      g.save();
+      g.lineCap = "round"; g.lineJoin = "round";
+      g.strokeStyle = "#3a2a18"; g.lineWidth = wpx * 1.5;
+      g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b2[0],b2[1]);
+      g.lineTo(c3[0],c3[1]); g.lineTo(d2[0],d2[1]); g.stroke();
+      g.strokeStyle = "#7d5c33"; g.lineWidth = wpx;
+      g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b2[0],b2[1]);
+      g.lineTo(c3[0],c3[1]); g.lineTo(d2[0],d2[1]); g.stroke();
+      g.strokeStyle = "#a67c45"; g.lineWidth = Math.max(1, wpx*0.3);
+      g.beginPath(); g.moveTo(b2[0],b2[1]); g.lineTo(c3[0],c3[1]); g.stroke();
+      g.restore();
+    }
+  }
+  // короткая строка посреди экрана
+  let msgTxt = "", msgCol = "#fff", msgEnd = 0;
+  function flashMsg(t, col) { msgTxt = t; msgCol = col || "#fff"; msgEnd = performance.now() + 2200; }
+  function drawMsg(g, W, H) {
+    const left = (msgEnd - performance.now()) / 2200;
+    if (left <= 0) return;
+    g.save();
+    g.globalAlpha = Math.min(1, left * 3) * 0.95;
+    g.textAlign = "center"; g.fillStyle = msgCol;
+    g.font = "600 " + Math.round(Math.min(15, W*0.0135) * uiS()) + "px ui-monospace,monospace";
+    g.fillText(msgTxt, W/2, H*0.30);
+    g.restore();
+  }
+
+  // ---------- мечи ----------  // ---------- мечи ----------
   // Из трещин в полу снизу вверх бьёт то, что прорубает камень насквозь.
   // Оно не приходит внезапно: сначала под ногами начинает гудеть.
   const SWORDS = [];
-  let swPhase = 0, swEnd = 0, swCool = 420, swHit = false;
+  let swPhase = 0, swEnd = 0, swCool = 1500, swHit = false;
   const SW_FROM = 240;                               // выше не бывает
 
   function swordsStart() {
@@ -1449,10 +1624,10 @@
                     ph: Math.random() * 6.28 });
     }
     swPhase = 1; swEnd = performance.now() + 9000; swHit = false;
-    swCool = 520 + Math.random() * 420;
+    swCool = 2200 + Math.random() * 2600;          // редко: за смену от силы раз
     hazEl.className = "haz on sword";
     hazEl.querySelector("b").textContent = "ПОД НОГАМИ";
-    hazEl.querySelector("u").textContent = "гудит — уходи с этого места";
+    hazEl.querySelector("u").textContent = "УХОДИ С ЭТОГО МЕСТА";
     swordRumble();
   }
   function swordsTick(dt) {
@@ -1464,19 +1639,20 @@
     }
     const left = (swEnd - performance.now()) / 1000;
     if (swPhase === 1) {
-      shake = Math.max(shake, 1.6 + (9 - left) * 0.8);           // дрожь растёт
+      shake = Math.max(shake, 2.2 + (9 - left) * 1.9);           // дрожь растёт до невозможной
       if (left <= 0) {
         swPhase = 2; swEnd = performance.now() + 1500;
+        wetFlashRed();
         hazEl.querySelector("u").textContent = "";
         swordStrike();
       }
     } else if (swPhase === 2) {
-      shake = Math.max(shake, 9);
+      shake = Math.max(shake, 16);
       // пока стоят — режут всё, что рядом
       if (!swHit) for (const sw of SWORDS) {
         if (Math.hypot(sw.x - P.x, sw.z - P.z) < 0.85) { swHit = true; break; }
       }
-      if (left <= 0) { swPhase = 3; swEnd = performance.now() + 900; }
+      if (left <= 0) { swPhase = 3; swEnd = performance.now() + 900; swordAfter(); }
     } else {
       if (left <= 0) {
         swPhase = 0; SWORDS.length = 0;
@@ -1509,57 +1685,147 @@
       if (czv < 0.2) return null;
       return [W*0.5 + (cxv/czv)*fov*H*0.5, H*0.5 - (cyv/czv)*fov*H*0.5, czv];
     };
-    for (const sw of SWORDS) {
-      const base = P.y + 1.45;
-      if (swPhase === 1) {                            // трещина светится и дышит
-        const p0 = proj(sw.x, base, sw.z); if (!p0) continue;
-        const k = Math.min(1, (9 - left) / 9);
-        const r = Math.max(3, 26 / p0[2] * (H/560)) * (0.7 + 0.3*Math.sin(now*6 + sw.ph));
-        const gr = g.createRadialGradient(p0[0], p0[1], 0, p0[0], p0[1], r*2.6);
-        gr.addColorStop(0, `rgba(255,${110 - k*60},${70 - k*50},${0.30 + k*0.45})`);
+
+    if (swPhase === 1) {
+      // весь кадр наливается красным, и чем ближе, тем сильнее
+      const k = Math.min(1, (9 - left) / 9);
+      const v = g.createRadialGradient(W*0.5, H*0.62, W*0.18, W*0.5, H*0.62, W*0.95);
+      v.addColorStop(0, "rgba(0,0,0,0)");
+      v.addColorStop(1, `rgba(${120 + k*90},${18},${14},${0.14 + k*0.40})`);
+      g.fillStyle = v; g.fillRect(0, 0, W, H);
+      for (const sw of SWORDS) {
+        const p0 = proj(sw.x, P.y + 1.45, sw.z); if (!p0) continue;
+        const r = Math.max(4, 30 / p0[2] * (H/560)) * (0.7 + 0.3*Math.sin(now*7 + sw.ph));
+        const gr = g.createRadialGradient(p0[0], p0[1], 0, p0[0], p0[1], r*3.0);
+        gr.addColorStop(0, `rgba(255,${90 - k*60},${50 - k*40},${0.42 + k*0.5})`);
+        gr.addColorStop(0.4, `rgba(${190 + k*60},30,18,${0.22 + k*0.3})`);
         gr.addColorStop(1, "rgba(0,0,0,0)");
         g.fillStyle = gr;
-        g.beginPath(); g.ellipse(p0[0], p0[1], r*2.6, r*0.9, 0, 0, 7); g.fill();
-        continue;
+        g.beginPath(); g.ellipse(p0[0], p0[1], r*3.0, r*1.0, 0, 0, 7); g.fill();
+        // трещина расходится
+        g.globalAlpha = 0.5 + k*0.5;
+        g.strokeStyle = `rgb(255,${120 - k*70},${70 - k*50})`;
+        g.lineWidth = Math.max(1, r*0.10);
+        for (let i = 0; i < 5; i++) {
+          const a = sw.ph + i * 1.257;
+          g.beginPath(); g.moveTo(p0[0], p0[1]);
+          g.lineTo(p0[0] + Math.cos(a)*r*(1.4 + (i%3)*0.5), p0[1] + Math.sin(a)*r*0.5);
+          g.stroke();
+        }
+        g.globalAlpha = 1;
       }
-      // клинок: вылезает, стоит, уходит
+      return;
+    }
+
+    // клинок: раскалённый, кривой, с шипами вразнобой
+    for (const sw of SWORDS) {
+      const base = P.y + 1.45;
       const out = swPhase === 2
-        ? Math.min(1, (1.5 - left) / 0.12)
+        ? Math.min(1, (1.5 - left) / 0.10)
         : Math.max(0, left / 0.9);
-      const top = base - sw.len * out;
-      const a = proj(sw.x, base, sw.z), b2 = proj(sw.x, top, sw.z);
-      if (!a || !b2) continue;
-      const wpx = Math.max(2, sw.w * 260 / a[2] * (H/560));
+      if (out <= 0.01) continue;
+      const seg = 12, pts = [];
+      for (let i = 0; i <= seg; i++) {
+        const t = i / seg;
+        const yy = base - sw.len * out * t;
+        // ствол уводит вбок, и не по дуге, а рывками
+        const bend = Math.sin(t*4.1 + sw.ph)*0.20 + Math.sin(t*9.3 + sw.ph*2)*0.09;
+        const p2 = proj(sw.x + bend, yy, sw.z + Math.cos(t*3.3 + sw.ph)*0.13);
+        pts.push(p2);
+      }
+      if (!pts[0]) continue;
+      const heat = swPhase === 2 ? 1 : Math.max(0, left / 0.9);
+      const w0 = Math.max(2.5, sw.w * 300 / pts[0][2] * (H/560));
+
       g.save();
-      g.globalAlpha = 0.96;
-      // тело клинка
-      const lg = g.createLinearGradient(a[0]-wpx, 0, a[0]+wpx, 0);
-      lg.addColorStop(0, "#14121a"); lg.addColorStop(.42, "#5d5a6b");
-      lg.addColorStop(.55, "#9aa0ae"); lg.addColorStop(1, "#0e0c12");
-      g.fillStyle = lg;
+      // свечение вокруг
+      g.globalAlpha = 0.55 * heat;
+      g.strokeStyle = `rgba(255,60,30,0.55)`;
+      g.lineWidth = w0 * 2.6; g.lineCap = "round"; g.lineJoin = "round";
+      g.filter = `blur(${Math.max(2, w0*0.9)}px)`;
       g.beginPath();
-      g.moveTo(a[0]-wpx, a[1]); g.lineTo(b2[0]-wpx*0.18, b2[1]);
-      g.lineTo(b2[0]+wpx*0.18, b2[1]); g.lineTo(a[0]+wpx, a[1]);
-      g.closePath(); g.fill();
-      // зазубрины: не лезвие, а что-то, чему всё равно, чем резать
-      const steps = 9;
-      g.fillStyle = "#7b8290";
-      for (let i = 1; i < steps; i++) {
-        const t = i / steps;
-        const px2 = a[0] + (b2[0]-a[0])*t, py2 = a[1] + (b2[1]-a[1])*t;
-        const ww = wpx * (1 - t*0.8), side = i % 2 ? 1 : -1;
+      let started = false;
+      for (const p2 of pts) { if (!p2) continue;
+        if (!started) { g.moveTo(p2[0], p2[1]); started = true; } else g.lineTo(p2[0], p2[1]); }
+      g.stroke();
+      g.filter = "none";
+      g.globalAlpha = 1;
+
+      // тело: тёмное железо, раскалённое изнутри
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b2 = pts[i+1]; if (!a || !b2) continue;
+        const t = i / seg;
+        const ww = w0 * (1 - t*0.72);
+        const lg = g.createLinearGradient(a[0]-ww, a[1], a[0]+ww, a[1]);
+        lg.addColorStop(0, "#2a0806");
+        lg.addColorStop(.34, "#8f1a10");
+        lg.addColorStop(.52, `rgb(255,${90 + 60*Math.sin(now*9 + i)},60)`);
+        lg.addColorStop(.72, "#a32014");
+        lg.addColorStop(1, "#1c0605");
+        g.fillStyle = lg;
         g.beginPath();
-        g.moveTo(px2 + side*ww, py2);
-        g.lineTo(px2 + side*ww*2.3, py2 - ww*0.9);
-        g.lineTo(px2 + side*ww*0.9, py2 - ww*1.6);
+        g.moveTo(a[0]-ww, a[1]); g.lineTo(b2[0]-ww*0.82, b2[1]);
+        g.lineTo(b2[0]+ww*0.82, b2[1]); g.lineTo(a[0]+ww, a[1]);
         g.closePath(); g.fill();
       }
-      // холодный блик по кромке
-      g.globalAlpha = 0.5;
-      g.strokeStyle = "#cfd6e4"; g.lineWidth = Math.max(1, wpx*0.16);
-      g.beginPath(); g.moveTo(a[0]+wpx*0.2, a[1]); g.lineTo(b2[0]+wpx*0.05, b2[1]); g.stroke();
+      // шипы: разной длины, в обе стороны, без всякого порядка
+      for (let i = 1; i < pts.length - 1; i++) {
+        const a = pts[i]; if (!a) continue;
+        const t = i / seg;
+        const ww = w0 * (1 - t*0.72);
+        const rr = h3(Math.round(sw.x*13) + i, Math.round(sw.z*17), i*7);
+        const cnt = rr > 0.72 ? 2 : 1;
+        for (let q = 0; q < cnt; q++) {
+          const side = (h3(i*3+q, Math.round(sw.x*7), q) > 0.5) ? 1 : -1;
+          const ln = ww * (1.4 + rr*3.2 + q*0.7);
+          const up = ww * (0.5 + rr*1.9);
+          const gl2 = g.createLinearGradient(a[0], a[1], a[0]+side*ln, a[1]-up);
+          gl2.addColorStop(0, "#c92a16");
+          gl2.addColorStop(0.55, "#6e1109");
+          gl2.addColorStop(1, "#210705");
+          g.fillStyle = gl2;
+          g.beginPath();
+          g.moveTo(a[0] + side*ww*0.7, a[1] + ww*0.5);
+          g.lineTo(a[0] + side*ln, a[1] - up);
+          g.lineTo(a[0] + side*ww*0.5, a[1] - ww*1.1);
+          g.closePath(); g.fill();
+        }
+      }
+      // раскалённая жила по центру
+      g.globalAlpha = 0.85 * heat;
+      g.strokeStyle = `rgb(255,${170 + 60*Math.sin(now*11 + sw.ph)},120)`;
+      g.lineWidth = Math.max(1, w0*0.22);
+      g.beginPath(); started = false;
+      for (const p2 of pts) { if (!p2) continue;
+        if (!started) { g.moveTo(p2[0], p2[1]); started = true; } else g.lineTo(p2[0], p2[1]); }
+      g.stroke();
       g.restore();
     }
+  }
+  // короткая красная вспышка в момент выхода
+  let redFlash = 0;
+  function wetFlashRed() { redFlash = performance.now() + 340; }
+  function drawRedFlash(g, W, H) {
+    const left = (redFlash - performance.now()) / 340;
+    if (left <= 0) return;
+    g.save();
+    g.globalAlpha = left * 0.55;
+    g.fillStyle = "#c8180c"; g.fillRect(0, 0, W, H);
+    g.restore();
+  }
+  // после: гул уходит вниз и остаётся звенящая пустота
+  function swordAfter() {
+    if (!AC) return;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(190, AC.currentTime);
+    o.frequency.exponentialRampToValueAtTime(21, AC.currentTime + 2.4);
+    const f2 = AC.createBiquadFilter(); f2.type = "lowpass"; f2.frequency.value = 420;
+    g.gain.setValueAtTime(0.22 * (SET.vol/100) * (SET.sfx/100), AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 2.6);
+    o.connect(f2); f2.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime + 2.8);
+    hush = Math.max(hush, 4.5);                      // после них ничего не слышно
   }
   function swordRumble() {
     if (!AC) return;
@@ -1568,10 +1834,22 @@
     o.frequency.linearRampToValueAtTime(46, AC.currentTime + 9);
     const f2 = AC.createBiquadFilter(); f2.type = "lowpass"; f2.frequency.value = 120;
     g.gain.setValueAtTime(0.0001, AC.currentTime);
-    g.gain.linearRampToValueAtTime(0.22 * (SET.vol/100) * (SET.sfx/100), AC.currentTime + 8.6);
+    g.gain.linearRampToValueAtTime(0.34 * (SET.vol/100) * (SET.sfx/100), AC.currentTime + 8.6);
     g.gain.linearRampToValueAtTime(0.0001, AC.currentTime + 10.4);
     o.connect(f2); f2.connect(g); g.connect(AC.destination);
     o.start(); o.stop(AC.currentTime + 10.6);
+    // и тонкий вой поверх: он и есть то, от чего встают волосы
+    const w = AC.createOscillator(), wg = AC.createGain(), wf = AC.createBiquadFilter();
+    w.type = "sawtooth";
+    w.frequency.setValueAtTime(310, AC.currentTime + 3.5);
+    w.frequency.exponentialRampToValueAtTime(1450, AC.currentTime + 9);
+    wf.type = "bandpass"; wf.frequency.value = 900; wf.Q.value = 7;
+    wg.gain.setValueAtTime(0.0001, AC.currentTime);
+    wg.gain.setValueAtTime(0.0001, AC.currentTime + 3.4);
+    wg.gain.linearRampToValueAtTime(0.15 * (SET.vol/100) * (SET.sfx/100), AC.currentTime + 8.9);
+    wg.gain.linearRampToValueAtTime(0.0001, AC.currentTime + 9.4);
+    w.connect(wf); wf.connect(wg); wg.connect(AC.destination);
+    w.start(); w.stop(AC.currentTime + 9.6);
   }
   function swordHiss() {
     if (!AC) return;
@@ -2261,7 +2539,7 @@
   let waiting = null;
   const BINDS = [["fwd","Вперёд"],["back","Назад"],["left","Влево"],["right","Вправо"],
     ["jump","Прыжок"],["run","Бежать"],["dig","Долбить"],["look","Оглянуться"],
-    ["up","Наверх в штрек"],["inv","Инвентарь"],["menu","Меню"]];
+    ["prop","Поставить крепь"],["up","Наверх в штрек"],["inv","Инвентарь"],["menu","Меню"]];
   function buildUI() {
     const ctl = document.getElementById("p-ctl"); ctl.innerHTML = "";
     BINDS.forEach(([k, label]) => {
@@ -2352,6 +2630,7 @@
       waiting = null; return;
     }
     if (mode === "note") { e.preventDefault(); closeNote(); return; }
+    if (e.code === SET.bind.prop) { e.preventDefault(); placeProp(); }
     if (e.code === SET.bind.up) { e.preventDefault(); goUp(); }
     if (e.code === SET.bind.menu) { e.preventDefault(); openMenu(!menu.classList.contains("open")); }
     if (e.code === SET.bind.inv) {
@@ -3479,7 +3758,8 @@
     else if (digging && digCd <= 0) {
       const t = aim();
       if (t) {
-        const dk = inDark(t[1]);
+        const broke = breakPropNear(t[0], t[1], t[2]);
+        const dk = broke || inDark(t[1]);            // по раме бьют, а не копают
         digCd = dk ? .09 : Math.max(.1, .34 - powOf() * .03); swing = 1;
         swDur = Math.max(.15, digCd);
         carve(t[0], t[1], t[2], (0.40 + powOf() * 0.13) * (buff.dmg > 0 ? 1.5 : 1) * (buff.soft > 0 ? 1.35 : 1));
@@ -3490,6 +3770,7 @@
           spawnChips(t[1] < 0 ? "#9a9088" : t[1] < 4 ? "#6d4d2f" : "#8a8290");
         }
         const nd = dk ? null : nodeNear(t[0], t[1], t[2]);
+        if (broke) { digCd = .6; }
         if (nd) {
           nd.hit++; blackOre += 6; cart = Math.min(capOf(), cart + 6);
           thud(false, .30);
@@ -3515,7 +3796,7 @@
     shake = Math.max(0, shake - dt * 34);
     dreadTick(dt); countTick();
     bottomTick();
-    dropsTick(dt); wailTick(dt); nuggetTick(); swordsTick(dt);
+    dropsTick(dt); wailTick(dt); nuggetTick(); swordsTick(dt); riskTick(dt);
     tideTick(dt); gritTick(dt); hazTick(dt); hazSound(dt);
     stepTick(dt, !!(fw || st), down("run")); dripTick(dt); droneTick();
     if (!sawPoint && PT && ptDist() < 18) { sawPoint = true; SAV.seen.cosmic = 1; saveGame(); }
@@ -3577,11 +3858,14 @@
       fxc.fillRect(p2.x, p2.y, p2.s, p2.s);
     }
     fxc.globalAlpha = 1;
+    drawProps(fxc, fx.width, fx.height);
     drawSwords(fxc, fx.width, fx.height);
+    drawRedFlash(fxc, fx.width, fx.height);
     drawDrops(fxc, fx.width, fx.height);
     drawCore(fxc, fx.width, fx.height);
     drawTook(fxc, fx.width, fx.height);
     drawLost(fxc, fx.width, fx.height);
+    drawMsg(fxc, fx.width, fx.height);
     drawGrit(fxc);
     drawDread(fxc, fx.width, fx.height, dt);
     const ta = tideAmt();
