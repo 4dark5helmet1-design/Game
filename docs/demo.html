@@ -482,10 +482,18 @@
   }
   function noteCut(X, Y, Z, R) {
     if (CUTS.length / 4 >= CUT_MAX) {                // самые старые прореживаем: там уже пусто
-      const keep = [];
-      for (let i = 0; i < CUTS.length; i += 4)
-        if (i >= CUTS.length / 2 || (i / 4) % 2 === 0) keep.push(CUTS[i], CUTS[i+1], CUTS[i+2], CUTS[i+3]);
-      CUTS.length = 0; CUTS.push(...keep); reindexCuts();
+      // Сдвигаем на месте. Раньше тут был push(...keep), и на шестидесяти
+      // тысячах ударов раскрытие массива в аргументы рвало стек намертво.
+      const half = CUTS.length / 2;
+      let w = 0;
+      for (let i = 0; i < CUTS.length; i += 4) {
+        if (i < half && (i / 4) % 2 !== 0) continue;
+        CUTS[w] = CUTS[i]; CUTS[w + 1] = CUTS[i + 1];
+        CUTS[w + 2] = CUTS[i + 2]; CUTS[w + 3] = CUTS[i + 3];
+        w += 4;
+      }
+      CUTS.length = w;
+      reindexCuts();
     }
     CUTS.push(X, Y, Z, R);
     indexCut(CUTS.length / 4 - 1);
