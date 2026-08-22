@@ -702,7 +702,9 @@
         genSlice(0); pushSlice(0);
       }
     }
-    refreshFeatures(); slabDirty = true;
+    refreshFeatures();
+    if (savReady) seedNuggets();      // подвалы въезжают в окно на спуске, а не только на старте
+    slabDirty = true;
     return true;
   }
   function windowTick() {
@@ -3741,7 +3743,8 @@
       SAV.bank = 0; SAV.pick = 1; SAV.lamp = 1; SAV.cart = 1; SAV.crew = 0;
       SAV.best = 0; SAV.men = []; SAV.notes = {}; SAV.seen = { end: 1, cosmic: SAV.seen.cosmic };
       saveGame();
-      WSEED++; CUTS.length = 0; CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
+      WSEED++; PROPS.length = 0; SAV.props = [];
+      CUTS.length = 0; CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
       genWorld(); uploadWorld(); seedNotes(); seedCosmic();
       cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
       for (const k in fired) delete fired[k];
@@ -3838,6 +3841,7 @@
     saveGame();
 
     WSEED++;                                          // новая смена — новый забой
+    PROPS.length = 0; SAV.props = [];                 // поставленное осталось в засыпанной шахте
     CUTS.length = 0; CUTB.clear(); Y0 = -4.0; ROT = 0; slabDirty = true;
     genWorld(); uploadWorld(); seedNotes();
     cart = 0; retPos = null; blackOre = 0; nodeBreaks = 0; PT = null; depthLag = 0;
