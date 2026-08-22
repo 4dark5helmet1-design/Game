@@ -1402,7 +1402,10 @@
   const shardMul = () => 1 + Math.pow(Math.max(0, SAV.shards), 0.62) * 0.35;
   // чем глубже, тем ценнее порода: иначе спуск не окупается
   const oreMul = () => 1 + Math.pow(Math.max(0, P.y) / 55, 0.88);
-  const capOf  = () => Math.round((60 + SAV.cart * 62) * shardMul()
+  // Вместимость обязана расти так же, как доход, иначе игра становится лифтом:
+  // руда за удар — это сила КРАТНО глубине, а вагонетка росла сложением.
+  // На 1200 м она наполнялась за 0.4 с при поездке в 16 с.
+  const capOf  = () => Math.round(80 * Math.pow(1.55, SAV.cart - 1) * shardMul()
                                  * (1 + passBonus("СПИНА") * 0.06 + beltBonus("cap"))
                                  * (buff.cap > 0 ? 2 : 1));
   const lampR  = () => (1 + SAV.lamp * 0.34) * (1 + passBonus("ГЛАЗ") * 0.04);
@@ -3110,7 +3113,9 @@
   let mode = "dig", liftEnd = 0, liftDir = 1, retPos = null;
   let downT0 = performance.now();                 // когда ты в последний раз спустился
 
-  const fmt = n => n >= 1000 ? (n / 1000).toFixed(1) + "K" : Math.round(n);
+  const fmt = n => n >= 1e9 ? (n / 1e9).toFixed(1) + "G"
+                 : n >= 1e6 ? (n / 1e6).toFixed(1) + "M"
+                 : n >= 1000 ? (n / 1000).toFixed(1) + "K" : Math.round(n);
 
   const ROWS = [
     { k:"pick", n:"КИРКА",   d:() => `ур. ${SAV.pick} · ${(powOf()*100|0)}% силы` },
