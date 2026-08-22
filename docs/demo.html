@@ -113,6 +113,29 @@
 
 
   /* --- меню --- */
+  /* отдельные экраны: инвентарь и верстак живут сами по себе, не в настройках */
+  .sheet{position:absolute;inset:0;background:rgba(7,6,11,.94);backdrop-filter:blur(8px);
+    display:none;flex-direction:column;z-index:22}
+  .sheet.open{display:flex}
+  .sheet-top{display:flex;justify-content:space-between;align-items:center;
+    padding:14px 16px;border-bottom:1px solid #2a2333;flex:0 0 auto}
+  .sheet-top b{font-size:12px;letter-spacing:.3em;color:var(--lamp)}
+  .sheet-top .x{font-size:17px;color:#a79fbd;cursor:pointer;padding:0 6px}
+  .sheet-top .x:active{color:#fff}
+  .sheet-body{flex:1;min-height:0;overflow:auto;padding:14px 16px 20px}
+  .sheet-note{font-size:11px;color:#9b93b0;letter-spacing:.05em;margin-top:14px}
+  .ctabs{display:flex;gap:6px;padding:10px 16px 0;flex:0 0 auto;flex-wrap:wrap}
+  .ctabs b{font-size:10.5px;letter-spacing:.14em;padding:8px 13px;border-radius:8px;cursor:pointer;
+    background:rgba(255,255,255,.05);color:#a79fbd;border:1px solid transparent}
+  .ctabs b.on{background:rgba(255,193,77,.14);color:var(--lamp);border-color:rgba(255,193,77,.4)}
+  .crows{display:flex;flex-direction:column}
+  /* подсказка «нажми» рядом с предметом в мире */
+  .use{position:absolute;left:50%;top:34%;transform:translateX(-50%) scale(var(--uis,1));
+    text-align:center;pointer-events:none;opacity:0;transition:opacity .22s;z-index:11}
+  .use.on{opacity:1}
+  .use b{display:block;font-size:12px;letter-spacing:.26em;color:var(--lamp);text-shadow:0 1px 8px #000}
+  .use u{display:block;margin-top:4px;font-size:9.5px;letter-spacing:.16em;color:#cfc7dd;
+    text-decoration:none;text-shadow:0 1px 6px #000}
   .menu{position:absolute;inset:0;background:rgba(6,5,10,.9);backdrop-filter:blur(7px);
     display:none;flex-direction:column;padding:16px;z-index:20;overflow:auto}
   .menu.open{display:flex}
@@ -248,17 +271,26 @@
   <div class="menu" id="menu">
     <div class="tabs">
       <b data-p="ctl" class="on">УПРАВЛЕНИЕ</b><b data-p="game">ИГРА</b>
-      <b data-p="vid">ГРАФИКА</b><b data-p="snd">ЗВУК</b><b data-p="inv">ИНВЕНТАРЬ</b>
+      <b data-p="vid">ГРАФИКА</b><b data-p="snd">ЗВУК</b>
     </div>
     <div class="pane on" id="p-ctl"></div>
     <div class="pane" id="p-game"></div>
     <div class="pane" id="p-vid"></div>
     <div class="pane" id="p-snd"></div>
-    <div class="pane" id="p-inv"><div class="inv" id="invgrid"></div>
-      <p style="font-size:11px;color:#9b93b0;letter-spacing:.05em;margin-top:12px">
-        Нажми на предмет, чтобы положить его в выбранную ячейку пояса.</p></div>
+
     <div class="mbtns"><b id="mreset">СБРОСИТЬ</b><b class="pri" id="mclose">ЗАКРЫТЬ</b></div>
   </div>
+  <div class="sheet" id="invsheet">
+    <div class="sheet-top"><b>СНАРЯЖЕНИЕ</b><span class="x" id="invx">✕</span></div>
+    <div class="sheet-body"><div class="inv" id="invgrid"></div>
+      <p class="sheet-note">Нажми на предмет, чтобы положить его в выбранную ячейку пояса.</p></div>
+  </div>
+  <div class="sheet" id="craftsheet">
+    <div class="sheet-top"><b>ВЕРСТАК</b><span class="x" id="craftx">✕</span></div>
+    <div class="ctabs" id="ctabs"></div>
+    <div class="sheet-body"><div class="crows" id="crows"></div></div>
+  </div>
+  <div class="use" id="usehint"><b>ВЕРСТАК</b><u>E — открыть</u></div>
   <div class="haz" id="haz"><b>ВОДА</b><u>затапливает</u></div>
   <div class="cross"></div>
   <div class="toolname" id="toolname">КИРКА</div>
@@ -1085,7 +1117,7 @@
   tap("tjump", () => { if (P.ground) P.vy = -7.2; });
   tap("tbelt", () => flashBelt());
   tap("tprop", () => placeProp());
-  tap("tup",   () => goUp());
+  tap("tup",   () => { if (nearBench()) openCraft(true); else goUp(); });
 
   // во весь экран — на телефоне без этого играть нельзя
   const gameEl = document.getElementById("game");
@@ -2734,6 +2766,22 @@
     menu.classList.toggle("open", on);
     if (on && document.pointerLockElement === cv) document.exitPointerLock();
   }
+  // инвентарь — свой экран, а не вкладка настроек
+  const invSheet = document.getElementById("invsheet");
+  const craftSheet = document.getElementById("craftsheet");
+  function openInv(on) {
+    if (on) { buildInv(); openMenu(false); openCraft(false); }
+    invSheet.classList.toggle("open", on);
+    if (on && document.pointerLockElement === cv) document.exitPointerLock();
+  }
+  function openCraft(on) {
+    if (on) { buildCraft(); openMenu(false); invSheet.classList.remove("open"); }
+    craftSheet.classList.toggle("open", on);
+    if (on && document.pointerLockElement === cv) document.exitPointerLock();
+  }
+  const anySheet = () => invSheet.classList.contains("open") || craftSheet.classList.contains("open");
+  document.getElementById("invx").onclick = () => openInv(false);
+  document.getElementById("craftx").onclick = () => openCraft(false);
   document.getElementById("gearbtn").onclick = () => openMenu(true);
   document.getElementById("mclose").onclick = () => openMenu(false);
   document.getElementById("mreset").onclick = () => {
@@ -2804,6 +2852,10 @@
     row(sd, "Общая громкость", "", slider("vol", 0, 100, "%"));
     row(sd, "Эффекты", "", slider("sfx", 0, 100, "%"));
 
+  }
+
+  // инвентарь строится отдельно от настроек — он теперь свой экран
+  function buildInv() {
     const ig = document.getElementById("invgrid"); ig.innerHTML = "";
     const sec = (title, hint) => {
       const h = document.createElement("div"); h.className = "isec";
@@ -2860,6 +2912,7 @@
       b.innerHTML = `ур. ${lv}<i style="display:block;font-style:normal;font-size:7.5px;color:#948ba9">${Math.round(prog*100)}%</i>`;
       d.append(sp, b); wp.append(d);
     });
+
   }
 
   addEventListener("keydown", e => {
@@ -2871,11 +2924,18 @@
     }
     if (mode === "note") { e.preventDefault(); closeNote(); return; }
     if (e.code === SET.bind.prop) { e.preventDefault(); placeProp(); }
-    if (e.code === SET.bind.up) { e.preventDefault(); goUp(); }
+    if (e.code === SET.bind.up) {
+      e.preventDefault();
+      if (nearBench()) openCraft(true); else goUp();
+    }
     if (e.code === SET.bind.menu) { e.preventDefault(); openMenu(!menu.classList.contains("open")); }
     if (e.code === SET.bind.inv) {
-      e.preventDefault(); openMenu(true);
-      document.querySelector('.tabs b[data-p="inv"]').click();
+      e.preventDefault();
+      openInv(!invSheet.classList.contains("open"));
+      return;
+    }
+    if (e.code === "Escape" && anySheet()) {
+      e.preventDefault(); openInv(false); openCraft(false); return;
     }
     const n = parseInt(e.key, 10);
     if (n >= 1 && n <= 4) pickSlot(n - 1);
@@ -2970,7 +3030,7 @@
     const madeN = Object.keys(SAV.mades || {}).length + Object.keys(SAV.madeg || {}).length;
     cf.innerHTML = `<span class="n">ВЕРСТАК</span><span class="p">${madeN} / ${ACTIVE.length + GEARS.length}</span>` +
                    `<span class="s">собрать скилл или вещь из руды</span>`;
-    cf.onclick = () => buildCraft();
+    cf.onclick = () => openCraft(true);
     hubRows.append(cf);
 
     const pr = document.createElement("div");
@@ -3019,51 +3079,138 @@
     }).join(" · ");
   }
   let craftTab = 0;
+  const CTABS = ["СКИЛЛЫ", "ВЕЩИ", "СКЛАД"];
   function buildCraft() {
-    hubRows.innerHTML = "";
-    const back = document.createElement("div");
-    back.className = "hrow can";
-    back.innerHTML = '<span class="n">← НАЗАД</span><span class="s">к снаряжению</span>';
-    back.onclick = () => buildHub();
-    hubRows.append(back);
+    const tabsEl = document.getElementById("ctabs");
+    tabsEl.innerHTML = "";
+    CTABS.forEach((t, k) => {
+      const b = document.createElement("b");
+      b.textContent = t;
+      b.className = k === craftTab ? "on" : "";
+      b.onclick = () => { craftTab = k; buildCraft(); };
+      tabsEl.append(b);
+    });
 
-    const tabs = document.createElement("div");
-    tabs.className = "hrow can";
-    tabs.innerHTML = '<span class="n">ВЕРСТАК</span>' +
-      '<span class="p">' + ["СКИЛЛЫ", "ВЕЩИ", "СКЛАД"][craftTab] + '</span>' +
-      '<span class="s">нажми, чтобы переключить</span>';
-    tabs.onclick = () => { craftTab = (craftTab + 1) % 3; buildCraft(); };
-    hubRows.append(tabs);
-
+    const rows = document.getElementById("crows");
+    rows.innerHTML = "";
     if (craftTab === 2) {
       ORES.forEach(o => {
-        const d = document.createElement("div");
         const n = haveOre(o.id);
+        const d = document.createElement("div");
         d.className = "hrow" + (n ? " can" : " max");
         d.innerHTML = '<span class="n" style="color:' + (n ? o.g : "#8c84a4") + '">' + o.n + "</span>" +
                       '<span class="p">' + fmt(n) + "</span>" +
                       '<span class="s">за кусок ' + o.price + " руды</span>";
-        hubRows.append(d);
+        rows.append(d);
       });
       return;
     }
-
     const list = craftTab === 0 ? ACTIVE : GEARS;
     const key = craftTab === 0 ? "mades" : "madeg";
     SAV[key] = SAV[key] || {};
-    list.forEach((it, i) => {
-      const rec = it[2], has = SAV[key][i], ok = canMake(rec);
+    list.forEach((it, i2) => {
+      const rec = it[2], has = SAV[key][i2], ok = canMake(rec);
       const d = document.createElement("div");
       d.className = "hrow" + (has ? " max" : ok ? " can" : "");
       d.innerHTML = '<span class="n">' + it[0] + "</span>" +
                     '<span class="p">' + (has ? "ЕСТЬ" : ok ? "СОБРАТЬ" : "—") + "</span>" +
                     '<span class="s">' + it[1] + "<br>" + recText(rec) + "</span>";
       if (!has && ok) d.onclick = () => {
-        payFor(rec); SAV[key][i] = 1; saveGame(); buildCraft(); thud(false, 1.4);
+        payFor(rec); SAV[key][i2] = 1; saveGame(); buildCraft(); thud(false, 1.4);
       };
-      hubRows.append(d);
+      rows.append(d);
     });
   }
+
+  // ---------- верстак стоит в подвале ----------
+  // Не пункт меню, а вещь: доски, тиски, разложенная руда. Подходишь — открываешь.
+  const BENCH = { x: 3.1, y: -0.05, z: 2.4 };
+  const nearBench = () =>
+    P.y < 1.8 && Math.hypot(BENCH.x - P.x, BENCH.z - P.z) < 3.0;
+  // видно ли его отсюда: если между глазом и столом порода, рисовать нечего
+  function benchSeen() {
+    const ex = P.x, ey = P.y - EYE, ez = P.z;
+    const dx = BENCH.x - ex, dy = (BENCH.y - 0.5) - ey, dz = BENCH.z - ez;
+    const d = Math.hypot(dx, dy, dz);
+    if (d > 16) return 0;
+    const n = Math.ceil(d / 0.22);
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      if (solidAt(ex + dx*t, ey + dy*t, ez + dz*t)) return 0;
+    }
+    return Math.max(0.25, 1 - d / 14);              // дальше — темнее
+  }
+  const useEl = document.getElementById("usehint");
+  function benchTick() {
+    useEl.classList.toggle("on", mode === "dig" && nearBench() && !anySheet());
+  }
+  function drawBench(g, W, H) {
+    if (P.y > 6) return;
+    const vis = benchSeen();
+    if (!vis) return;
+    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
+    const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
+    const ex = P.x, ey = P.y - EYE, ez = P.z;
+    const fov = 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62;
+    const pr = (X, Y, Z) => {
+      const rx = X-ex, ry = Y-ey, rz = Z-ez;
+      const cxv = cy*rx - sy*rz;
+      const cyv = -sy*sp*rx - cp*ry - cy*sp*rz;
+      const czv = sy*cp*rx - sp*ry + cy*cp*rz;
+      if (czv < 0.25) return null;
+      return [W*0.5 + (cxv/czv)*fov*H*0.5, H*0.5 - (cyv/czv)*fov*H*0.5, czv];
+    };
+    const hw = 0.62, hd = 0.44, top = BENCH.y - 0.95, foot = BENCH.y;
+    const C = [
+      pr(BENCH.x-hw, top,  BENCH.z-hd), pr(BENCH.x+hw, top,  BENCH.z-hd),
+      pr(BENCH.x+hw, top,  BENCH.z+hd), pr(BENCH.x-hw, top,  BENCH.z+hd),
+      pr(BENCH.x-hw, foot, BENCH.z-hd), pr(BENCH.x+hw, foot, BENCH.z-hd),
+      pr(BENCH.x+hw, foot, BENCH.z+hd), pr(BENCH.x-hw, foot, BENCH.z+hd)
+    ];
+    if (C.some(c => !c)) return;
+    const near = nearBench();
+    g.save();
+    g.globalAlpha = vis;
+    // тень на полу
+    const sh = [pr(BENCH.x-hw*1.1, foot, BENCH.z-hd*1.1), pr(BENCH.x+hw*1.1, foot, BENCH.z-hd*1.1),
+                pr(BENCH.x+hw*1.1, foot, BENCH.z+hd*1.1), pr(BENCH.x-hw*1.1, foot, BENCH.z+hd*1.1)];
+    if (!sh.some(c => !c)) {
+      g.save(); g.globalAlpha = vis * 0.42; g.filter = "blur(6px)";
+      g.fillStyle = "#000";
+      g.beginPath(); g.moveTo(sh[0][0], sh[0][1]);
+      for (let i2 = 1; i2 < 4; i2++) g.lineTo(sh[i2][0], sh[i2][1]);
+      g.closePath(); g.fill(); g.restore();
+    }
+    // ножки
+    g.strokeStyle = "#4a3418"; g.lineWidth = Math.max(2, 26 / C[0][2] * (H/560));
+    for (const [a, b2] of [[0,4],[1,5],[2,6],[3,7]]) {
+      g.beginPath(); g.moveTo(C[a][0], C[a][1]); g.lineTo(C[b2][0], C[b2][1]); g.stroke();
+    }
+    // столешница
+    const gr = g.createLinearGradient(C[0][0], C[0][1], C[2][0], C[2][1]);
+    gr.addColorStop(0, near ? "#c08d4a" : "#9a7038");
+    gr.addColorStop(0.55, near ? "#8d6530" : "#6f4f24");
+    gr.addColorStop(1, near ? "#5d4020" : "#48311a");
+    g.fillStyle = gr;
+    g.beginPath();
+    g.moveTo(C[0][0], C[0][1]); g.lineTo(C[1][0], C[1][1]);
+    g.lineTo(C[2][0], C[2][1]); g.lineTo(C[3][0], C[3][1]);
+    g.closePath(); g.fill();
+    g.strokeStyle = "rgba(0,0,0,.5)"; g.lineWidth = Math.max(1, 8 / C[0][2] * (H/560));
+    g.stroke();
+    // разложенная руда на столе
+    for (let i2 = 0; i2 < 5; i2++) {
+      const t = (i2 + 0.5) / 5;
+      const px2 = C[0][0] + (C[1][0]-C[0][0])*t + (C[3][0]-C[0][0])*0.45;
+      const py2 = C[0][1] + (C[1][1]-C[0][1])*t + (C[3][1]-C[0][1])*0.45;
+      const o = ORES[[0,1,2,4,7][i2]];
+      g.fillStyle = o.g;
+      const r = Math.max(1.2, 7 / C[0][2] * (H/560));
+      g.beginPath(); g.arc(px2, py2, r, 0, 7); g.fill();
+    }
+    g.restore();
+  }
+
 
   // схема шахты: разрез по глубине. То, что ты выкопал, и то, что тебе попалось.
   const planEl = document.getElementById("plan"), planWrap = document.getElementById("planwrap");
@@ -4149,6 +4296,7 @@
     dreadTick(dt); countTick();
     bottomTick();
     dropsTick(dt); wailTick(dt); nuggetTick(); swordsTick(dt); riskTick(dt); learnTick();
+    benchTick();
     tideTick(dt); gritTick(dt); hazTick(dt); hazSound(dt);
     stepTick(dt, !!(fw || st), down("run")); dripTick(dt); droneTick();
     if (!sawPoint && PT && ptDist() < 18) { sawPoint = true; SAV.seen.cosmic = 1; saveGame(); }
@@ -4210,6 +4358,7 @@
       fxc.fillRect(p2.x, p2.y, p2.s, p2.s);
     }
     fxc.globalAlpha = 1;
+    drawBench(fxc, fx.width, fx.height);
     drawProps(fxc, fx.width, fx.height);
     drawSwords(fxc, fx.width, fx.height);
     drawRedFlash(fxc, fx.width, fx.height);
