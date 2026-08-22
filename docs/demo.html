@@ -334,6 +334,7 @@
   if (!gl) { failBox.style.display = "flex"; failBox.textContent = "Нужен WebGL 2 — в этом браузере его нет."; return; }
 
   // ---------- поле плотности ----------
+  let savReady = false;                            // склад руды появляется позже мира
   // сохранение читается ниже, но шахта нужна уже на генерации мира
   let SAV_MINE = "", SAV_AT = null;
   try {
@@ -545,6 +546,30 @@
   function genWorld() {
     for (let ly = 0; ly < NY; ly++) genSlice(ly);
     refreshFeatures();
+    if (savReady) seedNuggets();
+  }
+  // в каждом чужом подвале что-то лежит на полу, и оно поёт
+  const NUGGETS = [];
+  function seedNuggets() {
+    NUGGETS.length = 0;
+    for (const r of ROOMS) {
+      if (!savReady || (SAV.took && SAV.took["n" + r.k])) continue;
+      const kk = Math.max(0, Math.min(5, Math.floor(r.y / 1000) + (hs(r.k, 51, 7) > .6 ? 1 : 0)));
+      NUGGETS.push({ id: "n" + r.k, x: r.x + (hs(r.k,53,3)-.5)*r.hx,
+                     y: r.y + r.hy - 0.25, z: r.z + (hs(r.k,55,5)-.5)*r.hz, k: kk });
+    }
+  }
+  function nuggetTick() {
+    if (!savReady) return;
+    for (let i = NUGGETS.length - 1; i >= 0; i--) {
+      const n = NUGGETS[i];
+      if (Math.hypot(n.x - P.x, n.y - (P.y - EYE*0.5), n.z - P.z) > 9) continue;
+      if (solidAt(n.x, n.y, n.z)) continue;         // ещё за стеной
+      NUGGETS.splice(i, 1);
+      SAV.took = SAV.took || {}; SAV.took[n.id] = 1; saveGame();
+      dropOre(n.x, n.y, n.z, n.k, true);
+      return;
+    }
   }
   // если прошлая смена оставила шахту — переигрываем её удары и встаём, где стояли
   if (SAV_MINE) { cutsFromText(SAV_MINE); }
@@ -700,8 +725,9 @@
   }
 
   // порода слоями; в подвале — бетон и балки
+  vec3 oreTint;
   vec3 rockColor(vec3 w, out float rough, out float oreAmt, out float emis){
-    rough = 1.0; oreAmt = 0.0; emis = 0.0;
+    rough = 1.0; oreAmt = 0.0; emis = 0.0; oreTint = vec3(0.08,0.34,0.42);
     float warp = (fbm(w*0.22)-0.5)*2.4 + (fbm(w*0.02)-0.5)*w.y*0.06;
     float d = w.y + warp;
     vec3 c;
@@ -753,16 +779,26 @@
       rough = 0.30;
     }
 
-    // жилы: своя руда на каждой трети пути
+    // жилы: шесть руд. Глубина решает, какая тут основная, медленный шум
+    // подмешивает соседние — поэтому пласты не режутся по линейке.
     float ov = fbm(w*0.5+vec3(31.0));
-    float ob = fbm(w*0.14+vec3(77.0));
-    if(w.y>0.4 && ov>0.60 && ob>0.52){
-      oreAmt = smoothstep(0.60,0.72,ov);
-      vec3 oc = w.y < 700.0  ? vec3(0.20,0.62,0.70)     // медь
-              : w.y < 2600.0 ? vec3(0.42,0.14,0.62)     // фиолет
-              : w.y < 4600.0 ? vec3(0.72,0.50,0.14)     // золото
-                             : vec3(0.86,0.90,0.98);    // белое
+    float sel = fbm(w*0.06+vec3(313.0));
+    float band = clamp(w.y/1100.0, 0.0, 5.0);
+    float kf = clamp(floor(band + (sel-0.5)*2.6 + 0.5), 0.0, 5.0);
+    int kind = int(kf);
+    float thr = 0.575 + kf*0.023;                       // золото реже угля
+    if(w.y>0.4 && ov>thr){
+      oreAmt = smoothstep(thr, thr+0.11, ov);
+      vec3 oc = kind==0 ? vec3(0.11,0.11,0.13)          // уголь
+              : kind==1 ? vec3(0.20,0.62,0.70)          // медь
+              : kind==2 ? vec3(0.55,0.32,0.20)          // железо
+              : kind==3 ? vec3(0.52,0.30,0.72)          // кварц
+              : kind==4 ? vec3(0.80,0.60,0.18)          // золото
+                        : vec3(0.82,0.90,0.98);         // иней
       c = mix(c, oc, oreAmt);
+      if(kind==0) rough = mix(rough, 0.16, oreAmt);     // уголь блестит на сколе
+      if(kind==4) rough = mix(rough, 0.10, oreAmt);     // золото тем более
+      oreTint = oc;
     }
     c *= 0.84+0.34*h31(floor(w*3.0));
 
@@ -883,7 +919,7 @@
                      + vec3(1.0,0.62,0.30)*win*2.6
                      + vec3(0.10,0.10,0.14)*0.22 );          // мягкая заливка, тени не чёрные
     col += vec3(1.0,0.90,0.72)*spec*(lamp+bulb*0.8);
-    col += vec3(0.08,0.34,0.42)*oreAmt*(lamp+bulb)*1.4;
+    col += oreTint*oreAmt*(lamp+bulb)*0.9;
     col += vec3(1.0,0.88,0.66)*emis*2.6;                    // само окно светится
     col *= 0.64 + 0.74*hC;
 
@@ -1209,11 +1245,51 @@
   SET.bind = Object.assign({}, DEF.bind, SET.bind || {});
   const saveSet = () => { try { localStorage.setItem(KEY, JSON.stringify(SET)); } catch (e) {} };
 
+  // ---------- руда ----------
+  // Шесть видов. Глубина задаёт основную, медленный шум подмешивает соседние —
+  // те же формулы, что в шейдере, иначе игра выдавала бы не то, что видно в стене.
+  const ORES = [
+    { id:"coal",   n:"УГОЛЬ",   c:"#2a2a30", g:"#4a4a55", price: 1 },
+    { id:"copper", n:"МЕДЬ",    c:"#33a0b3", g:"#7fdcea", price: 3 },
+    { id:"iron",   n:"ЖЕЛЕЗО",  c:"#8c5233", g:"#c98a5c", price: 7 },
+    { id:"quartz", n:"КВАРЦ",   c:"#854dba", g:"#c08cf0", price: 16 },
+    { id:"gold",   n:"ЗОЛОТО",  c:"#cc9a2e", g:"#ffd978", price: 38 },
+    { id:"rime",   n:"ИНЕЙ",    c:"#d2e4f2", g:"#ffffff", price: 90 }
+  ];
+  // шум, повторяющий шейдерный: h31 -> n3 -> fbm
+  const gh31 = (x, y, z) => {
+    const v = Math.sin(x*127.1 + y*311.7 + z*74.7) * 43758.5453;
+    return v - Math.floor(v);
+  };
+  function gn3(x, y, z) {
+    const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+    let fx = x - ix, fy = y - iy, fz = z - iz;
+    fx = fx*fx*(3-2*fx); fy = fy*fy*(3-2*fy); fz = fz*fz*(3-2*fz);
+    const L = (a, b, t) => a + (b - a) * t;
+    return L(L(L(gh31(ix,iy,iz),     gh31(ix+1,iy,iz),   fx),
+               L(gh31(ix,iy+1,iz),   gh31(ix+1,iy+1,iz), fx), fy),
+             L(L(gh31(ix,iy,iz+1),   gh31(ix+1,iy,iz+1), fx),
+               L(gh31(ix,iy+1,iz+1), gh31(ix+1,iy+1,iz+1), fx), fy), fz);
+  }
+  const gfbm = (x, y, z) =>
+    gn3(x,y,z)*0.55 + gn3(x*2.07,y*2.07,z*2.07)*0.28 + gn3(x*4.13,y*4.13,z*4.13)*0.17;
+
+  function oreAt(X, Y, Z) {                          // что в этой точке породы
+    if (Y <= 0.4) return null;
+    const ov = gfbm(X*0.5+31, Y*0.5+31, Z*0.5+31);
+    const sel = gfbm(X*0.06+313, Y*0.06+313, Z*0.06+313);
+    const band = Math.max(0, Math.min(5, Y/1100));
+    const k = Math.max(0, Math.min(5, Math.floor(band + (sel-0.5)*2.6 + 0.5)));
+    const thr = 0.575 + k*0.023;
+    if (ov <= thr) return null;
+    return { k, amt: Math.min(1, (ov - thr)/0.11) };
+  }
+
   // ---------- прогресс ----------
   const SKEY = "zaboy.save.v2", SKEY_OLD = "zaboy.save.v1";
   const SDEF = { bank: 0, shards: 0, pick: 1, lamp: 1, crew: 0, cart: 1, best: 0,
                  seen: {}, notes: {}, log: [], shift: 0, men: [],
-                 mine: "", at: null, load: 0, off: 0, seenAt: 0, v: 2 };
+                 mine: "", at: null, load: 0, off: 0, seenAt: 0, ore: {}, v: 2 };
   let SAV;
   // v2 хранит ещё и саму шахту. Старое сохранение переносим, чтобы прогресс не пропал.
   try {
@@ -1222,7 +1298,8 @@
   } catch (e) { SAV = Object.assign({}, SDEF); }
   SAV.v = 2;
   SAV.seen = SAV.seen || {}; SAV.notes = SAV.notes || {}; SAV.log = SAV.log || [];
-  SAV.men = SAV.men || [];
+  SAV.men = SAV.men || []; SAV.ore = SAV.ore || {}; SAV.took = SAV.took || {};
+  savReady = true; seedNuggets();
   // сохранения, где бригада была просто числом, разворачиваем в людей
   while (SAV.men.length < (SAV.crew | 0))
     SAV.men.push({ n: "ПРОХОДЧИК " + (SAV.men.length + 1), t: "проходчик", d: 0, since: 0 });
@@ -1337,6 +1414,154 @@
     return dark
       ? [[0, t[1]], [.2, t[2]], [.55, t[2]], [1, "#141019"]]
       : [[0, t[0]], [.22, t[1]], [.6, t[2]], [1, "#191420"]];
+  }
+
+  // звон куска: уголь глухой, иней стеклянный
+  function clink(k, big) {
+    if (!AC || hush > 0) return;
+    const base = [180, 420, 340, 780, 560, 1240][k] || 400;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = k === 0 ? "sine" : k === 5 ? "triangle" : "triangle";
+    o.frequency.setValueAtTime(base * (big ? 0.72 : 1) * (0.97 + Math.random()*0.06), AC.currentTime);
+    if (k > 0) o.frequency.exponentialRampToValueAtTime(base * 1.5, AC.currentTime + 0.05);
+    const v = (big ? 0.18 : 0.09) * (SET.vol/100) * (SET.sfx/100);
+    g.gain.setValueAtTime(v, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + (k === 0 ? 0.12 : 0.34) * (big ? 2.4 : 1));
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime + 1.0);
+  }
+
+  // ---------- плач руды ----------
+  // Самородок слышно раньше, чем видно: тонкая нота на грани голоса, которая
+  // тянется из стены. Шахтёры на это шли и не всегда возвращались.
+  let wailG = null, wailO = null, wailAt = 0, wailPos = null;
+  function wailStart(X, Y, Z, k) {
+    wailPos = { x: X, y: Y, z: Z, k };
+    if (!AC) return;
+    wailStop();
+    const o = AC.createOscillator(), o2 = AC.createOscillator(), g = AC.createGain();
+    const f2 = AC.createBiquadFilter();
+    o.type = "sine";  o.frequency.value  = 620 + k * 46;
+    o2.type = "sine"; o2.frequency.value = 623 + k * 46;      // биения: голос дрожит
+    f2.type = "bandpass"; f2.frequency.value = 700 + k * 50; f2.Q.value = 5;
+    g.gain.value = 0;
+    o.connect(f2); o2.connect(f2); f2.connect(g); g.connect(AC.destination);
+    o.start(); o2.start();
+    wailG = g; wailO = [o, o2]; wailAt = performance.now();
+  }
+  function wailStop() {
+    if (!wailG) return;
+    const g = wailG, os = wailO; wailG = null; wailO = null;
+    try {
+      g.gain.linearRampToValueAtTime(0.0001, AC.currentTime + 0.7);
+      os.forEach(o => o.stop(AC.currentTime + 0.8));
+    } catch (e) {}
+  }
+  function wailTick(dt) {
+    if (!wailPos) return;
+    // жив, пока самородок лежит в тоннеле
+    const still = DROPS.some(d => d.big);
+    if (!still) { wailStop(); wailPos = null; return; }
+    if (!wailG) return;
+    const d = Math.hypot(wailPos.x - P.x, wailPos.y - (P.y - EYE), wailPos.z - P.z);
+    const near = Math.max(0, 1 - d / 22);
+    const want = near * near * 0.055 * (SET.vol / 100) * (hush > 0 ? 0 : 1);
+    wailG.gain.value += (want - wailG.gain.value) * Math.min(1, dt * 2.2);
+    const wob = 1 + Math.sin(performance.now() / 900) * 0.012;
+    try { wailO[0].frequency.value = (620 + wailPos.k * 46) * wob; } catch (e) {}
+  }
+
+  // ---------- куски ----------
+  // Выбил жилу — кусок вылетает и падает. Он лежит в тоннеле, пока за ним
+  // не придут. Подошёл ближе полутора метров — притягивается сам.
+  const DROPS = [];
+  const DROP_MAX = 90;
+  function dropOre(X, Y, Z, k, big) {
+    if (DROPS.length >= DROP_MAX) DROPS.shift();
+    DROPS.push({
+      x: X + (Math.random()-.5)*.3, y: Y - .2, z: Z + (Math.random()-.5)*.3,
+      vx: (Math.random()-.5)*1.6, vy: -1.6 - Math.random(), vz: (Math.random()-.5)*1.6,
+      k, big: !!big, t: 0, pull: 0
+    });
+    if (big) wailStart(X, Y, Z, k);
+  }
+  function dropsTick(dt) {
+    const ex = P.x, ey = P.y - EYE*0.55, ez = P.z;
+    for (let i = DROPS.length - 1; i >= 0; i--) {
+      const d = DROPS[i];
+      d.t += dt;
+      const dist = Math.hypot(d.x-ex, d.y-ey, d.z-ez);
+      if (dist < (d.big ? 2.2 : 1.5)) d.pull = Math.min(1, d.pull + dt*3.4);
+      if (d.pull > 0) {                              // тянется в руку
+        const s = d.pull * d.pull * 9 * dt;
+        d.x += (ex-d.x)*s; d.y += (ey-d.y)*s; d.z += (ez-d.z)*s;
+        if (dist < 0.45) { takeOre(d); DROPS.splice(i,1); continue; }
+      } else {
+        d.vy += 15 * dt;
+        const nx = d.x + d.vx*dt, ny = d.y + d.vy*dt, nz = d.z + d.vz*dt;
+        if (!solidAt(nx, d.y, d.z)) d.x = nx; else d.vx *= -0.3;
+        if (!solidAt(d.x, ny, d.z)) d.y = ny; else { d.vy = 0; d.vx *= 0.7; d.vz *= 0.7; }
+        if (!solidAt(d.x, d.y, nz)) d.z = nz; else d.vz *= -0.3;
+      }
+      if (d.t > 240 || Math.abs(d.y - ey) > 40) DROPS.splice(i, 1);
+    }
+  }
+  function takeOre(d) {
+    const o = ORES[d.k], n = d.big ? 12 + Math.round(Math.random()*10) : 1;
+    SAV.ore[o.id] = (SAV.ore[o.id] || 0) + n;
+    cart = Math.min(capOf(), cart + o.price * n * (buff.ore > 0 ? 5 : 1));
+    oreEl.classList.add("hot"); oreHot = 1.4;
+    tookName = o.n + (n > 1 ? "  ×" + n : ""); tookCol = o.g;
+    tookEnd = performance.now() + 1600;
+    clink(d.k, d.big);
+  }
+  let tookName = "", tookCol = "#fff", tookEnd = 0;
+
+  // куски рисуются поверх сцены: маленькие искры на своих местах
+  function drawDrops(g, W, H) {
+    if (!DROPS.length) return;
+    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
+    const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
+    const ex = P.x, ey = P.y - EYE, ez = P.z;
+    const fov = 1 / Math.tan((SET.fov * Math.PI / 180) / 2) * 0.62;
+    for (const d of DROPS) {
+      const rx = d.x - ex, ry = d.y - ey, rz = d.z - ez;
+      // мировой вектор в координаты камеры (те же базисы, что в шейдере)
+      const cxv = cy*rx - sy*rz;
+      const cyv = -sy*sp*rx - cp*ry - cy*sp*rz;
+      const czv = sy*cp*rx - sp*ry + cy*cp*rz;
+      if (czv < 0.25) continue;
+      const sx = W*0.5 + (cxv/czv) * fov * H*0.5;
+      const sy2 = H*0.5 - (cyv/czv) * fov * H*0.5;
+      if (sx < -40 || sx > W+40 || sy2 < -40 || sy2 > H+40) continue;
+      const o = ORES[d.k];
+      const r = Math.max(1.4, (d.big ? 13 : 5) / czv * (H/560));
+      const tw = 0.75 + 0.25*Math.sin(d.t*4 + d.k);
+      g.globalAlpha = Math.min(1, 1.3 - czv/26) * (d.big ? 1 : 0.92);
+      const gr = g.createRadialGradient(sx, sy2, 0, sx, sy2, r*(d.big ? 5 : 3));
+      gr.addColorStop(0, o.g); gr.addColorStop(0.35, o.c);
+      gr.addColorStop(1, "rgba(0,0,0,0)");
+      g.globalAlpha *= d.big ? 0.55*tw : 0.30*tw;
+      g.fillStyle = gr;
+      g.beginPath(); g.arc(sx, sy2, r*(d.big ? 5 : 3), 0, 7); g.fill();
+      g.globalAlpha = Math.min(1, 1.3 - czv/26);
+      g.fillStyle = o.g;
+      g.beginPath(); g.arc(sx, sy2, r*0.55, 0, 7); g.fill();
+      g.fillStyle = o.c;
+      g.beginPath(); g.arc(sx - r*0.16, sy2 + r*0.16, r*0.42, 0, 7); g.fill();
+      g.globalAlpha = 1;
+    }
+  }
+  // что подобрал — одной строкой и уходит
+  function drawTook(g, W, H) {
+    const left = (tookEnd - performance.now()) / 1600;
+    if (left <= 0) return;
+    g.save();
+    g.globalAlpha = Math.min(1, left*2.2) * 0.92;
+    g.textAlign = "center"; g.fillStyle = tookCol;
+    g.font = "600 " + Math.round(Math.min(15, W*0.014) * uiS()) + "px ui-monospace,monospace";
+    g.fillText(tookName, W/2, H*0.60 - (1-left)*10);
+    g.restore();
   }
 
   // ---------- керн ----------
@@ -3111,8 +3336,17 @@
           thud(false, .30);
           if (nd.hit === 1) nodeBreaks++;
           if (nodeBreaks >= 2 && !fired.nodrop) { fired.nodrop = 1; startFall(); }
-        } else if (t[1] > 0 && !dk) cart = Math.min(capOf(),
-          cart + (2 + Math.random() * 3 * powOf()) * oreMul() * (buff.ore > 0 ? 5 : 1));
+        } else if (t[1] > 0 && !dk) {
+          const ore = oreAt(t[0], t[1], t[2]);
+          if (ore) {                                 // попал по жиле — выбил кусок
+            const big = ore.amt > 0.82 && Math.random() < 0.14;
+            dropOre(t[0], t[1], t[2], ore.k, big);
+            if (ore.amt > 0.5 && Math.random() < 0.45) dropOre(t[0], t[1], t[2], ore.k, false);
+          } else {                                   // просто порода — только крошка
+            cart = Math.min(capOf(),
+              cart + (1 + Math.random() * 1.6 * powOf()) * oreMul() * (buff.ore > 0 ? 5 : 1));
+          }
+        }
         oreEl.textContent = fmt(cart) + " / " + capOf();
         oreEl.classList.add("hot"); oreHot = 1.4;
         cartEl.style.width = (cart / capOf() * 100) + "%";
@@ -3122,6 +3356,7 @@
     shake = Math.max(0, shake - dt * 34);
     dreadTick(dt); countTick();
     bottomTick();
+    dropsTick(dt); wailTick(dt); nuggetTick();
     tideTick(dt); gritTick(dt); hazTick(dt); hazSound(dt);
     stepTick(dt, !!(fw || st), down("run")); dripTick(dt); droneTick();
     if (!sawPoint && PT && ptDist() < 18) { sawPoint = true; SAV.seen.cosmic = 1; saveGame(); }
@@ -3183,7 +3418,9 @@
       fxc.fillRect(p2.x, p2.y, p2.s, p2.s);
     }
     fxc.globalAlpha = 1;
+    drawDrops(fxc, fx.width, fx.height);
     drawCore(fxc, fx.width, fx.height);
+    drawTook(fxc, fx.width, fx.height);
     drawLost(fxc, fx.width, fx.height);
     drawGrit(fxc);
     drawDread(fxc, fx.width, fx.height, dt);
