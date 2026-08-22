@@ -184,7 +184,20 @@
   .inv .it.act{border-color:rgba(255,193,77,.55)}
   .inv .it canvas{width:30px;height:30px;flex:0 0 30px;background:#0b0912;border-radius:6px}
   .inv .it span{font-size:10px;letter-spacing:.04em;color:#cfc7dd;line-height:1.25}
-  .mbtns{display:flex;gap:8px;margin-top:14px}
+  .mbtns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  /* спросить прежде, чем стереть: отказаться должно быть так же легко */
+  .ask{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(4,3,7,.84);backdrop-filter:blur(3px);z-index:60;padding:22px}
+  .ask.on{display:flex}
+  .ask-box{max-width:400px;width:100%;background:#141019;border:1px solid #3a3148;border-radius:14px;
+    padding:22px 20px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.75)}
+  .ask-box b{display:block;font-size:13px;letter-spacing:.18em;color:#ff8f6a;margin-bottom:10px}
+  .ask-box p{margin:0 0 18px;font-size:12.5px;line-height:1.62;color:#d6cee6;font-family:var(--body)}
+  .ask-row{display:flex;gap:8px}
+  .ask-row i{flex:1;font-style:normal;text-align:center;font-size:11px;letter-spacing:.14em;padding:13px;
+    border-radius:9px;border:1px solid #3a3148;color:#cfc7dd;background:#1a1522;cursor:pointer}
+  .ask-row i:active{background:#221b2c}
+  .ask-row i.bad{border-color:rgba(224,80,95,.65);color:#ff7a88;background:#1e1216}
   .mbtns b{flex:1;text-align:center;font-size:11px;letter-spacing:.14em;padding:12px;border-radius:9px;
     border:1px solid var(--line2);color:#a79ec0;cursor:pointer}
   .mbtns b.pri{border-color:rgba(255,193,77,.6);color:var(--lamp);background:#1c1510}
@@ -279,6 +292,13 @@
   <div class="cart" id="cartbox" hidden><u>ВАГОНЕТКА ПОЛНА · E — НАВЕРХ</u><b><i id="cart"></i></b></div>
   <div class="gear" id="gearbtn">&#9881;</div>
   <div class="hotbar" id="hotbar"></div>
+  <div class="ask" id="ask">
+    <div class="ask-box">
+      <b id="askt">НАЧАТЬ ЗАНОВО?</b>
+      <p id="askb"></p>
+      <div class="ask-row"><i id="askno">ОТМЕНА</i><i class="bad" id="askyes">СТЕРЕТЬ</i></div>
+    </div>
+  </div>
   <div class="menu" id="menu">
     <div class="tabs">
       <b data-p="ctl" class="on">УПРАВЛЕНИЕ</b><b data-p="game">ИГРА</b>
@@ -289,7 +309,7 @@
     <div class="pane" id="p-vid"></div>
     <div class="pane" id="p-snd"></div>
 
-    <div class="mbtns"><b id="mreset">СБРОСИТЬ</b><b class="pri" id="mclose">ЗАКРЫТЬ</b></div>
+    <div class="mbtns"><b id="mreset">СБРОС НАСТРОЕК</b><b id="mnew">НАЧАТЬ ЗАНОВО</b><b class="pri" id="mclose">ЗАКРЫТЬ</b></div>
   </div>
   <div class="sheet" id="invsheet">
     <div class="sheet-top"><b>СНАРЯЖЕНИЕ</b><span class="x" id="invx">✕</span></div>
@@ -1116,7 +1136,8 @@
     if (document.pointerLockElement === cv) freeLook = false;   // настоящий лучше
   });
   const turn = (dx, dy, k) => {
-    P.yaw -= dx * k;
+    // мышь вправо — мир уезжает влево. Знак был перевёрнут.
+    P.yaw += dx * k;
     P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch + (SET.invY ? 1 : -1) * dy * k));
   };
   // Захват мыши дают не везде: внутри встроенного фрейма его не дают вовсе.
@@ -1126,7 +1147,7 @@
   let dragOn = false, dragX = 0, dragY = 0;
   let freeLook = false, freeX = 0, freeY = 0, edgeX = 0, edgeY = 0;
   const uiOpen = () =>
-    !!document.querySelector(".menu.open, .sheet.open, .hub.on, .note.on, .lift.on");
+    !!document.querySelector(".menu.open, .sheet.open, .hub.on, .note.on, .lift.on, .ask.on");
   const freeOn = () => freeLook && document.pointerLockElement !== cv && !uiOpen();
 
   document.addEventListener("mousemove", e => {
@@ -1194,7 +1215,7 @@
   addEventListener("touchmove", e => { for (const t of e.changedTouches) {
       if (t.identifier === lookId) {
         const k = SET.sens / 4800;
-        P.yaw -= (t.clientX - lx) * k;
+        P.yaw += (t.clientX - lx) * k;          // палец вправо — мир влево
         P.pitch = Math.max(-1.5, Math.min(1.5, P.pitch + (SET.invY ? 1 : -1) * (t.clientY - ly) * k));
         lx = t.clientX; ly = t.clientY;
       }
@@ -1218,18 +1239,24 @@
 
   // во весь экран — на телефоне без этого играть нельзя
   const gameEl = document.getElementById("game");
-  function toggleFull() {
-    const on = !gameEl.classList.contains("full");
-    gameEl.classList.toggle("full", on);
+  // Кадр во весь экран держим мы сами классом .full. Полноэкранный режим
+  // браузера — сверху и по желанию: Esc из него выбрасывает, и запретить это
+  // нельзя. Раньше на этом снимался и наш класс, и игра прыгала обратно в
+  // страницу вместо того, чтобы открыть меню.
+  let wantFull = false;
+  function toggleFull(on) {
+    wantFull = on === undefined ? !wantFull : !!on;
+    gameEl.classList.toggle("full", wantFull);
     try {
-      if (on && gameEl.requestFullscreen) gameEl.requestFullscreen().catch(() => {});
-      else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      if (wantFull && gameEl.requestFullscreen) gameEl.requestFullscreen().catch(() => {});
+      else if (!wantFull && document.fullscreenElement) document.exitFullscreen().catch(() => {});
     } catch (e) {}
     setTimeout(resize, 60);
   }
-  tap("fsbtn", toggleFull);
+  tap("fsbtn", () => toggleFull());
   document.addEventListener("fullscreenchange", () => {
-    gameEl.classList.toggle("full", !!document.fullscreenElement);
+    // вышли из браузерного полноэкранного, а кадр держим — значит нажали Esc
+    if (!document.fullscreenElement && wantFull && !menu.classList.contains("open")) openMenu(true);
     setTimeout(resize, 60);
   });
 
@@ -3019,6 +3046,27 @@
     SET = JSON.parse(JSON.stringify(DEF)); saveSet(); applySet(); buildUI(); buildHot(); pickSlot(SET.slot);
   };
 
+  // Всё, что нельзя вернуть, сначала спрашивает. Отказаться — левая кнопка,
+  // она же безопасная: попасть в неё легче, чем в ту, что стирает.
+  const askEl = document.getElementById("ask");
+  const askOpen = () => askEl.classList.contains("on");
+  function ask(title, body, onYes, yesWord) {
+    document.getElementById("askt").textContent = title;
+    document.getElementById("askb").textContent = body;
+    document.getElementById("askyes").textContent = yesWord || "СТЕРЕТЬ";
+    askEl.classList.add("on");
+    document.getElementById("askno").onclick = () => askEl.classList.remove("on");
+    document.getElementById("askyes").onclick = () => { askEl.classList.remove("on"); onYes(); };
+  }
+  document.getElementById("mnew").onclick = () => ask(
+    "НАЧАТЬ ЗАНОВО?",
+    "Пропадёт всё: осколки, кирка и фонарь, вся руда, собранные вещи и скиллы, " +
+    "найденные дневники, зарубки и сама шахта. Смены начнутся с первой. Отменить будет нельзя.",
+    () => {
+      try { localStorage.removeItem(SKEY); localStorage.removeItem(SKEY_OLD); } catch (e) {}
+      location.reload();
+    });
+
   function row(pane, label, hint, ctrl) {
     const d = document.createElement("div"); d.className = "opt";
     const l = document.createElement("div");
@@ -3159,6 +3207,7 @@
       e.preventDefault();
       if (nearBench()) openCraft(true); else goUp();
     }
+    if (e.code === "Escape" && askOpen()) { e.preventDefault(); askEl.classList.remove("on"); return; }
     if (e.code === SET.bind.menu) { e.preventDefault(); openMenu(!menu.classList.contains("open")); }
     if (e.code === SET.bind.inv) {
       e.preventDefault();
@@ -3185,11 +3234,14 @@
     // Досягаемость растёт вместе с вырубом. Иначе сильная кирка выедает вокруг
     // себя шар шире, чем видит прицел (радиус обгоняет 5.4 м уже к середине
     // игры), и бить внезапно становится не во что: замах есть, породы нет.
-    // Потолок — дальше самой дальней видимости: за ним всё равно ничего не
-    // видно, а шаг луча остаётся мельче тонкой перемычки.
-    const st = Math.min(26, Math.max(5.4, (0.40 + powOf() * 0.13) * 1.7 + 1.5)) / 90;
+    // Досягаемость. Было 5.4 м, и это оказалось меньше, чем нужно: стоя
+    // и глядя под небольшим углом вниз, игрок целится в пол в четырёх-пяти
+    // метрах — то есть на самом пределе луча. Один выруб, и бить уже не во
+    // что: кирка машет впустую, а человек не понимает, что сломалось.
+    // Потолок — дальше самой дальней видимости, за ней всё равно темно.
+    const st = Math.min(26, Math.max(9.5, (0.40 + powOf() * 0.13) * 1.7 + 1.5)) / 120;
     let x = P.x, y = P.y - EYE, z = P.z;
-    for (let i = 0; i < 90; i++) {
+    for (let i = 0; i < 120; i++) {
       x += dir[0] * st; y += dir[1] * st; z += dir[2] * st;
       if (solidAt(x, y, z)) return [x, y, z];
     }
